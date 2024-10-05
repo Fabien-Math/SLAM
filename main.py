@@ -18,7 +18,7 @@ def main():
 	map = Map()
 	walls = [wall.get_rect() for wall in map.walls]
 
-	beacon = BeaconRobot((200,400), 50)
+	beacon = BeaconRobot((200,400), 50, 50)
 	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=4)
 
 	running = True
@@ -40,14 +40,17 @@ def main():
 		compute_colision(beacon, walls)
 
 		dt = t - t_old
-		if key_pressed_is[K_LEFT]: 
-			beacon.move(-beacon.speed * dt, 0)
+		dir = [0, 0, 0, 0]
+		if key_pressed_is[K_LEFT]:
+			dir[0] = 1
 		if key_pressed_is[K_RIGHT]: 
-			beacon.move(beacon.speed * dt, 0)
+			dir[1] = 1
 		if key_pressed_is[K_UP]: 
-			beacon.move(0, -beacon.speed * dt)
+			dir[2] = 1
 		if key_pressed_is[K_DOWN]: 
-			beacon.move(0, beacon.speed * dt)
+			dir[3] = 1
+		
+		beacon.move(dir, dt)
 
 		# Draw character
 		beacon.draw(window)

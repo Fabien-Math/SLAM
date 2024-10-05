@@ -3,20 +3,39 @@ from util import Vector2
 from accelerometer import Accmeter
 import pygame
 
+
 class BeaconRobot:
-	def __init__(self, pos, acc) -> None:
+	def __init__(self, pos, acc, max_speed) -> None:
 		self.pos = Vector2(pos[0], pos[1])
 		self.pos_calc = Vector2(pos[0], pos[1])
 		self.acc = acc
-		self.speed = 50
+		self.decc = 100
+		self.speed = 0
+		self.last_dir = [0, 0, 0, 0]
+		self.max_speed = max_speed
 		self.radius = 5
 		self.color = (0, 200, 255)
 		self.map = []
 		self.lidar = None
 		self.accmeter = None
 
-	def move(self, x, y):
-		self.pos.add(x,y)
+	def move(self, dir, dt):
+
+		if dir == [0, 0, 0, 0]:
+			self.speed = max(self.speed - self.decc*dt, 0)
+			dir = self.last_dir
+		else:
+			self.speed = min(self.speed + self.acc*dt, self.max_speed)
+			self.last_dir = dir
+
+		if dir[0]:
+			self.pos.add(-self.speed*dt,0)
+		if dir[1]:
+			self.pos.add(self.speed*dt,0)
+		if dir[2]:
+			self.pos.add(0, -self.speed*dt)
+		if dir[3]:
+			self.pos.add(0, self.speed*dt)
 
 	def draw(self, window):
 		pygame.draw.circle(window, self.color, (self.pos.x, self.pos.y), 10)
