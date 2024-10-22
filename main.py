@@ -18,8 +18,9 @@ def main():
 	map = Map()
 	walls = [wall.get_rect() for wall in map.walls]
 
-	beacon = BeaconRobot((200,400), 50, 50)
-	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=4)
+	beacon = BeaconRobot((200,400), 50, 1000, 50, -25, 100)
+	beacon.equip_lidar(fov=360, freq=1, res=3.5, prec=5)
+	beacon.equip_accmeter(prec=5)
 
 	running = True
 	t = time.time()
@@ -35,28 +36,35 @@ def main():
 		
 		# Draw background and map
 		window.fill((150, 150, 150))
-		map.draw_map(window)
+		# map.draw_map(window)
 
 		compute_colision(beacon, walls)
 
 		dt = t - t_old
-		dir = [0, 0, 0, 0]
+		rotation = 0
+		direction = 0
 		if key_pressed_is[K_LEFT]:
-			dir[0] = 1
+			rotation -= 1
 		if key_pressed_is[K_RIGHT]: 
-			dir[1] = 1
+			rotation += 1
 		if key_pressed_is[K_UP]: 
-			dir[2] = 1
+			direction += 1
 		if key_pressed_is[K_DOWN]: 
-			dir[3] = 1
+			direction -= 1
 		
-		beacon.move(dir, dt)
+		beacon.move(direction, dt)
+		beacon.rotate(rotation, dt)
+
+		env_scanned = beacon.scan_environment(t, walls)
+		beacon.compute_pos_calc(t)
+		# beacon.draw_known_map(window)
+		beacon.update_live_grid_map(None)
+		if env_scanned:
+			beacon.draw_live_grid_map(window)
+
 
 		# Draw character
 		beacon.draw(window)
-		beacon.scan_environment(t, walls)
-		beacon.draw_known_map(window)
-
 
 		t_old = t
 		t = time.time()

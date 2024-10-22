@@ -1,4 +1,4 @@
-from util import Vector2, compute_line, find_intersection, distance
+from util import Vector2, compute_line, find_intersection, distance, find_circle_intersection, find_n_nearest
 import random
 from math import cos, sin, atan2, pi
 import pygame
@@ -14,9 +14,7 @@ class LIDAR:
 		self.last_scan_time = 0
 		self.pos = Vector2(0, 0)
 
-	def scan_environment(self, t, obstacles):
-
-		def compute_line_collision(obstacles, line):
+	def compute_line_collision(self, obstacles, line):
 			nearest_intersection = None
 			min_dist = 1e6
 			for obs in obstacles:
@@ -44,7 +42,9 @@ class LIDAR:
 				return x,y
 
 			return nearest_intersection
-						
+
+	def scan_environment(self, t, obstacles):
+				
 		if t < self.last_scan_time + 1/self.freq:
 			return None
 		
@@ -55,11 +55,41 @@ class LIDAR:
 			p = Vector2(self.pos.x + 100*cos(self.angle), self.pos.y + 100*sin(self.angle))
 			self.angle += self.resolution * pi / 180.0
 			line = compute_line(self.pos, p)
-			point = compute_line_collision(obstacles, line)
+			point = self.compute_line_collision(obstacles, line)
 			if point is not None:
 				points.append(point)
 		self.angle -= 2*pi
 		
 		return points
+
+	def compute_lidar_position(self, points):
+		n = len(points)
+		p1 = points[0]
+		r1 = distance(self.pos, p1)
+		p2 = points[n//4]
+		r2 = distance(self.pos, p2)
+		p3 = points[(2*n)//4]
+		r3 = distance(self.pos, p3)
+		p4 = points[(3*n)//4]
+		r4 = distance(self.pos, p4)
+
+		pi12, pi21 = find_circle_intersection(p1, r1, p2, r2)
+		pi23, pi32 = find_circle_intersection(p2, r2, p3, r3)
+		pi34, pi43 = find_circle_intersection(p3, r3, p4, r4)
+		pi41, pi14 = find_circle_intersection(p4, r4, p1, r1)
+		pts = [pi12, pi21, pi23, pi32, pi34, pi43, pi41, pi14]
+
+		idpts = find_n_nearest(pts, 4)
+		x, y = 0, 0
+		for id in idpts:
+			x += pts[id][0]
+			y += pts[id][1]
+		if len(idpts):
+			x /= len(idpts)
+			y /= len(idpts)
+
+		return Vector2(x, y)
+
+
 
 	
