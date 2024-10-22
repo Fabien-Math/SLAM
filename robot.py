@@ -100,6 +100,7 @@ class BeaconRobot:
 		for dot in self.map:
 			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
 
+
 	def draw_live_grid_map(self, window):
 		for idy, line in enumerate(self.live_grid_map):
 			for idx, value in enumerate(line):
@@ -108,7 +109,7 @@ class BeaconRobot:
 				if value == -1:
 					color = (70, 255, 200)
 				else:
-					gray_scale = 255 * (1 - value)
+					gray_scale = min(255, max(0, 255 * (1 - value)))
 					color = (gray_scale, gray_scale, gray_scale)
 				offset_id = self.live_grid_map_size//2
 				top_left_x = (idx - offset_id) * self.radius + self.live_grid_map_centre.y
@@ -154,20 +155,20 @@ class BeaconRobot:
 		self.lidar = LIDAR(fov, freq, res, prec)
 		self.lidar.pos = self.pos
 		
-	def scan_environment(self, time, obstacles):
+	def scan_environment(self, time, map, window):
 		if self.lidar is None:
 			print("No lidar equiped !")
 			return
 		
-		points = self.lidar.scan_environment(time, obstacles)
+		points = self.lidar.scan_environment(time, map, window)
 
 		# Compute position with lidar data
 		if points is not None:
-			self.pos_calc_lidar = self.lidar.compute_lidar_position(points)
+			self.pos_calc_lidar = self.lidar.correct_pos_with_lidar(points)
 			self.pos_calc = self.pos_calc_lidar.copy()
 		
-		if points is not None:
-			self.map += points
+		# if points is not None:
+			# self.map += points
 			self.update_live_grid_map(points)
 		
 		return True

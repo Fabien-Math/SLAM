@@ -1,5 +1,6 @@
 import pygame
-from util import Vector2
+from util import Vector2, compute_line
+from cave_generator import compute_contours, create_trigle_grid
 
 
 class Wall:
@@ -15,6 +16,38 @@ class Wall:
 	def get_rect(self):
 		rectangle = (self.p[0], self.p[1], self.p[0] + self.height, self.p[1] + self.width)
 		return rectangle
+	
+
+class Wall_Line:
+	def __init__(self, p1:Vector2, p2:Vector2, thickness:float):
+		self.p1 = p1
+		self.p2 = p2
+		self.thickness = thickness
+		self.line_eq = compute_line(p1, p2)
+
+	def draw(self, window):
+		pygame.draw.line(window, (0,0,0), self.p1.to_tuple(), self.p2.to_tuple(), self.thickness)
+	
+	def get_line(self):
+		return compute_line(self.p1, self.p2)
+
+	
+class Map_V2:
+	def __init__(self, n, m, dx, dy):
+		self.walls = None
+		tris, pts, vs = create_trigle_grid(n, m, dx, dy)
+		self.contours = compute_contours(tris, pts, vs, 0.5)
+		self.initialize_map()
+	
+	def initialize_map(self):
+		self.walls = [None for _ in range(len(self.contours))]
+
+		for i, contour in enumerate(self.contours):
+			self.walls[i] = (Wall_Line(contour[0], contour[1], 2))
+	
+	def draw_map(self, window):
+		for wall in self.walls:
+			wall.draw(window)
 
 class Map:
 	def __init__(self) -> None:

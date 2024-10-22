@@ -21,6 +21,15 @@ class Vector2:
 	
 	def copy(self):
 		return Vector2(self.x, self.y)
+
+	def to_tuple(self):
+		return (self.x, self.y)
+
+	def middle_point(self, p):
+		return Vector2((self.x + p.x)/2, (self.y + p.y)/2)
+	
+	def distance(self, p):
+		return sqrt((p.x - self.x)**2 + (p.y - self.y)**2)
 	
 def get_angle(p1:Vector2, p2:Vector2, p3:Vector2):
 	"""

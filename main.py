@@ -4,7 +4,7 @@ from pygame.locals import *
 import time
 from util import compute_colision
 from robot import BeaconRobot
-from map import Map
+from map import Map_V2
 
 
 def main():
@@ -15,11 +15,11 @@ def main():
 	window = pygame.display.set_mode(window_size)
 	pygame.display.set_caption("Map")
 
-	map = Map()
-	walls = [wall.get_rect() for wall in map.walls]
+	map = Map_V2(42, 40, 20, 20)
+	# walls = [wall.get_rect() for wall in map.walls]
 
 	beacon = BeaconRobot((200,400), 50, 1000, 50, -25, 100)
-	beacon.equip_lidar(fov=360, freq=1, res=3.5, prec=5)
+	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5)
 	beacon.equip_accmeter(prec=5)
 
 	running = True
@@ -36,9 +36,9 @@ def main():
 		
 		# Draw background and map
 		window.fill((150, 150, 150))
-		# map.draw_map(window)
+		map.draw_map(window)
 
-		compute_colision(beacon, walls)
+		# compute_colision(beacon, walls)
 
 		dt = t - t_old
 		rotation = 0
@@ -55,9 +55,9 @@ def main():
 		beacon.move(direction, dt)
 		beacon.rotate(rotation, dt)
 
-		env_scanned = beacon.scan_environment(t, walls)
+		env_scanned = beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
-		# beacon.draw_known_map(window)
+		beacon.draw_known_map(window)
 		beacon.update_live_grid_map(None)
 		if env_scanned:
 			beacon.draw_live_grid_map(window)
