@@ -38,7 +38,7 @@ class BeaconRobot:
 		self.color = (0, 200, 255)
 		self.map = []
 		self.live_grid_map_centre = self.pos.copy()
-		self.live_grid_map_size = 101
+		self.live_grid_map_size = 201
 		self.live_grid_map = np.zeros((self.live_grid_map_size, self.live_grid_map_size))
 		self.saved_grid_map = None
 
@@ -122,7 +122,8 @@ class BeaconRobot:
 		# Robot pos
 		idx = int((self.pos_calc.x - self.live_grid_map_centre.x)/self.radius + self.live_grid_map_size//2)
 		idy = int((self.pos_calc.y - self.live_grid_map_centre.y)/self.radius + self.live_grid_map_size//2)
-		self.live_grid_map[idx, idy] = -1
+		if 0 < idx < self.live_grid_map_size and 0 < idy < self.live_grid_map_size:
+			self.live_grid_map[idx, idy] = -1
 
 		if points is None:
 			return
@@ -130,7 +131,10 @@ class BeaconRobot:
 		for point in points:
 			idx = int((point[0] - self.live_grid_map_centre.x)/self.radius + self.live_grid_map_size//2)
 			idy = int((point[1] - self.live_grid_map_centre.y)/self.radius + self.live_grid_map_size//2)
-			self.live_grid_map[idx, idy] = max(self.live_grid_map[idx, idy], 1 - distance(self.pos_calc, point)/500)
+			if 0 < idx < self.live_grid_map_size and 0 < idy < self.live_grid_map_size:
+				self.live_grid_map[idx, idy] = max(self.live_grid_map[idx, idy], 1 - distance(self.pos_calc, point)/500)
+			else:
+				print("couucccou")
 
 
 	def equip_accmeter(self, prec):
@@ -160,16 +164,18 @@ class BeaconRobot:
 			print("No lidar equiped !")
 			return
 		
-		points = self.lidar.scan_environment(time, map, window)
+		points = self.lidar.scan_environment(time, map, self.radius, window)
 
 		# Compute position with lidar data
 		if points is not None:
-			self.pos_calc_lidar = self.lidar.correct_pos_with_lidar(points)
-			self.pos_calc = self.pos_calc_lidar.copy()
-		
-		# if points is not None:
-			# self.map += points
 			self.update_live_grid_map(points)
+			pos_lidar = self.lidar.correct_pos_with_lidar(points)
+			self.map += points
+			if pos_lidar is not None:
+				self.pos_calc_lidar = pos_lidar
+				self.pos_calc = self.pos_calc_lidar.copy()
+
+
 		
 		return True
 	

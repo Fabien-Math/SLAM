@@ -4,18 +4,21 @@ from pygame.locals import *
 import time
 from util import compute_colision
 from robot import BeaconRobot
-from map import Map_V2
+from map import Map
 
 
 def main():
 	### Init pygame window
 	pygame.init()
 
-	window_size = (800, 600)
+	window_size = (900, 600)
+	map_size = (800, 500)
+	map_offset = (50, 50)
+	subdiv_number = (20, 20)
 	window = pygame.display.set_mode(window_size)
 	pygame.display.set_caption("Map")
 
-	map = Map_V2(42, 40, 20, 20)
+	map = Map(map_size, map_offset, subdiv_number, 20, 20)
 	# walls = [wall.get_rect() for wall in map.walls]
 
 	beacon = BeaconRobot((200,400), 50, 1000, 50, -25, 100)
@@ -57,7 +60,7 @@ def main():
 
 		env_scanned = beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
-		beacon.draw_known_map(window)
+		# beacon.draw_known_map(window)
 		beacon.update_live_grid_map(None)
 		if env_scanned:
 			beacon.draw_live_grid_map(window)

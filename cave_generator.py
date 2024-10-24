@@ -69,8 +69,10 @@ def generate_map(n, m):
     return map[1:n+1, 1:m+1]
 
 
-def create_trigle_grid(n, m = None, dx = 1, dy = 1) -> list:
-    if m is None: m = n
+def create_trigle_grid(map_size, dx = 1, dy = 1) -> list:
+
+    m = int(map_size[0] / dx)
+    n = int(map_size[1] / (dy * np.sin(np.pi/3)))
 
     values = np.zeros(n*m)
     points = np.empty(n*m, dtype=Vector2)

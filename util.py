@@ -1,5 +1,5 @@
 from math import sqrt, acos
-from numpy import array, dot
+from numpy import array, dot, arctan2
 
 
 
@@ -51,6 +51,12 @@ def norm(u:tuple):
 	"""
 	return sqrt(u[0]**2 + u[1]**2)
 
+def evaluate_line(l, x):
+	if l[1] != 0:
+		return (l[2] - l[0] * x) / l[1]
+	else:
+		return x
+
 
 def distance(p1:Vector2, p2):
 	"""
@@ -72,6 +78,12 @@ def compute_line(p1:Vector2, p2:Vector2):
 	b = p1.x - p2.x
 	c = p1.x*(p2.y - p1.y) - p1.y*(p2.x - p1.x)
 	return a,b,c
+
+def point_in_box(p:tuple, p1:Vector2, p2:Vector2, error_offset:float = 1e-6):
+	if p[0] > min(p1.x, p2.x) - error_offset and p[0] < max(p2.x, p1.x) + error_offset:
+		if p[1] > min(p1.y, p2.y) - error_offset and p[1] < max(p2.y, p1.y) + error_offset:
+			return True
+	return False
 
 # def find_intersection(a1:float, b1:float, c1:float, a2:float, b2:float, c2:float):
 def find_intersection(l1, l2):
@@ -120,6 +132,26 @@ def find_circle_intersection(p1, r1, p2, r2):
 	pi2 = (xi2, yi2)
 	return pi1, pi2
 
+
+def compute_segment_rect_intersection(line, line_p1, line_p2, rect):
+	# rect = (x1, y1, x2, y2) avec p1 top-left et p2 bottom-right 
+	points = [(rect[0], rect[1], rect[0], rect[3]),
+				(rect[0], rect[3], rect[2], rect[3]),
+				(rect[2], rect[3], rect[2], rect[1]),
+				(rect[2], rect[1], rect[0], rect[1])]
+	for p1x, p1y, p2x, p2y in points:
+		p1 = Vector2(p1x, p1y)
+		p2 = Vector2(p2x, p2y)
+
+		line_rect = compute_line(p1, p2)
+		intersection = find_intersection(line, line_rect)
+
+		if intersection is not False:
+			if point_in_box(intersection, p1, p2):
+				if point_in_box(intersection, line_p1, line_p2):
+					return True
+	
+	return False
 
 def find_n_nearest(ps: list, n: int):
 	"""
