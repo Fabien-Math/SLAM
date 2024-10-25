@@ -2,14 +2,20 @@
 import pygame
 from pygame.locals import *
 import time
-from util import compute_colision
 from robot import BeaconRobot
 from map import Map
 
 def write_fps(dt, window, window_size):
+	"""Write the FPS on the top-right of the window
+
+	Args:
+		dt (float): Time between two frame
+		window (surface): Window on which writting
+		window_size (tuple): Size of the window
+	"""
 	font = pygame.font.Font('freesansbold.ttf', 16)
 	if dt:
-		text = font.render(f'{1/dt:.1f}', True, (255, 255, 255))
+		text = font.render(f'FPS {1/dt:.1f}', True, (255, 255, 255))
 
 		textRect = text.get_rect()
 	
@@ -17,28 +23,82 @@ def write_fps(dt, window, window_size):
 		window.blit(text, textRect)
 
 
+def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:float, toggle_draw_map:bool, toggle_draw_live_map:bool):
+	"""Update the display
+
+	Args:
+		window (surface): Surface on which the scene is drawn
+		window_size (tuple): Window size
+		map (Map): Scene map
+		beacon (BeaconRobot): Robot
+		dt (float): Display time step
+		env_scanned (bool): Redraw the scene when the live grid map is updated
+		toggle_draw_map (bool): Toggle to draw the map
+	"""
+	
+	# Erase the display
+	window.fill((150, 150, 150))
+
+	if toggle_draw_live_map:
+		beacon.draw_live_grid_map(window)
+	if toggle_draw_map:
+		map.draw_map(window)
+
+	# Draw the robot
+	beacon.draw(window)
+	# Draw the FPS
+	write_fps(dt, window, window_size)
+
+	# Update scene display
+	pygame.display.update()
+
+
 def main():
-	### Init pygame window
+	### INITIALISAZE PYGAME
 	pygame.init()
 
-	window_size = (900, 600)
-	map_size = (800, 500)
-	map_offset = (50, 50)
-	subdiv_number = (20, 20)
+	### WINDOW INITIALISATION
+	window_size = (1300, 700)
+	# Initialize the window
 	window = pygame.display.set_mode(window_size)
+	# Set the title of the window
 	pygame.display.set_caption("Map")
 
+	### MAP INITIALISATION
+	map_size = (1200, 600)
+	map_offset = (50, 50)
+	# Number of subdivisions in the map, used to list the lines
+	subdiv_number = (25, 25)
+	# Initilize the map
 	map = Map(map_size, map_offset, subdiv_number, 20, 20)
-	# walls = [wall.get_rect() for wall in map.walls]
 
+
+	### ROBOT INITIALISATION
 	beacon = BeaconRobot((200,400), 50, 1000, 50, -25, 100)
-	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5)
+	# Equip sensors
+	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=500)
 	beacon.equip_accmeter(prec=5)
 
+	# State of the simulation
 	running = True
+	# Toggle to draw the map
+	toggle_draw_map = False
+	toggle_draw_live_map = False
+
+	# Desired FPS
+	desired_fps = 60
+	
+
 	t = time.time()
 	t_old = t
+	
+	# Display time
+	t_display = t
 	while running:
+		# Time elapsed since the previous step
+		dt = t - t_old
+
+
 		key_pressed_is = pygame.key.get_pressed()
 		# Handle events
 		if key_pressed_is[K_ESCAPE]: 
@@ -46,45 +106,50 @@ def main():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
-		
-		# Draw background and map
-		window.fill((150, 150, 150))
-		# map.draw_map(window)
+		if key_pressed_is[K_m]:
+			toggle_draw_map = not toggle_draw_map
+		if key_pressed_is[K_l]:
+			toggle_draw_live_map = not toggle_draw_live_map
+		if key_pressed_is[K_UP]:
+			desired_fps = min(200, desired_fps + 20*dt)
+		if key_pressed_is[K_DOWN]:
+			desired_fps = max(1, desired_fps - 20*dt)
 
-		# compute_colision(beacon, walls)
-
-		dt = t - t_old
+		# Direction for rotation and direction
 		rotation = 0
 		direction = 0
-		if key_pressed_is[K_LEFT]:
+		if key_pressed_is[K_q]:
 			rotation -= 1
-		if key_pressed_is[K_RIGHT]: 
+		if key_pressed_is[K_d]: 
 			rotation += 1
-		if key_pressed_is[K_UP]: 
+		if key_pressed_is[K_z]: 
 			direction += 1
-		if key_pressed_is[K_DOWN]: 
+		if key_pressed_is[K_s]: 
 			direction -= 1
-		
+
+
+		# Robot movement
 		beacon.move(direction, dt)
 		beacon.rotate(rotation, dt)
 
-		env_scanned = beacon.scan_environment(t, map, window)
+		### SIMULATION
+		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
-		# beacon.draw_known_map(window)
 		beacon.update_live_grid_map(None)
-		if env_scanned:
-			beacon.draw_live_grid_map(window)
+		# compute_colision(beacon, walls)
+		
+		# DRAW THE SCENE
+		if t - t_display > 1/desired_fps:
+			update_display(window, window_size, map, beacon, t - t_display, toggle_draw_map, toggle_draw_live_map)
+			t_display = t
 
-		# Draw character
-		beacon.draw(window)
-
-		write_fps(dt, window, window_size)
 
 		t_old = t
 		t = time.time()
-		
-		pygame.display.update()
+
+	### DEINITIALIZE PYGAME
 	pygame.quit()
+
 
 if __name__ == '__main__':
 	main()

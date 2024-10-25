@@ -1,22 +1,21 @@
 from lidar import LIDAR
-from util import Vector2, distance, find_circle_intersection, find_n_nearest, get_angle
+from util import Vector2, distance
 from accelerometer import Accmeter
 import pygame
 from math import cos, sin ,pi
 import numpy as np
-from scipy.sparse import lil_matrix
 
 
 class BeaconRobot:
-	def __init__(self, pos, acc, rot_acc, max_forward_speed, max_backward_speed, max_rot_speed) -> None:
-		# Position
+	def __init__(self, pos:Vector2, acc:float, rot_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
+		# Position and rotation
 		self.pos = Vector2(pos[0], pos[1])
 		self.pos_calc = Vector2(pos[0], pos[1])
 		self.pos_calc_lidar = Vector2(pos[0], pos[1])
 		self.rot = 0
 		self.rot_calc = 0
 		
-		# Acceleration
+		# Acceleration and decceleration
 		self.acc = acc
 		self.rot_acc = rot_acc
 		self.acc_calc = 0
@@ -24,7 +23,7 @@ class BeaconRobot:
 		self.decc = 100
 		self.rot_decc = 1000
 
-		# Speed
+		# Speed and angular speed
 		self.speed = 0
 		self.speed_calc = 0
 		self.max_forward_speed = max_forward_speed
@@ -33,20 +32,29 @@ class BeaconRobot:
 		self.rot_speed_calc = 0
 		self.max_rot_speed = max_rot_speed
 
-
+		# Robot attribute
 		self.radius = 10
 		self.color = (0, 200, 255)
+
+		# Robot map
 		self.map = []
 		self.live_grid_map_centre = self.pos.copy()
-		self.live_grid_map_size = 201
-		self.live_grid_map = np.zeros((self.live_grid_map_size, self.live_grid_map_size))
+		self.live_grid_map_list_size = 201
+		self.live_grid_map_size = 10
+		self.live_grid_map = np.zeros((self.live_grid_map_list_size, self.live_grid_map_list_size))
 		self.saved_grid_map = None
 
 		# Sensors
 		self.lidar = None
 		self.accmeter = None
 
-	def move(self, dir, dt):
+	def move(self, dir:int, dt:float):
+		"""Move the robot
+
+		Args:
+			dir (int): Direction to go
+			dt (float): Time step
+		"""
 		if dir == 1:
 			if self.speed >= 0:
 				self.speed = min(self.speed + self.acc*dt, self.max_forward_speed)
@@ -63,13 +71,21 @@ class BeaconRobot:
 			else:
 				self.speed = min(self.speed + self.decc*dt, 0)
 
+		# Compute traveled distance
 		x = self.speed * cos(self.rot * pi / 180) * dt
 		y = self.speed * sin(self.rot * pi / 180) * dt
-
+		
+		# Update robot position
 		self.pos.add(x, y)
 
 
-	def rotate(self, dir, dt):
+	def rotate(self, dir:int, dt:float):
+		"""Rotate the robot
+
+		Args:
+			dir (int): Direction to rotate
+			dt (float): Time step
+		"""
 		if dir == 1:
 			if self.rot_speed >= 0:
 				self.rot_speed = min(self.rot_speed + self.rot_acc*dt, self.max_rot_speed)
@@ -85,62 +101,52 @@ class BeaconRobot:
 				self.rot_speed = max(self.rot_speed - self.rot_decc*dt, 0)
 			else:
 				self.rot_speed = min(self.rot_speed + self.rot_decc*dt, 0)
+		
+		# Update rotation
 		self.rot += self.rot_speed * dt
 
 
-	def draw(self, window):
-		pygame.draw.circle(window, self.color, (self.pos.x, self.pos.y), self.radius)
-		pygame.draw.line(window, (255,255,255), (self.pos.x, self.pos.y), (self.pos.x + self.radius * cos(self.rot * pi / 180), self.pos.y  + self.radius * sin(self.rot * pi / 180)), 2)
-		pygame.draw.circle(window, (100,100,100), (self.pos_calc.x, self.pos_calc.y), 0.8*self.radius)
-		pygame.draw.line(window, (255,255,255), (self.pos_calc.x, self.pos_calc.y), (self.pos_calc.x + self.radius * cos(self.rot_calc * pi / 180), self.pos_calc.y  + self.radius * sin(self.rot_calc * pi / 180)), 2)
-		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar.x, self.pos_calc_lidar.y), 0.5*self.radius)
-	
-
-	def draw_known_map(self, window):
-		for dot in self.map:
-			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
-
-
-	def draw_live_grid_map(self, window):
-		for idy, line in enumerate(self.live_grid_map):
-			for idx, value in enumerate(line):
-				if value == 0:
-					continue
-				if value == -1:
-					color = (70, 255, 200)
-				else:
-					gray_scale = min(255, max(0, 255 * (1 - value)))
-					color = (gray_scale, gray_scale, gray_scale)
-				offset_id = self.live_grid_map_size//2
-				top_left_x = (idx - offset_id) * self.radius + self.live_grid_map_centre.y
-				top_left_y = (idy - offset_id) * self.radius + self.live_grid_map_centre.x
-				rect = pygame.Rect(top_left_y, top_left_x, self.radius, self.radius)
-				pygame.draw.rect(window, color, rect)
-
-
 	def update_live_grid_map(self, points):
-		# Robot pos
-		idx = int((self.pos_calc.x - self.live_grid_map_centre.x)/self.radius + self.live_grid_map_size//2)
-		idy = int((self.pos_calc.y - self.live_grid_map_centre.y)/self.radius + self.live_grid_map_size//2)
-		if 0 < idx < self.live_grid_map_size and 0 < idy < self.live_grid_map_size:
+		"""Update the live grid of the robot
+
+		Args:
+			points (list): List of points to be added, if None, update only robot pos
+		"""
+		# Add robot pos
+		idx = int((self.pos_calc.x - self.live_grid_map_centre.x)/self.live_grid_map_size + self.live_grid_map_list_size//2)
+		idy = int((self.pos_calc.y - self.live_grid_map_centre.y)/self.live_grid_map_size + self.live_grid_map_list_size//2)
+		# If ids are in the range of the live map
+		if 0 < idx < self.live_grid_map_list_size and 0 < idy < self.live_grid_map_list_size:
+			# Set to safe path
 			self.live_grid_map[idx, idy] = -1
 
 		if points is None:
 			return
-		# Lidar points pos
+		
+		# Add lidar points pos
 		for point in points:
-			idx = int((point[0] - self.live_grid_map_centre.x)/self.radius + self.live_grid_map_size//2)
-			idy = int((point[1] - self.live_grid_map_centre.y)/self.radius + self.live_grid_map_size//2)
-			if 0 < idx < self.live_grid_map_size and 0 < idy < self.live_grid_map_size:
-				self.live_grid_map[idx, idy] = max(self.live_grid_map[idx, idy], 1 - distance(self.pos_calc, point)/500)
-			else:
-				print("couucccou")
+			idx = int((point[0] - self.live_grid_map_centre.x)/self.live_grid_map_size + self.live_grid_map_list_size//2)
+			idy = int((point[1] - self.live_grid_map_centre.y)/self.live_grid_map_size + self.live_grid_map_list_size//2)
+			# If ids are in the range of the live map
+			if 0 < idx < self.live_grid_map_list_size and 0 < idy < self.live_grid_map_list_size:
+				self.live_grid_map[idx, idy] = max(self.live_grid_map[idx, idy], 1 - distance(self.pos_calc, point)/self.lidar.max_dist)
 
 
-	def equip_accmeter(self, prec):
+	def equip_accmeter(self, prec:float):
+		"""Equip accelerometer to the robot
+
+		Args:
+			prec (float): Precision of the accelerometer in % (0 to 100)
+		"""
 		self.accmeter = Accmeter(prec)
 
-	def compute_pos_calc(self, t):
+
+	def compute_pos_calc(self, t:float):
+		"""Estimate position with accelerometer data
+
+		Args:
+			t (float): Current time
+		"""
 		last_time_scan = self.accmeter.last_scan_time
 		self.acc_calc, self.rot_acc_calc = self.accmeter.get_acc(self.speed, self.rot_speed, t)
 
@@ -155,14 +161,34 @@ class BeaconRobot:
 		self.pos_calc.add(x, y)
 
 
-	def equip_lidar(self, fov, freq, res, prec):
-		self.lidar = LIDAR(fov, freq, res, prec)
+	def equip_lidar(self, fov:float, freq:float, res:float, prec:float, max_dist:float):
+		"""Equip a Lidar to the robot
+
+		Args:
+			fov (float): Horizontal field of view
+			freq (float): Scanning frequency
+			res (float): Angular resolution
+			prec (float): LIDAR precision in % (0, 100)
+			max_dist (float): Max range of the Lidar
+		"""
+		self.lidar = LIDAR(fov, freq, res, max_dist, prec)
 		self.lidar.pos = self.pos
 		
+		
 	def scan_environment(self, time, map, window):
+		"""Request a scanning of the environment to the lidar
+
+		Args:
+			time (float): Current time
+			map (Map): Simulation map
+			window (surface): Surface on which to draw
+
+		Returns:
+			bool: Return if environment was scanned
+		"""
 		if self.lidar is None:
 			print("No lidar equiped !")
-			return
+			return False
 		
 		points = self.lidar.scan_environment(time, map, self.radius, window)
 
@@ -170,12 +196,57 @@ class BeaconRobot:
 		if points is not None:
 			self.update_live_grid_map(points)
 			pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
+
 			if pos_lidar is not None:
 				self.pos_calc_lidar = pos_lidar
 				self.pos_calc = self.pos_calc_lidar.copy()
 
 
-		
-		return True
+	### DISPLAY
+	def draw(self, window):
+		"""Draw the robot as a circle
+
+		Args:
+			window (surface): Surface on which to draw
+		"""
+		pygame.draw.circle(window, self.color, (self.pos.x, self.pos.y), self.radius)
+		pygame.draw.line(window, (255,255,255), (self.pos.x, self.pos.y), (self.pos.x + self.radius * cos(self.rot * pi / 180), self.pos.y  + self.radius * sin(self.rot * pi / 180)), 2)
+		pygame.draw.circle(window, (100,100,100), (self.pos_calc.x, self.pos_calc.y), 0.8*self.radius)
+		pygame.draw.line(window, (255,255,255), (self.pos_calc.x, self.pos_calc.y), (self.pos_calc.x + self.radius * cos(self.rot_calc * pi / 180), self.pos_calc.y  + self.radius * sin(self.rot_calc * pi / 180)), 2)
+		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar.x, self.pos_calc_lidar.y), 0.5*self.radius)
 	
-	
+
+	def draw_dot_map(self, window):
+		"""Draw point found by the robot
+
+		Args:
+			window (surface): Surface on which to draw
+		"""
+		for dot in self.map:
+			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
+
+
+	def draw_live_grid_map(self, window):
+		"""Draw the live grid map, the color change according to the value of confidence, 1 means it is sure that a wall is there
+		and drawn as a black square and 0 the opposite
+
+		Args:
+			window (surface): Surface on which to draw
+		"""
+		for idy, line in enumerate(self.live_grid_map):
+			for idx, value in enumerate(line):
+				if value == 0:
+					continue
+				if value == -1:
+					color = (70, 255, 200)
+				else:
+					gray_scale = min(255, max(0, 255 * (1 - value)))
+					color = (gray_scale, gray_scale, gray_scale)
+
+				offset_id = self.live_grid_map_list_size//2
+
+				top_left_x = (idx - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.y
+				top_left_y = (idy - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.x
+
+				rect = pygame.Rect(top_left_y, top_left_x, self.live_grid_map_size, self.live_grid_map_size)
+				pygame.draw.rect(window, color, rect)

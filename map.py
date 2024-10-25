@@ -88,11 +88,10 @@ class Map:
 					# pygame.draw.rect(window, (255, 0, 0), rect)
 
 	def subdiv_ids_to_rect(self, i, j):
-		"""
-		### Give the subdiv rectangle coordinante where the point is
+		"""Give the subdiv rectangle coordinante where the point is
 
-		#### Return
-		rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
+		Returns:
+			rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
 		"""
 		p1x = j * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
 		p1y = (i-1) * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
