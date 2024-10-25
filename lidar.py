@@ -1,7 +1,6 @@
-from util import Vector2, compute_line, find_intersection, point_in_box, distance, find_circle_intersection, find_n_nearest, evaluate_line
+from util import Vector2, compute_line, find_intersection, point_in_box, distance, find_circle_intersection, find_n_nearest_from_point
 import random
-from math import cos, sin, atan2, pi, sqrt
-import pygame
+from math import cos, sin, pi, sqrt
 from map import Wall, Map
 
 class LIDAR:
@@ -59,7 +58,7 @@ class LIDAR:
 			intersection_p = None
 			intersection_m = None
 			for i in range(51):
-				r = robot_radius + i**(2)/10
+				r = robot_radius + i**(2)/5
 				pp, pm = compute_ray_pos(line, r, self.pos)
 
 				# Top points
@@ -95,30 +94,24 @@ class LIDAR:
 		return None
 	
 
-	def correct_pos_with_lidar(self, points):
+	def correct_pos_with_lidar(self, points, window):
 		"""
 		### Correct robot position using points from the Lidar
 		"""
 		n = len(points)
 		if n == 0:
 			return
+		
+		n_circle = 2
+		circles = [0] * n_circle
+		for i in range(n_circle):
+			p = points[(i*n)//n_circle]
+			circles[i] = (p, distance(self.pos, p))
 
-		p1 = points[0]
-		r1 = distance(self.pos, p1)
-		p2 = points[n//4]
-		r2 = distance(self.pos, p2)
-		p3 = points[(2*n)//4]
-		r3 = distance(self.pos, p3)
-		p4 = points[(3*n)//4]
-		r4 = distance(self.pos, p4)
+		pts = find_all_circle_intersection(circles)			
+		
+		idpts = find_n_nearest_from_point(pts, 1, self.pos)
 
-		pi12, pi21 = find_circle_intersection(p1, r1, p2, r2)
-		pi23, pi32 = find_circle_intersection(p2, r2, p3, r3)
-		pi34, pi43 = find_circle_intersection(p3, r3, p4, r4)
-		pi41, pi14 = find_circle_intersection(p4, r4, p1, r1)
-		pts = [pi12, pi21, pi23, pi32, pi34, pi43, pi41, pi14]
-
-		idpts = find_n_nearest(pts, 4)
 		x, y = 0, 0
 		for id in idpts:
 			x += pts[id][0]
@@ -142,3 +135,23 @@ def compute_ray_pos(line, r, offset:Vector2):
 		ym = r * a / ab + offset.y
 
 		return [xp, yp], [xm, ym]
+
+
+def find_all_circle_intersection(circles):
+	points = []
+	for i, c1 in enumerate(circles):
+		for c2 in circles[i+1::]:
+			p1, r1 = c1
+			p2, r2 = c2
+
+			pi1, pi2 = find_circle_intersection(p1, r1, p2, r2)
+			points += [pi1]
+			points += [pi2]
+
+	return points
+
+
+
+
+
+

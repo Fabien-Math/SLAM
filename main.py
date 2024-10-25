@@ -6,6 +6,16 @@ from util import compute_colision
 from robot import BeaconRobot
 from map import Map
 
+def write_fps(dt, window, window_size):
+	font = pygame.font.Font('freesansbold.ttf', 16)
+	if dt:
+		text = font.render(f'{1/dt:.1f}', True, (255, 255, 255))
+
+		textRect = text.get_rect()
+	
+		textRect.center = (window_size[0]*0.9, window_size[1]*0.1)
+		window.blit(text, textRect)
+
 
 def main():
 	### Init pygame window
@@ -39,7 +49,7 @@ def main():
 		
 		# Draw background and map
 		window.fill((150, 150, 150))
-		map.draw_map(window)
+		# map.draw_map(window)
 
 		# compute_colision(beacon, walls)
 
@@ -65,9 +75,10 @@ def main():
 		if env_scanned:
 			beacon.draw_live_grid_map(window)
 
-
 		# Draw character
 		beacon.draw(window)
+
+		write_fps(dt, window, window_size)
 
 		t_old = t
 		t = time.time()

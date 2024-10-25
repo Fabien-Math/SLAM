@@ -1,5 +1,5 @@
 from math import sqrt, acos
-from numpy import array, dot, arctan2
+import numpy as np
 
 
 
@@ -37,11 +37,11 @@ def get_angle(p1:Vector2, p2:Vector2, p3:Vector2):
 	"""
 	a1, b1, _ = compute_line(p1, p2)
 	a2, b2, _ = compute_line(p2, p3)
-	x = array([a1, b1])
-	y = array([a2, b2])
+	x = np.array([a1, b1])
+	y = np.array([a2, b2])
 	xy_norm = norm(x)*norm(y)
 	if xy_norm:
-		return acos(dot(x,y)/(xy_norm))
+		return acos(np.dot(x,y)/(xy_norm))
 
 	return 0
 	
@@ -118,15 +118,29 @@ def find_circle_intersection(p1, r1, p2, r2):
 	"""
 	### Find the intersection point between two circle if it exists
 	"""
-	r = distance_points(p1, p2)
-	if r > (r1 + r2):
+	d = distance_points(p1, p2)
+	if d >= (r1 + r2):
+		print("No circle intersection found ! Returned None")
+		return None
+	if d < abs(r1 - r2):
+		print("No circle intersection found ! Returned None")
+		return None
+	if abs(r1 - r2) < 1e-6:
 		print("No circle intersection found ! Returned None")
 		return None
 
-	xi1 = 0.5*(p2[0] + p1[0] + r1**2/(p2[0] - p1[0]))
-	yi1 = 0.5*(p2[1] + p1[1] - r2**2/(p2[1] - p1[1]))
-	xi2 = 0.5*(p2[0] + p1[0] - r2**2/(p2[0] - p1[0]))
-	yi2 = 0.5*(p2[1] + p1[1] + r1**2/(p2[1] - p1[1]))
+	# https://lucidar.me/fr/mathematics/how-to-calculate-the-intersection-points-of-two-circles/
+	a = (r1**2 - r2**2 + d**2)/(2*d)
+	h = sqrt(r1**2 - a**2)
+
+	x5 = p1[0] + (a / d) * (p2[0] - p1[0]) 
+	y5 = p1[1] + (a / d) * (p2[1] - p1[1]) 
+
+	xi1 = x5 - h * (p2[1] - p1[1])/d
+	yi1 = y5 + h * (p2[0] - p1[0])/d
+
+	xi2 = x5 + h * (p2[1] - p1[1])/d
+	yi2 = y5 - h * (p2[0] - p1[0])/d
 
 	pi1 = (xi1, yi1)
 	pi2 = (xi2, yi2)
@@ -167,10 +181,38 @@ def find_n_nearest(ps: list, n: int):
 		for j, p2 in enumerate(pts):
 			k = j + cpt_pop
 			d = distance_points(p1, p2)
-			if d < 1:
+			if d < 10:
 				if i not in idpts:
 					idpts.append(i)
 				if k not in idpts:
 					idpts.append(k)
 	
 	return idpts
+
+
+def find_n_nearest_from_point(ps: list, n: int, pos:Vector2):
+	"""
+	### Find the 'n' nearest point from a position
+	"""
+	ds = [0]*len(ps)
+	for i, p in enumerate(ps):
+		ds[i] = distance(pos, p)
+
+	ds_min = [0]*n
+	for i in range(n):
+		id_min = find_id_min(ds)
+		ds_min[i] = id_min + i
+		ds.pop(id_min)
+
+	return ds_min
+
+
+def find_id_min(ls:list):
+	id_min = 0
+	min_value = ls[0]
+	for i, l in enumerate(ls):
+		if l < min_value:
+			id_min = i
+			min_value = l
+	
+	return id_min
