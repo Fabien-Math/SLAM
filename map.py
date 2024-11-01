@@ -56,8 +56,10 @@ class Map:
 			print("Walls is not defined !")
 			return
 		for k, wall in enumerate(self.walls):
-			for i in range(self.subdiv_number[1]):
-				for j in range(self.subdiv_number[0]):
+			p1_ids = self.subdiv_coord_to_ids(wall.p1.to_tuple())
+			p2_ids = self.subdiv_coord_to_ids(wall.p2.to_tuple())
+			for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1]) + 1):
+				for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0]) + 1):
 					rect = self.subdiv_ids_to_rect(i, j)
 					# If the first point is in the box
 					if wall.p1.x > min(rect[0], rect[2]) - error_offset and wall.p1.x < max(rect[0], rect[2]) + error_offset:
