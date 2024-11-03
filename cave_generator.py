@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from util import Vector2
 
 def compute_contours(triangles, points, values, thresh):
@@ -51,7 +50,6 @@ def compute_contours(triangles, points, values, thresh):
 
 def generate_map(n, m):    
     map = np.random.randint(0, 2, (n+2, m+2))
-    map[8:13, 8:13] = 1
 
     s = 0
     while np.sum(map) != s:
@@ -72,7 +70,7 @@ def generate_map(n, m):
 def create_trigle_grid(map_size, dx = 1, dy = 1) -> list:
 
     m = int(map_size[0] / dx)
-    n = int(map_size[1] / (dy * np.sin(np.pi/3)))
+    n = int(map_size[1] / (dy * np.sin(np.pi/3))) + 1
 
     values = np.zeros(n*m)
     points = np.empty(n*m, dtype=Vector2)

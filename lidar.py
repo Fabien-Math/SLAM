@@ -2,6 +2,7 @@ from util import *
 import random
 from math import cos, sin, pi, sqrt
 from map import Wall, Map
+import pygame
 
 class LIDAR:
 	"""Class to simulate a LIDAR
@@ -30,14 +31,14 @@ class LIDAR:
 		# State of the LIDAR
 		self.is_scanning = False
 		# Sarting angle
-		self.angle = -pi
+		self.angle = 0
 		# Last time the lidar scan the environment
 		self.last_scan_time = 0
 		# Position of the LIDAR
 		self.pos = Vector2(0, 0) 
 
 
-	def compute_line_collision(self, walls:list[Wall], line:tuple):
+	def compute_line_collision(self, walls:list[Wall], line:tuple, window):
 		"""Compute the collision point between a line and a segment
 
 		Args:
@@ -47,23 +48,35 @@ class LIDAR:
 		Returns:
 			tuple: Intersection point between the line and the segment if it exists, else return None
 		"""
-		inter_found = False
+		nearest_intersections = None
+		min_inter_dist = 1e9
 
 		for wall in walls:
 			wall_line = wall.line_eq
 			p1, p2 = wall.p1, wall.p2
 
 			intersection = find_intersection(line, wall_line)
-
 			if intersection:
 				if point_in_box(intersection, p1, p2):
-					inter_found = True
-					break
+					inter_dist = distance(self.pos, intersection)
+					if inter_dist < min_inter_dist:
+						# pygame.draw.circle(window, (55, 255, 255), intersection, 3)
+						# pygame.time.delay(10)
+						# pygame.display.update()
+						nearest_intersections = intersection
+						min_inter_dist = inter_dist
 
-		if inter_found:
-			dist = distance(self.pos, intersection)
-			x = intersection[0] + self.precision * (random.random()-0.5) * dist/100
-			y = intersection[1] + self.precision * (random.random()-0.5) * dist/100
+
+		if nearest_intersections is not None:
+			# pygame.draw.circle(window, (255, 55, 255), nearest_intersections, 3)
+			# pygame.time.delay(20)
+			# pygame.display.update()
+			dist = distance(self.pos, nearest_intersections)
+			x = nearest_intersections[0] + self.precision * (random.random()-0.5) * dist/100
+			y = nearest_intersections[1] + self.precision * (random.random()-0.5) * dist/100
+			# pygame.draw.circle(window, (255, 55, 100), (x, y), 5, 2)
+			# pygame.time.delay(10)
+			# pygame.display.update()
 			return x,y
 
 		return None
@@ -93,47 +106,42 @@ class LIDAR:
 
 		# Initialize intersection point list
 		points = []
-
-		while self.angle < 0:
-			p = Vector2(self.pos.x + 100*cos(self.angle), self.pos.y + 100*sin(self.angle))
-			line = compute_line(self.pos, p)
+		points_mask = []
+		
+		while self.angle < 2*pi:
+			p_r = Vector2(self.pos.x + 100*cos(self.angle), self.pos.y + 100*sin(self.angle))
+			line = compute_line(self.pos, p_r)
 
 			# Upward intersection point
-			intersection_p = None
-			# Downward intersection point
-			intersection_m = None
+			intersection = None
 
 			# Number of point to check according to the lidar max distance
 			N = int(sqrt(5 * (self.max_dist - robot_radius)))
 			for i in range(N):
-				r = robot_radius + i**(2)/5
-				p_up, p_down = compute_ray_pos(line, r, self.pos)
-
 				# Upward points
-				if intersection_p is None:
-					intersection_p = self.check_wall_collision(map, p_up, line)
-				else:
-					points.append(intersection_p)
-					
-				# Downward points
-				if intersection_m is None:
-					intersection_m = self.check_wall_collision(map, p_down, line)
-				else:
-					points.append(intersection_m)
-			
+				r = robot_radius + i**(2)/5
+				p_r = (r*cos(self.angle) + self.pos.x, r*sin(self.angle) + self.pos.y)
+				# pygame.draw.circle(window, (34,134,233), p_r, 2)
+
+				intersection = self.check_wall_collision(map, p_r, line, window)
+
+				if intersection is not None:
+					points.append(intersection)
+					break
+
 			# Increment angle with resolution
 			self.angle += self.resolution * pi / 180.0
 
 		# Reset angle
-		self.angle -= pi
+		self.angle -= 2*pi
 
 		# Update last scan time
 		self.last_scan_time = t
-		
+
 		return points
 	
 
-	def check_wall_collision(self, map:Map, p:tuple, line):
+	def check_wall_collision(self, map:Map, p:tuple, line, window):
 		"""Check if the line shot by the lidar collide with a wall
 
 		Args:
@@ -147,6 +155,9 @@ class LIDAR:
 
 		# Convert the position into the indices of the subdivision map
 		p_ids = map.subdiv_coord_to_ids(p)
+		rect = map.subdiv_ids_to_rect(p_ids[0], p_ids[1])
+		# rect = pygame.Rect(rect[0], rect[1], abs(rect[0] - rect[2]), abs(rect[1] - rect[3]))
+		# pygame.draw.rect(window, (255, 0, 0), rect, 2)
 
 		# Check if the ids are in the subdivided map
 		if 0 <= p_ids[0] < map.subdiv_number[0]:
@@ -157,7 +168,10 @@ class LIDAR:
 				# If any wall is in the cell
 				if subdiv != []:
 					walls = [map.walls[k] for k in subdiv]
-					intersection = self.compute_line_collision(walls, line)
+					# for wall in walls:
+						# pygame.draw.line(window, (255, 255, 255), wall.p1.to_tuple(), wall.p2.to_tuple(), 2)
+
+					intersection = self.compute_line_collision(walls, line, window)
 
 					if intersection:
 						return intersection

@@ -34,23 +34,37 @@ class Map:
 		self.subdiv_number = subdiv_number
 		self.subdivision = None
 
-		self.initialize_map(map_offset)
+		self.initialize_map()
 	
-	def initialize_map(self, map_offset):
-		self.walls = [None for _ in range(len(self.contours))]
+	def initialize_map(self):
+		self.walls = [None for _ in range(len(self.contours) + 4)]
 
 		for i, contour in enumerate(self.contours):
-			contour[0].add(*map_offset)
-			contour[1].add(*map_offset)
+			contour[0].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*np.sin(np.pi/3)))
+			contour[1].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*np.sin(np.pi/3)))
 			self.walls[i] = (Wall(contour[0], contour[1], 2))
-		
+
+		safe_offset = 1
+		# Top left
+		p1 = Vector2(self.map_offset[0] + safe_offset, self.map_offset[1] + safe_offset)
+		# Bottom left
+		p2 = Vector2(self.map_offset[0] + safe_offset, self.map_offset[1] + self.map_size[1] - safe_offset)
+		# Top right
+		p3 = Vector2(self.map_offset[0] + self.map_size[0] - safe_offset, self.map_offset[1] + self.map_size[1] - safe_offset)
+		# Bottom right
+		p4 = Vector2(self.map_offset[0] + self.map_size[0] - safe_offset, self.map_offset[1] + safe_offset)
+		# Make borders
+		self.walls[-1] = Wall(p1, p2, 2)
+		self.walls[-2] = Wall(p2, p3, 2)
+		self.walls[-3] = Wall(p3, p4, 2)
+		self.walls[-4] = Wall(p4, p1, 2)
+
 		self.create_and_fill_subdivision()
 
 
 	def create_and_fill_subdivision(self):
 		# Initialisation of subdivision list
 		self.subdivision = [[[] for _ in range(self.subdiv_number[0])] for _ in range(self.subdiv_number[1])]
-		points = np.array([[(j * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0], (i-1) * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]) for j in range(self.subdiv_number[0]+1)] for i in range(self.subdiv_number[1]+1)])
 		error_offset = 1e-6
 		if self.walls is None:
 			print("Walls is not defined !")
@@ -60,7 +74,7 @@ class Map:
 			p2_ids = self.subdiv_coord_to_ids(wall.p2.to_tuple())
 			for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1]) + 1):
 				for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0]) + 1):
-					rect = self.subdiv_ids_to_rect(i, j)
+					rect = self.subdiv_ids_to_rect(j, i)
 					# If the first point is in the box
 					if wall.p1.x > min(rect[0], rect[2]) - error_offset and wall.p1.x < max(rect[0], rect[2]) + error_offset:
 						if wall.p1.y > min(rect[1], rect[3]) - error_offset and wall.p1.y < max(rect[1], rect[3]) + error_offset:
@@ -85,20 +99,20 @@ class Map:
 				if walls != []:
 					for wall_id in walls:
 						pygame.draw.line(window, (255, 255, 255), self.walls[wall_id].p1.to_tuple(), self.walls[wall_id].p2.to_tuple(), 2)
-					# rect = self.subdiv_ids_to_rect(i, j)
+					# rect = self.subdiv_ids_to_rect(j, i)
 					# rect = pygame.Rect(rect[0], rect[1], dx, dy)
 					# pygame.draw.rect(window, (255, 0, 0), rect)
 
-	def subdiv_ids_to_rect(self, i, j):
+	def subdiv_ids_to_rect(self, idx, idy):
 		"""Give the subdiv rectangle coordinante where the point is
 
 		Returns:
 			rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
 		"""
-		p1x = j * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
-		p1y = (i-1) * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
-		p2x = (j+1) * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
-		p2y = i * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
+		p1x = idx * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
+		p1y = idy * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
+		p2x = (idx+1) * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
+		p2y = (idy+1) * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
 		
 		return p1x, p1y, p2x, p2y 
 
@@ -112,13 +126,13 @@ class Map:
 		idx = (pos[0] - self.map_offset[0]) * self.subdiv_number[0] / self.map_size[0]
 		idy = (pos[1] - self.map_offset[1]) * self.subdiv_number[1] / self.map_size[1]
 
-		return int(idx), int(idy+1)
+		return int(idx), int(idy)
 
 
 	def draw_subdiv_points(self, window):
 		for i in range(self.subdiv_number[1]):
 			for j in range(self.subdiv_number[0]):
-				rect = self.subdiv_ids_to_rect(i, j)
+				rect = self.subdiv_ids_to_rect(j, i)
 				p = [rect[0], rect[1]]
 				c_p = [(rect[0] + rect[2])/2 + 10, (rect[1] + rect[3])/2 + 10]
 				pygame.draw.circle(window, (0, 0, 0), p, 2)

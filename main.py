@@ -4,6 +4,9 @@ from pygame.locals import *
 import time
 from robot import BeaconRobot
 from map import Map
+import numpy as np
+
+np.random.seed(5)
 
 def write_fps(dt, window, window_size):
 	"""Write the FPS on the top-right of the window
@@ -20,6 +23,24 @@ def write_fps(dt, window, window_size):
 		textRect = text.get_rect()
 	
 		textRect.center = (window_size[0]*0.9, window_size[1]*0.1)
+		window.blit(text, textRect)
+
+def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
+	"""Write the robot info on the bottom of the window
+
+	Args:
+		dt (float): Time between two frame
+		window (surface): Window on which writting
+		window_size (tuple): Size of the window
+		beacon (BeaconRobot): Robot class
+	"""
+	font = pygame.font.Font('freesansbold.ttf', 16)
+	if dt:
+		text = font.render(f"Calculated : [Acc {beacon.acc_calc:.1f}, Speed {beacon.speed_calc:.1f}, Pos {beacon.pos_calc}]; Real : [Acc {beacon.acc:.1f}, Speed {beacon.speed:.1f}, Pos {beacon.pos}]", True, (255, 255, 255))
+
+		textRect = text.get_rect()
+	
+		textRect.center = (window_size[0]*0.5, window_size[1]*0.95)
 		window.blit(text, textRect)
 
 
@@ -44,10 +65,13 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	if toggle_draw_map:
 		map.draw_map(window)
 
+	beacon.controller.draw_voronoi_diagram(window)
+
 	# Draw the robot
 	beacon.draw(window)
 	# Draw the FPS
 	write_fps(dt, window, window_size)
+	write_robot_info(dt, window, window_size, beacon)
 
 	# Update scene display
 	pygame.display.update()
@@ -64,26 +88,26 @@ def main():
 	# Set the title of the window
 	pygame.display.set_caption("Map")
 
-	### MAP INITIALISATION
+	# MAP INITIALISATION
 	map_size = (1200, 600)
 	map_offset = (50, 50)
 	# Number of subdivisions in the map, used to list the lines
-	subdiv_number = (25, 25)
+	subdiv_number = (20, 20)
 	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, 20, 20)
+	map = Map(map_size, map_offset, subdiv_number, 25, 25)
 
 
 	### ROBOT INITIALISATION
-	beacon = BeaconRobot((200,400), 50, 1000, 50, -25, 100)
+	beacon = BeaconRobot((350, 275), 50, 1000, 50, -25, 100)
 	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=500)
-	beacon.equip_accmeter(prec=5)
+	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=200)
+	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
 
 	# State of the simulation
 	running = True
 	# Toggle to draw the map
-	toggle_draw_map = False
-	toggle_draw_live_map = False
+	toggle_draw_map = True
+	toggle_draw_live_map = True
 
 	# Desired FPS
 	desired_fps = 60
