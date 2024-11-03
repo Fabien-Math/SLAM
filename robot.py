@@ -48,7 +48,7 @@ class BeaconRobot:
 		# Sensors
 		self.lidar = None
 		self.accmeter = None
-		self.controller = Controller(0)
+		self.controller = Controller(self, 0)
 
 	def move(self, dir:int, dt:float):
 		"""Move the robot
@@ -118,12 +118,12 @@ class BeaconRobot:
 		Returns:
 			rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
 		"""
-		if 0 < idx < self.live_grid_map_list_size and 0 < idy < self.live_grid_map_list_size:
+		if 0 <= idx < self.live_grid_map_list_size and 0 <= idy < self.live_grid_map_list_size:
 			offset_id = self.live_grid_map_list_size//2
-			p1x = (idx - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.y
-			p1y = (idy - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.x
-			p2x = (idx + 1 - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.y
-			p2y = (idy + 1 - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.x
+			p1x = (idx - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.x
+			p1y = (idy - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.y
+			p2x = (idx + 1 - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.x
+			p2y = (idy + 1 - offset_id) * self.live_grid_map_size + self.live_grid_map_centre.y
 
 		return p1x, p1y, p2x, p2y 
 	
@@ -138,7 +138,7 @@ class BeaconRobot:
 		# If ids are in the range of the live map
 		if 0 < idx < self.live_grid_map_list_size and 0 < idy < self.live_grid_map_list_size:
 			# Set to safe path
-			self.live_grid_map[idx, idy] = -1
+			self.live_grid_map[idy, idx] = -1
 
 		if points is None:
 			return
@@ -148,7 +148,7 @@ class BeaconRobot:
 			idx, idy = self.live_grid_map_coord_to_ids(point)
 			# If ids are in the range of the live map
 			if 0 < idx < self.live_grid_map_list_size and 0 < idy < self.live_grid_map_list_size:
-				self.live_grid_map[idx, idy] = max(self.live_grid_map[idx, idy], 1 - distance(self.pos_calc, point)/self.lidar.max_dist)
+				self.live_grid_map[idy, idx] = max(self.live_grid_map[idy, idx], 1 - distance(self.pos_calc, point)/self.lidar.max_dist)
 
 
 	def equip_accmeter(self, acc_prec:float, ang_acc_prec:float):
@@ -213,7 +213,7 @@ class BeaconRobot:
 		
 		# Compute position with lidar data
 		if points is not None:
-			self.controller.find_new_direction_2(points, self, window)
+			self.controller.find_new_direction(points, window)
 			self.update_live_grid_map(points)
 			pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
 
@@ -246,15 +246,16 @@ class BeaconRobot:
 			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
 
 
-	def draw_live_grid_map(self, window):
+	def draw_live_grid_map(self, window, map_offset):
 		"""Draw the live grid map, the color change according to the value of confidence, 1 means it is sure that a wall is there
 		and drawn as a black square and 0 the opposite
 
 		Args:
 			window (surface): Surface on which to draw
 		"""
-		for idy, line in enumerate(self.live_grid_map):
-			for idx, value in enumerate(line):
+		for idy in range(self.live_grid_map_list_size):
+			for idx in range(self.live_grid_map_list_size):
+				value = self.live_grid_map[idy, idx]
 				if value == 0:
 					continue
 				if value == -1:
@@ -264,6 +265,10 @@ class BeaconRobot:
 					color = (gray_scale, gray_scale, gray_scale)
 
 				top_left_x, top_left_y, _, _ = self.live_grid_map_ids_to_rect(idx, idy)
+				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
+				# pygame.draw.circle(window, (255, 255, 0), self.pos.to_tuple(), 2)
+				# pygame.display.update()				
 
-				rect = pygame.Rect(top_left_y, top_left_x, self.live_grid_map_size, self.live_grid_map_size)
+
+				rect = pygame.Rect(top_left_x, top_left_y, self.live_grid_map_size, self.live_grid_map_size)
 				pygame.draw.rect(window, color, rect)

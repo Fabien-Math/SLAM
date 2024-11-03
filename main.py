@@ -61,7 +61,7 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	window.fill((150, 150, 150))
 
 	if toggle_draw_live_map:
-		beacon.draw_live_grid_map(window)
+		beacon.draw_live_grid_map(window, map.map_offset)
 	if toggle_draw_map:
 		map.draw_map(window)
 
@@ -102,6 +102,7 @@ def main():
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
+
 
 	# State of the simulation
 	running = True
@@ -160,8 +161,10 @@ def main():
 		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
 		beacon.update_live_grid_map(None)
+		beacon.controller.check_safe_path(window)
 		# compute_colision(beacon, walls)
 		
+
 		# DRAW THE SCENE
 		if t - t_display > 1/desired_fps:
 			update_display(window, window_size, map, beacon, t - t_display, toggle_draw_map, toggle_draw_live_map)

@@ -5,8 +5,9 @@ import pygame
 import cv2
 
 class Controller:
-	def __init__(self, mode):
+	def __init__(self, robot, mode):
 		self.mode = mode            # Mode 1 = Autonomous
+		self.robot = robot
 		self.waypoints = None       # List of point to explore
 		self.waypoint = None
 		self.waypoint_reached = True
@@ -24,6 +25,8 @@ class Controller:
 			self.waypoint = self.waypoints.pop()
 			self.waypoint_reached = False
 
+		self.check_safe_path(self.robot)
+
 		
 
 
@@ -31,60 +34,8 @@ class Controller:
 	def follow_gost():
 		...
 
-	def find_new_direction(self, points, robot, window):
 
-		in_void = False
-
-		longuest_void = []
-		safe_points = []
-		n = len(points)
-
-		i = 0
-		# points connections are treated at the end
-		angle_range = robot.lidar.resolution * (1 + 10 * robot.lidar.precision / 100)
-		if get_angle_tuple_deg(points[-1], robot.pos.to_tuple(), points[0]) > angle_range:
-			while get_angle_tuple_deg(points[i], robot.pos.to_tuple(), points[i+1]) > angle_range:
-				i += 1
-
-		test_angle_gap = get_angle_tuple_deg(points[i], robot.pos.to_tuple(), points[i+1]) > angle_range
-		while test_angle_gap or i < n:
-			if not test_angle_gap and not in_void:
-				id_min = i
-				in_void = True
-			
-			if test_angle_gap and in_void:
-				id_max = i
-				longuest_void.append(id_max - id_min)
-				safe_points.append((points[id_min], points[id_max%n]))
-				in_void = False
-		
-			test_angle_gap = get_angle_tuple_deg(points[i%n], robot.pos.to_tuple(), points[(i+1)%n]) > angle_range
-			i += 1
-
-		dtype = [("distance", float), ("point", tuple)]
-		list_points = [(dist, safe_ang) for dist, safe_ang in zip(longuest_void, points)]
-
-		struct_array = np.array(list_points, dtype)
-		sorted_safe_points = np.sort(struct_array, order="distance")
-
-		for pts in safe_points:
-			for point in pts:
-				pygame.draw.circle(window, (255, 0, 0), point, 3)
-				pygame.display.update()
-				pygame.time.delay(20)
-		cell_size = robot.live_grid_map_size
-
-	def find_new_direction_2(self, points, robot, window):
-		##############################################################################
-		
-		
-		
-		### LES POINTS NE SONT PAS TRIE CORRECTEMENT DANS L'ORDRE DES ANGLES !!!!!!!!!
-		### CA NE PEUT PAS FONCTIONNER COMME CA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-		##############################################################################
+	def find_new_direction(self, points, window):
 		longuest_void = []
 		safe_points = []
 		n = len(points)
@@ -96,7 +47,7 @@ class Controller:
 				# i += 1
  
 		for i in range(-1,n-1):
-			if distance_tuple(points[i], points[i+1]) > self.safe_radius_multiplicator*robot.radius:
+			if distance_tuple(points[i], points[i+1]) > self.safe_radius_multiplicator*self.robot.radius:
 				longuest_void.append(distance_tuple(points[i], points[(i+1)]))
 				safe_points.append((points[i], points[(i+1)%n]))
 
@@ -113,10 +64,27 @@ class Controller:
 		
 	
 
-	def check_safe_path(self, robot):
-		points = None
+	def check_safe_path(self, window):
+		idx, idy = self.robot.live_grid_map_coord_to_ids(self.robot.pos_calc.to_tuple())
+		range_ids = int(self.range_safe_path_computer/self.robot.live_grid_map_size)
 
-		self.build_voronoi_diagram(robot, points)
+		live_grid_map_list_size = self.robot.live_grid_map_list_size
+		points = []
+		for i in range(idy - range_ids, idy + range_ids + 1):
+			for j in range(idx - range_ids, idx + range_ids + 1):
+				if 0 < j < live_grid_map_list_size and 0 < i < live_grid_map_list_size:
+					value = self.robot.live_grid_map[i, j]
+					if value > 0:
+						rect = self.robot.live_grid_map_ids_to_rect(j, i)
+						# pygame.draw.circle(window, (0, 0,255), rect[0:2], 2)
+						# pygame.draw.circle(window, (0, 0,255), rect[2:4], 2)
+						# pygame.display.update()
+						# pygame.time.delay(200)
+						points.append(middle_point(rect[0:2], rect[2:4]))
+		
+			
+
+		self.build_voronoi_diagram(points)
 
 
 	
@@ -155,41 +123,40 @@ class Controller:
 			p = (polygon[i, 0] + bislen * bisnX, polygon[i, 1] + bislen * bisnY)
 
 			to_be_added = True
-			for j in range(len(polygon)):
-				line = compute_line_tuple(polygon[j], polygon[j-1])
-				if orthogonal_projection(p, line) < abs(offset) * 0.95:
-					to_be_added = False
+			# for j in range(len(polygon)):
+			# 	line = compute_line_tuple(polygon[j], polygon[j-1])
+			# 	if orthogonal_projection(p, line) < abs(offset) * 0.95:
+			# 		to_be_added = False
 			if to_be_added:
 				thinned_polygon.append(p)
 		
 		return thinned_polygon
 
 
-	def build_voronoi_diagram(self, robot, points):
+	def build_voronoi_diagram(self, points):
 		"""
 		## Description
-			Construction du diagramme de Voronoi avec les obstacles et le bateau
+			Build Voronoi diagram with walls
 		
 		### Args:
-			robot (BeaconRobot): Objet robot
 			obstacles (list[tuple]): List of lidar points
 		
 		### Returns:
 			list: List of centres and edges of the Voronoi diagram
 		"""
 		# Definition de la zone pour effectuer la subdivision
-		rect = (int(robot.pos.x - self.range_safe_path_computer), int(robot.pos.y - self.range_safe_path_computer), 2*self.range_safe_path_computer + 1, 2*self.range_safe_path_computer + 1)
+		rect = (int(self.robot.pos.x - self.range_safe_path_computer), int(self.robot.pos.y - self.range_safe_path_computer), 2*self.range_safe_path_computer + 1, 2*self.range_safe_path_computer + 1)
 		subdiv = cv2.Subdiv2D(rect)
 
 		# Insertion des points dans la subdivision pour en extraire le diagram de Voronoi
-		subdiv.insert(robot.pos.to_tuple())
+		subdiv.insert(self.robot.pos.to_tuple())
 		for point in points:
-			if point_in_circle(point, robot.pos.to_tuple(), self.range_safe_path_computer):
+			if point_in_circle(point, self.robot.pos.to_tuple(), self.range_safe_path_computer):
 				subdiv.insert(point)
 
 		# Calcul du diagramme de Voronoi
 		self.voronoi_diagram  = subdiv.getVoronoiFacetList([])		
-		self.thinned_voronoi_polygon = self.thin_polygon(self.voronoi_diagram[0][0], -robot.radius)
+		self.thinned_voronoi_polygon = self.thin_polygon(self.voronoi_diagram[0][0], -self.robot.radius)
 
 	def draw_voronoi_diagram(self, window):
 		if self.voronoi_diagram is None:
