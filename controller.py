@@ -8,7 +8,7 @@ class Controller:
 	def __init__(self, robot, mode):
 		self.mode = mode            # Mode 1 = Autonomous
 		self.robot = robot
-		self.waypoints = None       # List of point to explore
+		self.waypoints = [(np.random.randint(100, 1100), np.random.randint(100, 500)) for _ in range(20)]       # List of point to explore
 		self.waypoint = None
 		self.waypoint_reached = True
 		self.safe_radius_multiplicator = 4
@@ -16,7 +16,7 @@ class Controller:
 		self.voronoi_diagram = None
 		self.thinned_voronoi_polygon = None
 
-	def move_to_waypoint(self):
+	def move_to_waypoint(self, dt, window):
 		# Point must be safe to go
 		if self.waypoints is None and self.waypoint is None:
 			return
@@ -25,9 +25,25 @@ class Controller:
 			self.waypoint = self.waypoints.pop()
 			self.waypoint_reached = False
 
-		self.check_safe_path(self.robot)
+		self.check_safe_path(window)
 
-		
+		angle_diff = get_absolute_angle(self.waypoint,self.robot.pos_calc.to_tuple()) * 180 / np.pi - self.robot.rot_calc
+		angle_diff %= 360
+		if angle_diff > 180:
+			angle_diff -= 360
+
+		move_speed = min(distance(self.robot.pos_calc, self.waypoint)/100 + 0.5, 1)
+		rot_speed = max(min(angle_diff, 1), -1)
+		rot_dir = sign(rot_speed)
+
+		self.robot.move(dt, 1, move_speed)
+		self.robot.rotate(dt, rot_dir, abs(rot_speed))
+
+		# write_text(f"{angle_dir:.1f}", window, (50, 50))
+		# write_text(f"{self.robot.rot_speed:.1f}", window, (100, 50))
+
+		if point_in_circle(self.robot.pos_calc.to_tuple(), self.waypoint, 5):
+			self.waypoint_reached = True
 
 
 	
@@ -159,7 +175,7 @@ class Controller:
 		self.thinned_voronoi_polygon = self.thin_polygon(self.voronoi_diagram[0][0], -self.robot.radius)
 
 	def draw_voronoi_diagram(self, window):
-		if self.voronoi_diagram is None:
+		if self.voronoi_diagram is None or len(self.thinned_voronoi_polygon) < 2:
 			return None
 		
 

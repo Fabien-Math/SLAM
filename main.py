@@ -25,6 +25,7 @@ def write_fps(dt, window, window_size):
 		textRect.center = (window_size[0]*0.9, window_size[1]*0.1)
 		window.blit(text, textRect)
 
+
 def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
 	"""Write the robot info on the bottom of the window
 
@@ -36,12 +37,16 @@ def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
 	"""
 	font = pygame.font.Font('freesansbold.ttf', 16)
 	if dt:
-		text = font.render(f"Calculated : [Acc {beacon.acc_calc:.1f}, Speed {beacon.speed_calc:.1f}, Pos {beacon.pos_calc}]; Real : [Acc {beacon.acc:.1f}, Speed {beacon.speed:.1f}, Pos {beacon.pos}]", True, (255, 255, 255))
+		text1 = font.render(f"Calculated : [Acc {beacon.acc_calc:.1f}, Speed {beacon.speed_calc:.1f}, Pos {beacon.pos_calc}]; Real : [Acc {beacon.acc:.1f}, Speed {beacon.speed:.1f}, Pos {beacon.pos}]", True, (255, 255, 255))
+		text2 = font.render(f"Calculated : [Ang acc {beacon.rot_acc_calc:.1f}, Ang speed {beacon.rot_speed_calc:.1f}, Angle {beacon.rot_calc:.1f}]; Real : [Ang acc {beacon.rot_acc:.1f}, Ang speed {beacon.rot_speed:.1f}, Angle {beacon.rot:.1f}]", True, (255, 255, 255))
 
-		textRect = text.get_rect()
+		textRect1 = text1.get_rect()
+		textRect2 = text2.get_rect()
 	
-		textRect.center = (window_size[0]*0.5, window_size[1]*0.95)
-		window.blit(text, textRect)
+		textRect1.center = (window_size[0]*0.5, window_size[1]*0.98)
+		textRect2.center = (window_size[0]*0.5, window_size[1]*0.95)
+		window.blit(text1, textRect1)
+		window.blit(text2, textRect2)
 
 
 def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:float, toggle_draw_map:bool, toggle_draw_live_map:bool):
@@ -65,7 +70,10 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	if toggle_draw_map:
 		map.draw_map(window)
 
-	beacon.controller.draw_voronoi_diagram(window)
+	if not beacon.controller.mode:
+		beacon.controller.draw_voronoi_diagram(window)
+		pygame.draw.circle(window, (255, 0, 0), beacon.controller.waypoint, 5)
+
 
 	# Draw the robot
 	beacon.draw(window)
@@ -98,7 +106,7 @@ def main():
 
 
 	### ROBOT INITIALISATION
-	beacon = BeaconRobot((350, 275), 50, 1000, 50, -25, 100)
+	beacon = BeaconRobot((350, 275), 50, 1000, 100, 25, 100)
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
@@ -131,37 +139,49 @@ def main():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
-		if key_pressed_is[K_m]:
-			toggle_draw_map = not toggle_draw_map
-		if key_pressed_is[K_l]:
-			toggle_draw_live_map = not toggle_draw_live_map
-		if key_pressed_is[K_UP]:
-			desired_fps = min(200, desired_fps + 20*dt)
-		if key_pressed_is[K_DOWN]:
+			# Handle if the key was pressed once
+			if event.type == KEYDOWN:
+				if event.key == K_m:
+					toggle_draw_map = not toggle_draw_map
+				if event.key == K_l:
+					toggle_draw_live_map = not toggle_draw_live_map
+				if event.key == K_a:
+					beacon.controller.mode = 1 * (beacon.controller.mode == 0) + 0 * (beacon.controller.mode != 0)
+		if key_pressed_is[K_LEFT]:
 			desired_fps = max(1, desired_fps - 20*dt)
+		if key_pressed_is[K_LEFT]:
+			desired_fps = max(1, desired_fps - 20*dt)
+		if key_pressed_is[K_RIGHT]:
+			desired_fps = min(200, desired_fps + 20*dt)
+		if key_pressed_is[K_LEFT]:
+			desired_fps = max(1, desired_fps - 20*dt)
+		
 
-		# Direction for rotation and direction
-		rotation = 0
-		direction = 0
-		if key_pressed_is[K_q]:
-			rotation -= 1
-		if key_pressed_is[K_d]: 
-			rotation += 1
-		if key_pressed_is[K_z]: 
-			direction += 1
-		if key_pressed_is[K_s]: 
-			direction -= 1
+		if beacon.controller.mode:
+			# Direction for rotation and direction
+			rotation = 0
+			direction = 0
+			if key_pressed_is[K_q]:
+				rotation -= 1
+			if key_pressed_is[K_d]: 
+				rotation += 1
+			if key_pressed_is[K_z]: 
+				direction += 1
+			if key_pressed_is[K_s]: 
+				direction -= 1
 
 
-		# Robot movement
-		beacon.move(direction, dt)
-		beacon.rotate(rotation, dt)
+			# Robot movement
+			beacon.move(dt, direction)
+			beacon.rotate(dt, rotation)
+		else:
+			beacon.controller.move_to_waypoint(dt, window)
+
 
 		### SIMULATION
 		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
 		beacon.update_live_grid_map(None)
-		beacon.controller.check_safe_path(window)
 		# compute_colision(beacon, walls)
 		
 

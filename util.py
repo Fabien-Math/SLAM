@@ -1,5 +1,6 @@
 from math import sqrt, acos
 import numpy as np
+import pygame
 
 
 ### CLASSES
@@ -100,11 +101,18 @@ def get_angle_tuple_deg(p1:tuple, p2:tuple, p3:tuple):
 
 	return abs(ang1 - ang2) * 180 / np.pi
 
-def getAbsoluteAngle(p1:tuple, p2:tuple):
+
+def get_absolute_angle(p1:tuple, p2:tuple):
 	"""Compute and return the absolute angle between two points from (0, 0)
 	"""
 	ang = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
 	return ang + (2 * np.pi)*(ang < 0)
+
+def get_signed_angle(p1:tuple, p2:tuple):
+	"""Compute and return the absolute angle between two points from (0, 0)
+	"""
+	ang = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
+	return ang
 
 ### LINES
 
@@ -188,6 +196,9 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 	a, b, c = line
 	return abs(a*p[0] + b*p[1] - c)/np.sqrt(a**2 + b**2)
 
+
+def sign(a:float):
+	return 1 * (a>=0) - 1 *(a<0)
 
 ### INTERSECTIONS
 
@@ -432,3 +443,23 @@ def convex_hull(points:list):
         if p == l:
             break
     return hull
+
+
+### DISPLAY
+
+def write_text(text, window, pos):
+	"""Write the FPS on the top-right of the window
+
+	Args:
+		dt (float): Time between two frame
+		window (surface): Window on which writting
+		window_size (tuple): Size of the window
+	"""
+	font = pygame.font.Font('freesansbold.ttf', 16)
+	text = font.render(text, True, (255, 255, 255))
+
+	textRect = text.get_rect()
+
+	textRect.center = pos
+	window.blit(text, textRect)
+	pygame.display.update()

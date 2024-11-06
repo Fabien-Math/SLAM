@@ -1,5 +1,5 @@
 from lidar import LIDAR
-from util import Vector2, distance
+from util import Vector2, distance, sign
 from accelerometer import Accmeter
 import pygame
 from math import cos, sin ,pi
@@ -50,29 +50,36 @@ class BeaconRobot:
 		self.accmeter = None
 		self.controller = Controller(self, 0)
 
-	def move(self, dir:int, dt:float):
+	def move(self, dt:float, direction:int, coef_max_speed:float = 1, coef_max_acc:float = 1):
 		"""Move the robot
 
 		Args:
-			dir (int): Direction to go
-			dt (float): Time step
+			dt (float): Time
+			coef_max_acc (float): _description_
+			coef_max_speed (float, optional): _description_. Defaults to 1.
 		"""
-		if dir == 1:
-			if self.speed >= 0:
-				self.speed = min(self.speed + self.acc*dt, self.max_forward_speed)
-			else:
-				self.speed = max(self.speed + self.decc*dt, 0)
-		elif dir == -1:
-			if self.speed <= 0:
-				self.speed = max(self.speed - self.acc*dt, self.max_backward_speed)
-			else:
-				self.speed = min(self.speed + self.decc*dt, 0)
-		else:
-			if self.speed >= 0:
-				self.speed = max(self.speed - self.decc*dt, 0)
-			else:
-				self.speed = min(self.speed + self.decc*dt, 0)
 
+		if direction == 1:
+			max_speed = coef_max_speed * self.max_forward_speed
+		elif direction == -1:
+			max_speed = coef_max_speed * self.max_backward_speed
+		else:
+			max_speed = 0
+			
+		acc = coef_max_acc * self.acc
+		decc = coef_max_acc * self.decc
+
+		abs_speed = abs(self.speed)
+
+		# Accelration
+		if abs_speed < max_speed:
+			self.speed = direction * min(abs_speed + acc*dt, max_speed)
+		
+		# Decceleration
+		if abs_speed > max_speed:
+			self.speed = sign(self.speed) * max(abs_speed - decc*dt, 0)
+
+	
 		# Compute traveled distance
 		x = self.speed * cos(self.rot * pi / 180) * dt
 		y = self.speed * sin(self.rot * pi / 180) * dt
@@ -81,31 +88,34 @@ class BeaconRobot:
 		self.pos.add(x, y)
 
 
-	def rotate(self, dir:int, dt:float):
+	def rotate(self, dt:float, direction:float, coef_max_rot_speed:float = 1, coef_max_rot_acc:float = 1):
 		"""Rotate the robot
 
 		Args:
-			dir (int): Direction to rotate
+			dir (float): Direction to rotate
 			dt (float): Time step
 		"""
-		if dir == 1:
-			if self.rot_speed >= 0:
-				self.rot_speed = min(self.rot_speed + self.rot_acc*dt, self.max_rot_speed)
-			else:
-				self.rot_speed = max(self.rot_speed + self.rot_decc*dt, 0)
-		elif dir == -1:
-			if self.rot_speed <= 0:
-				self.rot_speed = max(self.rot_speed - self.rot_acc*dt, -self.max_rot_speed)
-			else:
-				self.rot_speed = min(self.rot_speed + self.rot_decc*dt, 0)
+
+		if direction == 0:
+			max_rot_speed = 0
 		else:
-			if self.rot_speed >= 0:
-				self.rot_speed = max(self.rot_speed - self.rot_decc*dt, 0)
-			else:
-				self.rot_speed = min(self.rot_speed + self.rot_decc*dt, 0)
+			max_rot_speed = coef_max_rot_speed * self.max_rot_speed
+		rot_acc = coef_max_rot_acc * self.rot_acc
+		rot_decc = coef_max_rot_acc * self.rot_decc
+
+		abs_rot_speed = abs(self.rot_speed)
+
+		# Accelration
+		if abs_rot_speed < max_rot_speed:
+			self.rot_speed = direction * min(abs_rot_speed + rot_acc*dt, max_rot_speed)
+		
+		# Decceleration
+		if abs_rot_speed >= max_rot_speed:
+			self.rot_speed = sign(self.rot_speed) * max(abs_rot_speed - rot_decc*dt, 0)
 		
 		# Update rotation
 		self.rot += self.rot_speed * dt
+		self.rot %= 360
 
 	def live_grid_map_coord_to_ids(self, point):
 		idx = int((point[0] - self.live_grid_map_centre.x)/self.live_grid_map_size + self.live_grid_map_list_size//2)
@@ -193,7 +203,7 @@ class BeaconRobot:
 		self.lidar = LIDAR(fov, freq, res, max_dist, prec)
 		self.lidar.pos = self.pos
 		
-		
+
 	def scan_environment(self, time, map, window):
 		"""Request a scanning of the environment to the lidar
 
@@ -223,6 +233,7 @@ class BeaconRobot:
 
 
 	### DISPLAY
+
 	def draw(self, window):
 		"""Draw the robot as a circle
 
