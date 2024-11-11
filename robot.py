@@ -159,7 +159,7 @@ class BeaconRobot:
 		# Compute position with lidar data
 		if points is not None:
 			# self.controller.find_new_direction(points, window)
-			self.live_grid_map.update(self.pos_calc, points, self.lidar.max_dist)
+			self.live_grid_map.update(points, self.lidar.max_dist)
 			pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
 
 			if pos_lidar is not None:

@@ -43,14 +43,14 @@ class Live_grid_map():
 		return p1x, p1y, p2x, p2y 
 	
 	
-	def update(self, robot_pos, points, max_lidar_distance):
+	def update(self, points, max_lidar_distance):
 		"""Update the live grid of the robot
 
 		Args:
 			points (list): List of points to be added, if None, update only robot pos
 		"""
 		# Add robot pos
-		idx, idy = self.vec_to_ids(robot_pos)
+		idx, idy = self.vec_to_ids(self.robot.pos_calc)
 		# If ids are in the range of the live map
 		if 0 < idx < self.list_size and 0 < idy < self.list_size:
 			# Set to safe path
@@ -64,9 +64,37 @@ class Live_grid_map():
 			idx, idy = self.coord_to_ids(point)
 			# If ids are in the range of the live map
 			if 0 < idx < self.list_size and 0 < idy < self.list_size:
-				self.map[idy, idx] = max(self.map[idy, idx], 1 - distance(robot_pos, point)/max_lidar_distance)
+				self.map[idy, idx] = max(self.map[idy, idx], 1 - distance(self.robot.pos_calc, point)/max_lidar_distance)
 
-	def draw(self, window, map_offset):
+			p1 = Vector2(point[0], point[1])
+			self.fill_subdivision(p1)
+	
+
+	def fill_subdivision(self, p1):
+		# Initialisation of subdivision list
+		error_offset = 1e-6
+		p2 = self.robot.pos_calc
+		line = compute_line(p1, p2)
+
+		p1_ids = self.vec_to_ids(p1)
+		p2_ids = self.vec_to_ids(p2)
+		for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1]) + 1):
+			for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0]) + 1):
+				rect = self.ids_to_rect(j, i)
+				# If the second point is in the box
+				if p2.x > min(rect[0], rect[2]) - error_offset and p2.x < max(rect[0], rect[2]) + error_offset:
+					if p2.y > min(rect[1], rect[3]) - error_offset and p2.y < max(rect[1], rect[3]) + error_offset:
+						if self.map[i, j] == 0:
+							self.map[i, j] = -1
+							continue
+				# If the line touches another box
+				is_in_rect = compute_segment_rect_intersection(line, p1, p2, rect)
+				if is_in_rect:
+					if self.map[i, j] == 0:
+						self.map[i, j] = -1
+
+
+	def draw(self, window):
 		"""Draw the live grid map, the color change according to the value of confidence, 1 means it is sure that a wall is there
 		and drawn as a black square and 0 the opposite
 

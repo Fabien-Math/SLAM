@@ -29,7 +29,12 @@ class Controller:
 		self.thinned_voronoi_polygon = None
 
 
-	def move_to_waypoint(self, t, dt, window):
+	def move_to_waypoint(self, dt):
+		"""Move to the next waypoint
+
+		Args:
+			dt (float): Time enlapsed
+		"""
 		# Point must be safe to go
 		if self.waypoints is None and self.waypoint is None:
 			return
@@ -58,7 +63,12 @@ class Controller:
 
 
 	def check_safe_path(self, t):
+		"""Construct a Voronoi diagram to check if the path is safe
 
+		Args:
+			t (float): Current time
+		"""
+		# If not enough time pass
 		if t < self.last_time_check_for_new_path + 1 / self.freq_check_for_new_path:
 			return
 
@@ -102,7 +112,6 @@ class Controller:
 		# Calcul du diagramme de Voronoi
 		self.voronoi_diagram  = subdiv.getVoronoiFacetList([])	
 		self.thinned_voronoi_polygon = self.thin_polygon(self.voronoi_diagram[0][0], -self.robot.radius)
-
 
 
 	def thin_polygon(self, polygon, offset):
@@ -150,10 +159,12 @@ class Controller:
 		return convex_hull(thinned_polygon)
 
 
-
-
-
 	def draw_voronoi_diagram(self, window):
+		"""Draw the Voronoi diagram on the screen
+
+		Args:
+			window (surface): Surface on which to draw
+		"""
 		if self.voronoi_diagram is None or len(self.thinned_voronoi_polygon) < 2:
 			return None
 		
@@ -171,6 +182,3 @@ class Controller:
 		robot_polygon_thinned_wrong_type = self.thinned_voronoi_polygon
 		robot_polygon_thinned = [(float(robot_polygon_thinned_wrong_type[i][0]), float(robot_polygon_thinned_wrong_type[i][1])) for i in range(len(robot_polygon_thinned_wrong_type))]
 		pygame.draw.polygon(window, (255, 255, 100), robot_polygon_thinned, 1)
-
-
-	
