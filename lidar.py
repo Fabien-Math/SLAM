@@ -1,8 +1,8 @@
-from util import *
-import random
+from util import Vector2, distance, find_intersection, point_in_box, compute_line, find_circle_intersection, find_id_min
 from math import cos, sin, pi, sqrt
+import random
+
 from map import Wall, Map
-import pygame
 
 class LIDAR:
 	"""Class to simulate a LIDAR
@@ -60,23 +60,14 @@ class LIDAR:
 				if point_in_box(intersection, p1, p2):
 					inter_dist = distance(self.pos, intersection)
 					if inter_dist < min_inter_dist:
-						# pygame.draw.circle(window, (55, 255, 255), intersection, 3)
-						# pygame.time.delay(10)
-						# pygame.display.update()
 						nearest_intersections = intersection
 						min_inter_dist = inter_dist
 
 
 		if nearest_intersections is not None:
-			# pygame.draw.circle(window, (255, 55, 255), nearest_intersections, 3)
-			# pygame.time.delay(20)
-			# pygame.display.update()
 			dist = distance(self.pos, nearest_intersections)
 			x = nearest_intersections[0] + self.precision * (random.random()-0.5) * dist/100
 			y = nearest_intersections[1] + self.precision * (random.random()-0.5) * dist/100
-			# pygame.draw.circle(window, (255, 55, 100), (x, y), 5, 2)
-			# pygame.time.delay(10)
-			# pygame.display.update()
 			return x,y
 
 		return None
@@ -106,7 +97,6 @@ class LIDAR:
 
 		# Initialize intersection point list
 		points = []
-		points_mask = []
 		
 		while self.angle < 2*pi:
 			p_r = Vector2(self.pos.x + 100*cos(self.angle), self.pos.y + 100*sin(self.angle))
@@ -118,10 +108,8 @@ class LIDAR:
 			# Number of point to check according to the lidar max distance
 			N = int(sqrt(5 * (self.max_dist - robot_radius)))
 			for i in range(N):
-				# Upward points
 				r = robot_radius + i**(2)/5
 				p_r = (r*cos(self.angle) + self.pos.x, r*sin(self.angle) + self.pos.y)
-				# pygame.draw.circle(window, (34,134,233), p_r, 2)
 
 				intersection = self.check_wall_collision(map, p_r, line, window)
 
@@ -155,9 +143,6 @@ class LIDAR:
 
 		# Convert the position into the indices of the subdivision map
 		p_ids = map.subdiv_coord_to_ids(p)
-		rect = map.subdiv_ids_to_rect(p_ids[0], p_ids[1])
-		# rect = pygame.Rect(rect[0], rect[1], abs(rect[0] - rect[2]), abs(rect[1] - rect[3]))
-		# pygame.draw.rect(window, (255, 0, 0), rect, 2)
 
 		# Check if the ids are in the subdivided map
 		if 0 <= p_ids[0] < map.subdiv_number[0]:
@@ -168,8 +153,6 @@ class LIDAR:
 				# If any wall is in the cell
 				if subdiv != []:
 					walls = [map.walls[k] for k in subdiv]
-					# for wall in walls:
-						# pygame.draw.line(window, (255, 255, 255), wall.p1.to_tuple(), wall.p2.to_tuple(), 2)
 
 					intersection = self.compute_line_collision(walls, line, window)
 
@@ -213,6 +196,8 @@ class LIDAR:
 
 		return Vector2(x, y)
 
+
+# FUNCTIONS
 
 def compute_ray_pos(line, r:float, offset:Vector2):
 	"""Compute the point distant from r from the lidar
@@ -260,3 +245,19 @@ def find_all_circle_intersection(circles):
 				points += [pi2]
 
 	return points
+
+
+def find_n_nearest_from_point(ps: list, n: int, pos:Vector2):
+	"""Find the 'n' nearest point from a position
+	"""
+	ds = [0]*len(ps)
+	for i, p in enumerate(ps):
+		ds[i] = distance(pos, p)
+
+	ds_min = [0]*n
+	for i in range(n):
+		id_min = find_id_min(ds)
+		ds_min[i] = id_min + i
+		ds.pop(id_min)
+
+	return ds_min

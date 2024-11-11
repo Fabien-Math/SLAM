@@ -1,7 +1,9 @@
-import pygame
 from util import Vector2, compute_line, compute_segment_rect_intersection
+from math import pi, sin
+
 from cave_generator import compute_contours, create_trigle_grid
-import numpy as np
+
+import pygame
 
 class Wall:
 	def __init__(self, p1:Vector2, p2:Vector2, thickness:float):
@@ -40,8 +42,8 @@ class Map:
 		self.walls = [None for _ in range(len(self.contours) + 4)]
 
 		for i, contour in enumerate(self.contours):
-			contour[0].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*np.sin(np.pi/3)))
-			contour[1].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*np.sin(np.pi/3)))
+			contour[0].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*sin(pi/3)))
+			contour[1].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*sin(pi/3)))
 			self.walls[i] = (Wall(contour[0], contour[1], 2))
 
 		safe_offset = 1

@@ -1,12 +1,13 @@
-# Create a map
 import pygame
 from pygame.locals import *
+
 import time
+import numpy as np
+np.random.seed(5)
+
 from robot import BeaconRobot
 from map import Map
-import numpy as np
 
-np.random.seed(5)
 
 def write_fps(dt, window, window_size):
 	"""Write the FPS on the top-right of the window
@@ -66,20 +67,20 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	window.fill((150, 150, 150))
 
 	if toggle_draw_live_map:
-		beacon.draw_live_grid_map(window, map.map_offset)
+		beacon.live_grid_map.draw(window, map.map_offset)
 	if toggle_draw_map:
 		map.draw_map(window)
 
-	if not beacon.controller.mode:
+	if beacon.controller.mode:
 		beacon.controller.draw_voronoi_diagram(window)
-		pygame.draw.circle(window, (255, 0, 0), beacon.controller.waypoint, 5)
+		pygame.draw.circle(window, (255, 0, 0), beacon.controller.waypoint, beacon.controller.waypoint_radius)
 
 
 	# Draw the robot
 	beacon.draw(window)
 	# Draw the FPS
 	write_fps(dt, window, window_size)
-	write_robot_info(dt, window, window_size, beacon)
+	# write_robot_info(dt, window, window_size, beacon)
 
 	# Update scene display
 	pygame.display.update()
@@ -102,14 +103,15 @@ def main():
 	# Number of subdivisions in the map, used to list the lines
 	subdiv_number = (20, 20)
 	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, 25, 25)
+	map = Map(map_size, map_offset, subdiv_number, 40, 40)
 
 
 	### ROBOT INITIALISATION
 	beacon = BeaconRobot((350, 275), 50, 1000, 100, 25, 100)
 	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=5, res=3.5, prec=5, max_dist=200)
+	beacon.equip_lidar(fov=360, freq=3, res=3.5, prec=5, max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
+	beacon.equip_controller(check_safe_path_frequency=10, mode=1)
 
 
 	# State of the simulation
@@ -152,12 +154,18 @@ def main():
 		if key_pressed_is[K_LEFT]:
 			desired_fps = max(1, desired_fps - 20*dt)
 		if key_pressed_is[K_RIGHT]:
-			desired_fps = min(200, desired_fps + 20*dt)
+			desired_fps = min(500, desired_fps + 20*dt)
 		if key_pressed_is[K_LEFT]:
 			desired_fps = max(1, desired_fps - 20*dt)
 		
-
 		if beacon.controller.mode:
+			# a = time.perf_counter()
+			beacon.controller.check_safe_path(t)
+			# b = time.perf_counter()
+			beacon.controller.move_to_waypoint(t, dt, window)
+			# fps = 1/(b - a)
+			# print(f"Check path time {fps:.1f} FPS")
+		else:
 			# Direction for rotation and direction
 			rotation = 0
 			direction = 0
@@ -174,26 +182,30 @@ def main():
 			# Robot movement
 			beacon.move(dt, direction)
 			beacon.rotate(dt, rotation)
-		else:
-			beacon.controller.move_to_waypoint(dt, window)
-
+	
 
 		### SIMULATION
+		# a = time.perf_counter()
 		beacon.scan_environment(t, map, window)
+		# b = time.perf_counter()
+		# print(f"Scan time {b - a:.3e} s")
 		beacon.compute_pos_calc(t)
-		beacon.update_live_grid_map(None)
+		# a = time.perf_counter()
+		beacon.live_grid_map.update(beacon.pos_calc, None, beacon.lidar.max_dist)
+		# b = time.perf_counter()
+		# fps = 1/(b - a)
+		# print(f"Update live grid time {fps:.1f} FPS")
 		# compute_colision(beacon, walls)
-		
+		# pygame.time.delay(1000)
+
 
 		# DRAW THE SCENE
 		if t - t_display > 1/desired_fps:
 			update_display(window, window_size, map, beacon, t - t_display, toggle_draw_map, toggle_draw_live_map)
 			t_display = t
 
-
 		t_old = t
 		t = time.time()
-
 	### DEINITIALIZE PYGAME
 	pygame.quit()
 

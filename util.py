@@ -1,5 +1,5 @@
-from math import sqrt, acos
-import numpy as np
+from math import sqrt, acos, atan2, pi, sqrt
+
 import pygame
 
 
@@ -73,11 +73,10 @@ def get_angle(p1:Vector2, p2:Vector2, p3:Vector2):
 	"""
 	a1, b1, _ = compute_line(p1, p2)
 	a2, b2, _ = compute_line(p2, p3)
-	x = np.array([a1, b1])
-	y = np.array([a2, b2])
-	xy_norm = norm(x)*norm(y)
+
+	xy_norm = norm((a1, b1))*norm((a2, b2))
 	if xy_norm:
-		return acos(np.dot(x,y)/(xy_norm))
+		return acos((a1 * a2 + b1 * b2)/(xy_norm))
 
 	return 0
 
@@ -90,28 +89,28 @@ def get_angle_tuple_deg(p1:tuple, p2:tuple, p3:tuple):
 	dy1 = p2[1] - p1[1]
 	dy2 = p2[1] - p3[1]
 
-	ang1 = np.arctan2(dy1, dx1)
-	ang2 = np.arctan2(dy2, dx2)
+	ang1 = atan2(dy1, dx1)
+	ang2 = atan2(dy2, dx2)
 
 	if ang1 < 0:
-		ang1 += 2* np.pi
+		ang1 += 2 * pi
 
 	if ang2 < 0:
-		ang2 += 2* np.pi
+		ang2 += 2 * pi
 
-	return abs(ang1 - ang2) * 180 / np.pi
+	return abs(ang1 - ang2) * 180 / pi
 
 
 def get_absolute_angle(p1:tuple, p2:tuple):
 	"""Compute and return the absolute angle between two points from (0, 0)
 	"""
-	ang = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
-	return ang + (2 * np.pi)*(ang < 0)
+	ang = atan2(p1[1] - p2[1], p1[0] - p2[0])
+	return ang + (2 * pi)*(ang < 0)
 
 def get_signed_angle(p1:tuple, p2:tuple):
 	"""Compute and return the absolute angle between two points from (0, 0)
 	"""
-	ang = np.arctan2(p1[1] - p2[1], p1[0] - p2[0])
+	ang = atan2(p1[1] - p2[1], p1[0] - p2[0])
 	return ang
 
 ### LINES
@@ -185,7 +184,7 @@ def dot_product(v1:tuple, v2:tuple):
 
 def normalizeVec(v:tuple):
 		x, y = v
-		dist = np.sqrt(x*x+y*y)
+		dist = sqrt(x*x+y*y)
 		return x/dist, y/dist
 
 
@@ -194,7 +193,7 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 	#### "https://fr.wikipedia.org/wiki/Distance_d'un_point_%C3%A0_une_droite"
 	"""
 	a, b, c = line
-	return abs(a*p[0] + b*p[1] - c)/np.sqrt(a**2 + b**2)
+	return abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
 
 
 def sign(a:float):
@@ -357,22 +356,6 @@ def find_n_nearest(ps: list, n: int):
 					idpts.append(k)
 	
 	return idpts
-
-
-def find_n_nearest_from_point(ps: list, n: int, pos:Vector2):
-	"""Find the 'n' nearest point from a position
-	"""
-	ds = [0]*len(ps)
-	for i, p in enumerate(ps):
-		ds[i] = distance(pos, p)
-
-	ds_min = [0]*n
-	for i in range(n):
-		id_min = find_id_min(ds)
-		ds_min[i] = id_min + i
-		ds.pop(id_min)
-
-	return ds_min
 
 
 ### MIN INDICES
