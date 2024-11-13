@@ -2,7 +2,6 @@ from math import sqrt, acos, atan2, pi, sqrt
 
 import pygame
 
-
 ### CLASSES
 
 class Vector2:
@@ -107,6 +106,7 @@ def get_absolute_angle(p1:tuple, p2:tuple):
 	ang = atan2(p1[1] - p2[1], p1[0] - p2[0])
 	return ang + (2 * pi)*(ang < 0)
 
+
 def get_signed_angle(p1:tuple, p2:tuple):
 	"""Compute and return the absolute angle between two points from (0, 0)
 	"""
@@ -182,10 +182,10 @@ def dot_product(v1:tuple, v2:tuple):
 	return v1[0] * v2[0] + v1[1] * v2[1]
 
 
-def normalizeVec(v:tuple):
-		x, y = v
-		dist = sqrt(x*x+y*y)
-		return x/dist, y/dist
+def normalize_vec(v:tuple):
+	x, y = v
+	dist = sqrt(x*x+y*y)
+	return x/dist, y/dist
 
 
 def orthogonal_projection(p:tuple, line:tuple) -> float:
@@ -194,6 +194,46 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 	"""
 	a, b, c = line
 	return abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
+
+def wall_orthogonal_point(p:tuple, wall, window):
+	p1, p2 = left_point(wall.p1, wall.p2)
+	vec = (p2.x - p1.x , p2.y - p1.y)
+	line = compute_line(p1, p2)
+	a, b, c = line
+
+	dir_vec = normalize_vec(vec)
+
+	yp1 = evaluate_line(line, p[0])
+	y_point = (p[0], yp1)
+	d = abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
+
+
+	h2 = (p[1] - yp1)**2 - d**2
+	if h2 > 0:
+		h = sqrt(h2)
+		if y_point[1] > p[1]:
+			if p1.y > p2.y:
+				H = (y_point[0] + h*dir_vec[0], y_point[1] + h*dir_vec[1])
+				# pygame.draw.circle(window, (0, 255, 255), H, 4)
+			else:
+				H = (y_point[0] - h*dir_vec[0], y_point[1] - h*dir_vec[1])
+				# pygame.draw.circle(window, (0, 255, 255), H, 4)
+		else:
+			if p1.y > p2.y:
+				H = (y_point[0] - h*dir_vec[0], y_point[1] - h*dir_vec[1])
+				# pygame.draw.circle(window, (255, 255, 0), H, 4)
+			else:
+				H = (y_point[0] + h*dir_vec[0], y_point[1] + h*dir_vec[1])
+				# pygame.draw.circle(window, (255, 255, 0), H, 4)
+
+		# pygame.draw.circle(window, (255, 255, 0), H, 4)
+		pygame.display.update()
+
+		return H
+	else:
+		return y_point
+
+
 
 
 def sign(a:float):
@@ -371,21 +411,10 @@ def find_id_min(ls:list):
 	
 	return id_min
 
-
-### ROBOT COLLISION
-
-def compute_colision(robot, walls):
-	"""Compute collision between the robot and walls
-	"""
-	offset = robot.radius*sqrt(2)
-	for wall in walls:
-		if robot.pos.x > wall[0] - offset and robot.pos.x < wall[2] + offset:
-			if robot.pos.y > wall[1] - offset and robot.pos.y < wall[3] + offset:
-				robot.color = (255, 0, 0)
-				return True
-	robot.color = (0, 200, 255)
-	return False
-
+def left_point(p1:Vector2, p2:Vector2):
+	if p1.x > p2.x:
+		return p2, p1
+	return p1, p2
 
 ### CONVEX HULL
 

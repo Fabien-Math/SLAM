@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-
+ 
 import time
 import numpy as np
 np.random.seed(5)
@@ -49,6 +49,17 @@ def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
 		window.blit(text1, textRect1)
 		window.blit(text2, textRect2)
 
+def write_crashed_robot(robot:BeaconRobot, window, window_size):
+	if not robot.crashed_in_wall:
+		return
+	
+	font = pygame.font.Font('freesansbold.ttf', 54)
+	
+	text1 = font.render("ROBOT CRASHED !!!", True, (255, 50, 100))
+	textRect1 = text1.get_rect()
+	
+	textRect1.center = (window_size[0]*0.5, window_size[1]*0.5)
+	window.blit(text1, textRect1)
 
 def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:float, toggle_draw_map:bool, toggle_draw_live_map:bool):
 	"""Update the display
@@ -70,6 +81,9 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 		beacon.live_grid_map.draw(window)
 	if toggle_draw_map:
 		map.draw_map(window)
+	
+	# map.draw_subdiv_points(window)
+	
 
 	if beacon.controller.mode:
 		beacon.controller.draw_voronoi_diagram(window)
@@ -80,6 +94,7 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	# Draw the FPS
 	write_fps(dt, window, window_size)
 	write_robot_info(dt, window, window_size, beacon)
+	write_crashed_robot(beacon, window, window_size)
 
 	# Update scene display
 	pygame.display.update()
@@ -100,18 +115,18 @@ def main():
 	map_size = (1100, 600)
 	map_offset = (50, 50)
 	# Number of subdivisions in the map, used to list the lines
-	subdiv_number = (20, 20)
+	subdiv_number = (25, 25)
 	# Initilize the map
 	map = Map(map_size, map_offset, subdiv_number, 25, 25)
 
 
 	### ROBOT INITIALISATION
-	beacon = BeaconRobot((350, 275), 50, 1000, 100, 25, 100)
+	# beacon = BeaconRobot((350, 275), 50, 1000, 100, 25, 100)
+	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 100)
 	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=3, res=3.5, prec=5, max_dist=200)
+	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=5, max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
-	beacon.equip_controller(check_safe_path_frequency=10, mode=1)
-
+	beacon.equip_controller(check_safe_path_frequency=10, mode=0)
 
 	# State of the simulation
 	running = True
@@ -133,8 +148,7 @@ def main():
 
 		key_pressed_is = pygame.key.get_pressed()
 		# Handle events
-		if key_pressed_is[K_ESCAPE]: 
-			running = False
+		
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
@@ -146,6 +160,8 @@ def main():
 					toggle_draw_live_map = not toggle_draw_live_map
 				if event.key == K_a:
 					beacon.controller.mode = 1 * (beacon.controller.mode == 0) + 0 * (beacon.controller.mode != 0)
+				if event.key == K_ESCAPE: 
+					running = False
 		if key_pressed_is[K_LEFT]:
 			desired_fps = max(1, desired_fps - 20*dt)
 		if key_pressed_is[K_LEFT]:
@@ -179,6 +195,9 @@ def main():
 		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
 		beacon.live_grid_map.update(None, beacon.lidar.max_dist)
+		beacon.compute_robot_collision(map, window)
+
+		
 
 		# DRAW THE SCENE
 		if t - t_display > 1/desired_fps:

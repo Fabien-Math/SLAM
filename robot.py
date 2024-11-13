@@ -1,4 +1,4 @@
-from util import Vector2, sign
+from util import Vector2, sign, wall_orthogonal_point, point_in_circle, point_in_box
 from math import cos, sin ,pi
 
 from lidar import LIDAR
@@ -38,6 +38,7 @@ class BeaconRobot:
 		# Robot attribute
 		self.radius = 10
 		self.color = (0, 200, 255)
+		self.crashed_in_wall = False
 
 		# Robot map
 		self.map = []
@@ -160,11 +161,12 @@ class BeaconRobot:
 		if points is not None:
 			# self.controller.find_new_direction(points, window)
 			self.live_grid_map.update(points, self.lidar.max_dist)
-			pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
+			if len(points) > 5:
+				pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
 
-			if pos_lidar is not None:
-				self.pos_calc_lidar = pos_lidar
-				self.pos_calc = self.pos_calc_lidar.copy()
+				if pos_lidar is not None:
+					self.pos_calc_lidar = pos_lidar
+					self.pos_calc = self.pos_calc_lidar.copy()
 
 
 
@@ -195,6 +197,39 @@ class BeaconRobot:
 	def equip_controller(self, check_safe_path_frequency, mode):
 		self.controller = Controller(self, check_safe_path_frequency, mode)
 		
+	### ROBOT COLLISION
+
+	def compute_robot_collision(self, map, window):
+		"""Compute collision between the robot and walls
+		"""
+		idx, idy = map.subdiv_coord_to_ids(self.pos.to_tuple())
+		
+		if map.subdivision is None:
+			return None
+		
+
+		for idxs in range(idx-1, idx+2):
+			for idys in range(idy-1, idy+2):
+				map_subdiv = map.subdivision[idys][idxs]
+				if map_subdiv != []:
+					walls = [map.walls[i] for i in map_subdiv]
+					for wall in walls:
+						if point_in_circle(wall.p1.to_tuple(), self.pos.to_tuple(), self.radius):
+							self.crashed_in_wall = True
+							return
+						if point_in_circle(wall.p2.to_tuple(), self.pos.to_tuple(), self.radius):
+							self.crashed_in_wall = True
+							return
+
+						ortho_point = wall_orthogonal_point(self.pos.to_tuple(), wall, window)
+
+						if point_in_box(ortho_point, wall.p1, wall.p2):
+							if point_in_circle(ortho_point, self.pos.to_tuple(), self.radius):
+								self.crashed_in_wall = True
+								return
+
+		self.crashed_in_wall = False
+
 
 	### DISPLAY
 

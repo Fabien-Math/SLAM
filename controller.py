@@ -169,9 +169,9 @@ class Controller:
 			return None
 		
 		# Draw complete Voronoi diagram
-		for f in self.voronoi_diagram[0]:
-			polygon = [(float(f[i][0]), float(f[i][1])) for i in range(len(f))]
-			pygame.draw.polygon(window, (100, 255, 100), polygon, 2)
+		# for f in self.voronoi_diagram[0]:
+		# 	polygon = [(float(f[i][0]), float(f[i][1])) for i in range(len(f))]
+		# 	pygame.draw.polygon(window, (100, 255, 100), polygon, 2)
 		
 		# Draw robot Voronoi diagram
 		robot_polygon_wrong_type = self.voronoi_diagram[0][0]

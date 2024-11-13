@@ -1,6 +1,7 @@
-from util import Vector2, distance, find_intersection, point_in_box, compute_line, find_circle_intersection, find_id_min
+from util import Vector2, distance, find_intersection, point_in_box, compute_line, find_circle_intersection, find_id_min, get_angle_tuple_deg
 from math import cos, sin, pi, sqrt
 import random
+import pygame
 
 from map import Wall, Map
 
@@ -56,9 +57,19 @@ class LIDAR:
 			p1, p2 = wall.p1, wall.p2
 
 			intersection = find_intersection(line, wall_line)
+
 			if intersection:
 				if point_in_box(intersection, p1, p2):
 					inter_dist = distance(self.pos, intersection)
+					# Check if the intersection point found is on the right side of the robot
+					right_pos = (self.pos.x + 1, self.pos.y)
+					diff_angle = get_angle_tuple_deg(right_pos, self.pos.to_tuple(), intersection)
+					angle_deg = self.angle * 180 / pi
+					if angle_deg > 180:
+						angle_deg = 360 - angle_deg
+
+					if abs(angle_deg - diff_angle) > 10 or distance(self.pos, intersection) > self.max_dist:
+						continue
 					if inter_dist < min_inter_dist:
 						nearest_intersections = intersection
 						min_inter_dist = inter_dist
@@ -102,21 +113,26 @@ class LIDAR:
 			p_r = Vector2(self.pos.x + 100*cos(self.angle), self.pos.y + 100*sin(self.angle))
 			line = compute_line(self.pos, p_r)
 
-			# Upward intersection point
+			# Intersection point
 			intersection = None
 
 			# Number of point to check according to the lidar max distance
-			N = int(sqrt(5 * (self.max_dist - robot_radius)))
+			N = int(1.5 * sqrt(5 * (self.max_dist - robot_radius)))
 			for i in range(N):
-				r = robot_radius + i**(2)/5
+				r = robot_radius + i**(2)/(1.5**2 * 5)
 				p_r = (r*cos(self.angle) + self.pos.x, r*sin(self.angle) + self.pos.y)
 
 				intersection = self.check_wall_collision(map, p_r, line, window)
 
 				if intersection is not None:
-					points.append(intersection)
 					break
+			
+			if intersection is not None:
+				points.append(intersection)
+			else:
+				points.append(p_r)
 
+				
 			# Increment angle with resolution
 			self.angle += self.resolution * pi / 180.0
 

@@ -84,13 +84,13 @@ class Live_grid_map():
 				# If the second point is in the box
 				if p2.x > min(rect[0], rect[2]) - error_offset and p2.x < max(rect[0], rect[2]) + error_offset:
 					if p2.y > min(rect[1], rect[3]) - error_offset and p2.y < max(rect[1], rect[3]) + error_offset:
-						if self.map[i, j] == 0:
+						if self.map[i, j] <= 0.2:
 							self.map[i, j] = -1
 							continue
 				# If the line touches another box
 				is_in_rect = compute_segment_rect_intersection(line, p1, p2, rect)
 				if is_in_rect:
-					if self.map[i, j] == 0:
+					if self.map[i, j] <= 0.2:
 						self.map[i, j] = -1
 
 
