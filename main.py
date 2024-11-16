@@ -115,7 +115,7 @@ def main():
 	map_size = (1100, 600)
 	map_offset = (50, 50)
 	# Number of subdivisions in the map, used to list the lines
-	subdiv_number = (25, 25)
+	subdiv_number = (35, 35)
 	# Initilize the map
 	map = Map(map_size, map_offset, subdiv_number, 25, 25)
 

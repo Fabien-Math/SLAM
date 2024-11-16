@@ -47,8 +47,11 @@
 % \usepackage{tcolorbox}
 \usepackage[most]{tcolorbox}
 \usepackage{textcomp}
+\usepackage{tikz}
+\usepackage{titlesec}
 \usepackage{ulem}
 \usepackage{wrapfig}
+
 
 \numberwithin{figure}{section}
 \numberwithin{table}{section}
@@ -65,11 +68,37 @@
 \cfoot{ }
 \rfoot{Page \thepage \ / \pageref{LastPage}}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\familydefault}{\sfdefault}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%t
 %     Début du document     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
-Bonjour
+\begin{titlepage}
+    \begin{center}
+        \Large
+        \vfill
+        \textsc{Conception et optimisation d'algorithmes de coordination multi-robot pour l'exploration autonome de réseaux de galerie.}
+        \vfill
+    \end{center}
+\end{titlepage}
+\newpage
+
+\subfile{state_of_the_art}
+
+\newpage
+
+\subfile{math_def}
+
+
+\newpage
+\addcontentsline{toc}{section}{\protect\numberline{}References}
+\bibliographystyle{unsrt}
+\footnotesize{\bibliography{bib.bib}}
+
+
 \end{document}

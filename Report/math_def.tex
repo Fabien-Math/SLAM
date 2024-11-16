@@ -1,0 +1,54 @@
+\documentclass[main.tex]{subfiles}
+\input{main}
+
+\begin{document}
+
+\section{Définitions mathématiques}
+
+Soit $\Omega \in \mathbb{R}^{2}$, soit $\mathbf{X}(t)$ les coordonées du robot à l'instant $t$ dans cet espace.
+
+
+Soit $ V(t)$ le champ de vision du robot à l'instant $t$
+
+Soit $\mathbf{M}(t, \theta)$ le premier point d'intersection entre un segment et les murs, 
+
+\begin{equation*}
+    \displaystyle
+    \mathbf{M}(t, \theta) = \mathbf{X}(t) + R(t, \theta) 
+    \begin{pmatrix}
+        \cos \theta & 0\\
+        0 & \sin \theta\\
+    \end{pmatrix} 
+    \mathbf{X}(t)
+\end{equation*}
+
+On note $\mathbf{M}_{max} (t, \theta)$ le point tel que $R(t, \theta) = R_{max}$
+
+Ici,
+\begin{equation*}
+    \displaystyle
+    R(t, \theta) = \min (\text{\rmfamily distance}( \, \mathbf{X}(t), \, L(\theta) \cap W \,))
+\end{equation*}
+
+\begin{equation*}
+    \displaystyle
+    L(\theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
+\end{equation*}
+
+\begin{equation*}
+    \displaystyle
+    W = \left\{ \, \text{\rmfamily Segment} (\Omega)\, \right\}
+\end{equation*}
+
+On défini le champ de vision du robot tel que:
+
+
+\begin{equation}
+    \displaystyle
+    V(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \theta) \,|\, l \in [0, 1], \theta \in [0, 2 \pi[ \, \right\}
+\end{equation}
+
+Autrement dis, $V(t)$ est l'ensemble des points de $\Omega$ présents dans un disque de rayon $R_{max}$ et situé entre le robot et la plus proche intersection à un mur 
+
+
+\end{document}
