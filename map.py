@@ -34,6 +34,7 @@ class Map:
 
 		# Sub map
 		self.subdiv_number = subdiv_number
+		self.subdiv_size = (map_size[0] / subdiv_number[0], map_size[1] / subdiv_number[1])
 		self.subdivision = None
 
 		self.initialize_map()
@@ -93,8 +94,8 @@ class Map:
 						self.subdivision[i][j].append(k)
 
 	def draw_subdivision(self, window):
-		dx = self.map_size[0]/self.subdiv_number[0]
-		dy = self.map_size[1]/self.subdiv_number[1]
+		dx = self.subdiv_size[0]
+		dy = self.subdiv_size[1]
 
 		for i, line in enumerate(self.subdivision):
 			for j, walls in enumerate(line):
@@ -111,12 +112,23 @@ class Map:
 		Returns:
 			rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
 		"""
-		p1x = idx * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
-		p1y = idy * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
-		p2x = (idx+1) * self.map_size[0]/self.subdiv_number[0] + self.map_offset[0]
-		p2y = (idy+1) * self.map_size[1]/self.subdiv_number[1] + self.map_offset[1]
+		p1x = idx * self.subdiv_size[0] + self.map_offset[0]
+		p1y = idy * self.subdiv_size[1] + self.map_offset[1]
+		p2x = (idx+1) * self.subdiv_size[0] + self.map_offset[0]
+		p2y = (idy+1) * self.subdiv_size[1] + self.map_offset[1]
 		
 		return p1x, p1y, p2x, p2y 
+	
+	def subdiv_ids_to_centre(self, idx, idy):
+		"""Give the subdiv rectangle coordinante where the point is
+
+		Returns:
+			centre point (tuple): center point of the subdivision
+		"""
+		p1x = (idx + 0.5) * self.subdiv_size[0] + self.map_offset[0]
+		p1y = (idy + 0.5) * self.subdiv_size[1] + self.map_offset[1]
+		
+		return p1x, p1y
 
 	def subdiv_coord_to_ids(self, pos:tuple):
 		"""
@@ -128,7 +140,20 @@ class Map:
 		idx = (pos[0] - self.map_offset[0]) * self.subdiv_number[0] / self.map_size[0]
 		idy = (pos[1] - self.map_offset[1]) * self.subdiv_number[1] / self.map_size[1]
 
-		return int(idx), int(idy)
+		return min(max(0, int(idx)), self.subdiv_number[0]-1), min(max(0, int(idy)), self.subdiv_number[1]-1)
+
+	def subdiv_coord_to_ids_float(self, pos:tuple):
+		"""
+		### Give the subdiv ids from the coordinante where the point is
+
+		#### Return
+		ids (tuple[float]): (idx_float, idy_float)
+		"""
+		idx = (pos[0] - self.map_offset[0]) / self.subdiv_size[0]
+		idy = (pos[1] - self.map_offset[1]) / self.subdiv_size[1]
+
+		return idx, idy
+
 
 
 	def draw_subdiv_points(self, window):

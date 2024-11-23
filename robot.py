@@ -157,19 +157,22 @@ class BeaconRobot:
 		
 		points = self.lidar.scan_environment(time, map, self.radius, window)
 		
+		# Update live grid map with all known and unknown point
+		# if no_inter_point is not None:
+		# 	self.live_grid_map.update(points, self.lidar.max_dist)
+
 		# Compute position with lidar data
 		if points is not None:
 			# self.controller.find_new_direction(points, window)
 			self.live_grid_map.update(points, self.lidar.max_dist)
+			self.map += points
 			if len(points) > 5:
 				pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
 
 				if pos_lidar is not None:
 					self.pos_calc_lidar = pos_lidar
 					self.pos_calc = self.pos_calc_lidar.copy()
-
-
-
+			
 
 	### EQUIP EQUIPEMENT
 	def equip_accmeter(self, acc_prec:float, ang_acc_prec:float):
@@ -253,6 +256,6 @@ class BeaconRobot:
 			window (surface): Surface on which to draw
 		"""
 		for dot in self.map:
-			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
+			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), self.radius)
 
 

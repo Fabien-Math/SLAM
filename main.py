@@ -79,6 +79,7 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 
 	if toggle_draw_live_map:
 		beacon.live_grid_map.draw(window)
+		# beacon.draw_dot_map(window)
 	if toggle_draw_map:
 		map.draw_map(window)
 	
@@ -115,13 +116,13 @@ def main():
 	map_size = (1100, 600)
 	map_offset = (50, 50)
 	# Number of subdivisions in the map, used to list the lines
-	subdiv_number = (35, 35)
+	subdiv_number = (25, 25)
 	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, 25, 25)
+	map = Map(map_size, map_offset, subdiv_number, 40, 40)
 
 
 	### ROBOT INITIALISATION
-	# beacon = BeaconRobot((350, 275), 50, 1000, 100, 25, 100)
+	# beacon = BeaconRobot((140, 555), 50, 1000, 100, 25, 100)
 	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 100)
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=5, max_dist=200)
@@ -172,7 +173,7 @@ def main():
 			desired_fps = max(1, desired_fps - 20*dt)
 		
 		if beacon.controller.mode:
-			beacon.controller.check_safe_path(t)
+			# beacon.controller.check_safe_path(t)
 			beacon.controller.move_to_waypoint(dt)
 		else:
 			# Direction for rotation and direction
@@ -194,7 +195,6 @@ def main():
 		### SIMULATION
 		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
-		beacon.live_grid_map.update(None, beacon.lidar.max_dist)
 		beacon.compute_robot_collision(map, window)
 
 		

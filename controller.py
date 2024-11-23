@@ -20,6 +20,11 @@ class Controller:
 		self.waypoint = None
 		self.waypoint_reached = True
 
+		self.local_waypoints = []
+		self.local_waypoint_radius = 5
+		self.local_waypoint = None
+		self.local_waypoint_reached = True
+
 		self.range_safe_path_computer = 100	# Range of the robot to find the new path with the voronoi
 
 		self.freq_check_for_new_path = freq
@@ -36,41 +41,50 @@ class Controller:
 			dt (float): Time enlapsed
 		"""
 		# Point must be safe to go
-		if self.waypoints is None and self.waypoint is None:
+		if self.waypoints is None:
 			return
 
 		if len(self.waypoints) > 0 and self.waypoint_reached:
 			self.waypoint = self.waypoints.pop()
 			self.waypoint_reached = False
 
-		# Correct angle to point to the waypoint
-		angle_diff = get_absolute_angle(self.waypoint,self.robot.pos_calc.to_tuple()) * 180 / pi - self.robot.rot_calc
+		if self.local_waypoint_reached:
+			self.check_safe_path()
+			self.local_waypoint = self.local_waypoints.pop()
+			self.local_waypoint_reached = False
+
+		# Correct angle to point to the local waypoint
+		angle_diff = get_absolute_angle(self.local_waypoint,self.robot.pos_calc.to_tuple()) * 180 / pi - self.robot.rot_calc
 		angle_diff %= 360
 		if angle_diff > 180:
 			angle_diff -= 360
 
-		# Compute speed according to the distance from the waypoint the robot is
-		move_speed = min(distance(self.robot.pos_calc, self.waypoint)/200 + 0.3, 1)
+		# Compute speed according to the distance from the local waypoint the robot is
+		move_speed = min(distance(self.robot.pos_calc, self.local_waypoint)/200 + 0.1 - abs(angle_diff)/180, 1)
 		rot_speed = max(min(angle_diff, 1), -1)
 		rot_dir = sign(rot_speed)
 
 		self.robot.move(dt, 1, move_speed)
 		self.robot.rotate(dt, rot_dir, abs(rot_speed))
 
+		# Arrived at local waypoint
+		if point_in_circle(self.robot.pos_calc.to_tuple(), self.local_waypoint, self.local_waypoint_radius):
+			self.local_waypoint_reached = True
+
 		# Arrived at waypoint
 		if point_in_circle(self.robot.pos_calc.to_tuple(), self.waypoint, self.waypoint_radius):
 			self.waypoint_reached = True
 
 
-	def check_safe_path(self, t):
+	def check_safe_path(self):
 		"""Construct a Voronoi diagram to check if the path is safe
 
 		Args:
 			t (float): Current time
 		"""
-		# If not enough time pass
-		if t < self.last_time_check_for_new_path + 1 / self.freq_check_for_new_path:
-			return
+		# # If not enough time pass
+		# if t < self.last_time_check_for_new_path + 1 / self.freq_check_for_new_path:
+		# 	return
 
 		idx, idy = self.robot.live_grid_map.coord_to_ids(self.robot.pos_calc.to_tuple())
 		range_ids = int(self.range_safe_path_computer/self.robot.live_grid_map.size)
@@ -86,7 +100,22 @@ class Controller:
 						points.append(middle_point(rect[0:2], rect[2:4]))
 		
 		self.build_voronoi_diagram(points)
-		self.last_time_check_for_new_path = t
+
+
+		next_point = self.thinned_voronoi_polygon[-1]
+		# for i in range(len(self.thinned_voronoi_polygon)):
+		# 	p1 = self.thinned_voronoi_polygon[i-1]
+		# 	p2 = self.thinned_voronoi_polygon[i]
+		# 	p_inter = segment_intersection(p1, p2, self.robot.pos_calc.to_tuple(), self.waypoint)
+		# 	if p_inter:
+		# 		next_point = p_inter
+		# 		break
+		
+
+		self.local_waypoints.append(next_point)
+
+
+		# self.last_time_check_for_new_path = t
 
 
 	def build_voronoi_diagram(self, points):

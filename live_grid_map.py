@@ -1,5 +1,7 @@
 from util import *
 import numpy as np
+import cv2
+from PIL import Image
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -68,6 +70,8 @@ class Live_grid_map():
 
 			p1 = Vector2(point[0], point[1])
 			self.fill_subdivision(p1)
+
+		# self.find_close_contour()
 	
 
 	def fill_subdivision(self, p1):
@@ -78,8 +82,8 @@ class Live_grid_map():
 
 		p1_ids = self.vec_to_ids(p1)
 		p2_ids = self.vec_to_ids(p2)
-		for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1]) + 1):
-			for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0]) + 1):
+		for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1])):
+			for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0])):
 				rect = self.ids_to_rect(j, i)
 				# If the second point is in the box
 				if p2.x > min(rect[0], rect[2]) - error_offset and p2.x < max(rect[0], rect[2]) + error_offset:
@@ -92,6 +96,22 @@ class Live_grid_map():
 				if is_in_rect:
 					if self.map[i, j] <= 0.2:
 						self.map[i, j] = -1
+
+	def find_close_contour(self):
+		...
+		# cv2.imwrite("coucou.png", (self.map+1)*120)
+		# img_color = cv2.imread("coucou.png")
+		# img_grey = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
+		# img = cv2.threshold(img_grey, 150, 255, cv2.THRESH_BINARY)[1]  # ensure binary
+
+		# contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		# superficie = [cv2.contourArea(cnt) for cnt in contours if cv2.contourArea(cnt) > (self.robot.radius+1)**2]
+		# for i in range(len(contours)):
+		# 	cv2.drawContours(img_color, contours, i, (0, i/len(contours) * 125 + 125, 0), 1) 
+		# if len(superficie) == 2:
+		# 	print(superficie)
+		# cv2.imwrite("tresh.png", img_color)
+		# print("Number of contours: " + str(len(superficie)))
 
 
 	def draw(self, window):
