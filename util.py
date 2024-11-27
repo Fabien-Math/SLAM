@@ -1,6 +1,7 @@
 from math import sqrt, acos, atan2, pi, sqrt
 
 import pygame
+import numpy as np
 
 ### CLASSES
 
@@ -491,6 +492,12 @@ def convex_hull(points:list):
         if p == l:
             break
     return hull
+
+### DISTRIBUTION
+
+def normal_distribution(mean, covariance):
+	return np.random.multivariate_normal(mean, covariance)
+
 
 
 ### DISPLAY

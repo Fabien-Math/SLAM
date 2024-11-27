@@ -78,8 +78,8 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	window.fill((150, 150, 150))
 
 	if toggle_draw_live_map:
-		beacon.live_grid_map.draw(window)
-		# beacon.draw_dot_map(window)
+		# beacon.live_grid_map.draw(window)
+		beacon.draw_dot_map(window)
 	if toggle_draw_map:
 		map.draw_map(window)
 	
@@ -122,10 +122,10 @@ def main():
 
 
 	### ROBOT INITIALISATION
-	# beacon = BeaconRobot((140, 555), 50, 1000, 100, 25, 100)
+	# beacon = BeaconRobot((1130, 618), 50, 1000, 100, 25, 100)
 	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 100)
 	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=5, max_dist=200)
+	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)
 	beacon.equip_controller(check_safe_path_frequency=10, mode=0)
 
@@ -196,7 +196,7 @@ def main():
 		beacon.scan_environment(t, map, window)
 		beacon.compute_pos_calc(t)
 		beacon.compute_robot_collision(map, window)
-
+		beacon.live_grid_map.update_robot_path()
 		
 
 		# DRAW THE SCENE

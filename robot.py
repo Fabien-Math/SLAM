@@ -5,6 +5,7 @@ from lidar import LIDAR
 from accelerometer import Accmeter
 from live_grid_map import Live_grid_map
 from controller import Controller
+from map import Map
 
 import pygame
 
@@ -140,7 +141,7 @@ class BeaconRobot:
 	
 
 
-	def scan_environment(self, time, map, window):
+	def scan_environment(self, time, map:Map, window):
 		"""Request a scanning of the environment to the lidar
 
 		Args:
@@ -155,23 +156,32 @@ class BeaconRobot:
 			print("No lidar equiped !")
 			return False
 		
-		points = self.lidar.scan_environment(time, map, self.radius, window)
+		lidar_data = self.lidar.scan_environment(time, map, window)
+		
+		if lidar_data is None:
+			return None
 		
 		# Update live grid map with all known and unknown point
 		# if no_inter_point is not None:
 		# 	self.live_grid_map.update(points, self.lidar.max_dist)
 
-		# Compute position with lidar data
-		if points is not None:
-			# self.controller.find_new_direction(points, window)
-			self.live_grid_map.update(points, self.lidar.max_dist)
-			self.map += points
-			if len(points) > 5:
-				pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
+		# Compute position of point given the lidar data
+		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
 
-				if pos_lidar is not None:
-					self.pos_calc_lidar = pos_lidar
-					self.pos_calc = self.pos_calc_lidar.copy()
+		# self.controller.find_new_direction(points, window)
+		self.live_grid_map.update(points, self.lidar.max_dist)
+		self.map += points
+		if len(points) > 5:
+			pos_lidar = self.lidar.correct_pos_with_lidar(points, window)
+
+			for p in points:
+				pygame.draw.line(window, (255, 0, 0), self.pos_calc.to_tuple(), p, 2)
+			pygame.display.update()
+			pygame.time.delay(100)
+
+			if pos_lidar is not None:
+				self.pos_calc_lidar = pos_lidar
+				self.pos_calc = self.pos_calc_lidar.copy()
 			
 
 	### EQUIP EQUIPEMENT
@@ -202,7 +212,7 @@ class BeaconRobot:
 		
 	### ROBOT COLLISION
 
-	def compute_robot_collision(self, map, window):
+	def compute_robot_collision(self, map:Map, window):
 		"""Compute collision between the robot and walls
 		"""
 		idx, idy = map.subdiv_coord_to_ids(self.pos.to_tuple())
@@ -210,9 +220,13 @@ class BeaconRobot:
 		if map.subdivision is None:
 			return None
 		
+		nx, ny = map.subdiv_number
 
 		for idxs in range(idx-1, idx+2):
 			for idys in range(idy-1, idy+2):
+				if idxs > nx - 1 or idxs < 0 or idys > ny - 1 or idys < 0:
+					continue
+				
 				map_subdiv = map.subdivision[idys][idxs]
 				if map_subdiv != []:
 					walls = [map.walls[i] for i in map_subdiv]
@@ -256,6 +270,6 @@ class BeaconRobot:
 			window (surface): Surface on which to draw
 		"""
 		for dot in self.map:
-			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), self.radius)
+			pygame.draw.circle(window, (255, 255, 255), (dot[0], dot[1]), 1)
 
 

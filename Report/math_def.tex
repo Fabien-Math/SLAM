@@ -50,5 +50,26 @@ On défini le champ de vision du robot tel que:
 
 Autrement dis, $V(t)$ est l'ensemble des points de $\Omega$ présents dans un disque de rayon $R_{max}$ et situé entre le robot et la plus proche intersection à un mur 
 
+On construit maintenant la fonctionnelle que l'on cherchera plus tard à optimiser, celle-ci est relative au déplacement du robot.
+
+
+On défini $\mathit{KM}$ (\textit{Known Map}) l'espace de la map connu par le robot et $\mathit{EM}$ (\textit{Explorable Map}) la partie de $\Omega$ explorable par le robot.
+\begin{equation}
+    \displaystyle
+    J(\mathbf{X}(t)) = \int_{0}^{T} | \mathbf{\dot{X}}(t) | dt
+\end{equation}
+
+$J$ est une fonctionnelle fonction de la position initiale du robot, elle donne la longeur du chamin parcourue par le robot avant que $t = T$.
+
+$T$ étant l'instant à partir du quel la map est explorée au maximum des capacités du robot, c'est à dire : $KM = EM$.
+
+Pour savoir si $KM = EM$, on calcul les contours du domaine connu, si tous les contours sont fermés, alors $KM \subset EM$, si de plus les mesures de $KM$ et de $EM$, à savoir leur surface, sont égales alors, on peut raisonnablement dire que $KM = EM$.
+
+
+Pour plus de simplicité lors de l'étude de la fonctionnelle, on la modifie légerement.
+\begin{equation}
+    \displaystyle
+    J(\mathbf{X}(t)) = \frac{1}{2} \int_{0}^{T} \mathbf{\dot{X}}(t)^{2} dt
+\end{equation}
 
 \end{document}

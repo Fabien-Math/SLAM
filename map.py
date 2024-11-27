@@ -47,7 +47,7 @@ class Map:
 			contour[1].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*sin(pi/3)))
 			self.walls[i] = (Wall(contour[0], contour[1], 2))
 
-		safe_offset = 1
+		safe_offset = 5
 		# Top left
 		p1 = Vector2(self.map_offset[0] + safe_offset, self.map_offset[1] + safe_offset)
 		# Bottom left
@@ -94,8 +94,8 @@ class Map:
 						self.subdivision[i][j].append(k)
 
 	def draw_subdivision(self, window):
-		dx = self.subdiv_size[0]
-		dy = self.subdiv_size[1]
+		# dx = self.subdiv_size[0]
+		# dy = self.subdiv_size[1]
 
 		for i, line in enumerate(self.subdivision):
 			for j, walls in enumerate(line):
@@ -140,7 +140,7 @@ class Map:
 		idx = (pos[0] - self.map_offset[0]) * self.subdiv_number[0] / self.map_size[0]
 		idy = (pos[1] - self.map_offset[1]) * self.subdiv_number[1] / self.map_size[1]
 
-		return min(max(0, int(idx)), self.subdiv_number[0]-1), min(max(0, int(idy)), self.subdiv_number[1]-1)
+		return int(idx), int(idy)
 
 	def subdiv_coord_to_ids_float(self, pos:tuple):
 		"""
