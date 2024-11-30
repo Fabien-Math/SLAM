@@ -53,7 +53,7 @@ class Live_grid_map():
 			self.map[idy, idx] = -2
 	
 	
-	def update(self, points, max_lidar_distance):
+	def update(self, points, max_lidar_distance, window):
 		"""Update the live grid of the robot
 
 		Args:
@@ -63,41 +63,89 @@ class Live_grid_map():
 		if points is None:
 			return
 		
+		new_cpt = 0
+
 		# Add lidar points pos
 		for point in points:
 			idx, idy = self.coord_to_ids(point)
 			# If ids are in the range of the live map
-			if 0 < idx < self.list_size and 0 < idy < self.list_size:
-				self.map[idy, idx] = max(self.map[idy, idx], 1 - distance(self.robot.pos_calc, point)/max_lidar_distance)
+			if distance(self.robot.pos_calc, point) <= 1.5*max_lidar_distance:
+				if 0 < idx < self.list_size and 0 < idy < self.list_size:
+					self.map[idy, idx] = max(self.map[idy, idx], 1 - distance(self.robot.pos_calc, point)/max_lidar_distance)
 
-			# p1 = Vector2(point[0], point[1])
-			# self.fill_subdivision(p1)
+				p1 = (point[0], point[1])
+				new_cpt += self.fill_subdivision(p1, window)
+			else:
+				p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
+				new_cpt += self.fill_subdivision(p1, window)
+		
+		print(new_cpt)
 
 		# self.find_close_contour()
 	
 
-	def fill_subdivision(self, p1):
+	def fill_subdivision(self, p1, window):
 		# Initialisation of subdivision list
-		error_offset = 1e-6
-		p2 = self.robot.pos_calc
-		line = compute_line(p1, p2)
+		robot_pos = self.robot.pos_calc.to_tuple()
+		line = compute_line_tuple(p1, robot_pos)
 
-		p1_ids = self.vec_to_ids(p1)
-		p2_ids = self.vec_to_ids(p2)
-		for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1])):
-			for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0])):
-				rect = self.ids_to_rect(j, i)
-				# If the second point is in the box
-				if p2.x > min(rect[0], rect[2]) - error_offset and p2.x < max(rect[0], rect[2]) + error_offset:
-					if p2.y > min(rect[1], rect[3]) - error_offset and p2.y < max(rect[1], rect[3]) + error_offset:
-						if self.map[i, j] <= 0.2:
-							self.map[i, j] = -1
+		new_cpt = 0
+
+		p1_ids = self.coord_to_ids(p1)
+		p2_ids = self.coord_to_ids(robot_pos)
+
+		ids_line = move_on_line(p2_ids, p1_ids, p2_ids, p1_ids)
+		for ids in ids_line:
+			j, i = ids
+			rect = self.ids_to_rect(*ids)
+			is_in_rect = compute_segment_rect_intersection_tuple(line, p1, robot_pos, rect)
+
+			# If the second point is in the box
+			if is_in_rect:
+				# pygame.draw.circle(window, (0, 255, 0), is_in_rect, 1)
+				# pygame.draw.circle(window, (0, 0, 255), p1.to_tuple(), 2)
+				# pygame.display.update()
+				
+				# pygame.time.delay(10)
+				# If the distance between the robot and the rect wall is lower than the distince between the robot and the obstacle
+				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1):
+					if self.map[i, j] <= 0:
+						if self.map[i, j] <= -0.5:
 							continue
-				# If the line touches another box
-				is_in_rect = compute_segment_rect_intersection(line, p1, p2, rect)
-				if is_in_rect:
-					if self.map[i, j] <= 0.2:
+						# Add known square cpt (allow to compute the discovery)
+						new_cpt += 1
 						self.map[i, j] = -1
+						continue
+
+		# error_offset = 1e-6
+		# for i in range(min(p1_ids[1], p2_ids[1]), max(p1_ids[1], p2_ids[1])):
+		# 	for j in range(min(p1_ids[0], p2_ids[0]), max(p1_ids[0], p2_ids[0])):
+		# 		rect = self.ids_to_rect(j, i)
+		# 		# If the second point is in the box
+		# 		if p2.x > min(rect[0], rect[2]) - error_offset and p2.x < max(rect[0], rect[2]) + error_offset:
+		# 			if p2.y > min(rect[1], rect[3]) - error_offset and p2.y < max(rect[1], rect[3]) + error_offset:
+		# 				if self.map[i, j] <= 0.2:
+		# 					if self.map[i, j] <= -0.5:
+		# 						continue
+		# 					# Add known square cpt (allow to compute the discovery)
+		# 					new_cpt += 1
+		# 					self.map[i, j] = -1
+		# 					continue
+
+		# 		# If the line touches another box
+		# 		is_in_rect = compute_segment_rect_intersection(line, p1, p2, rect)
+		# 		if is_in_rect:
+		# 			if self.map[i, j] <= 0.2:
+		# 				if self.map[i, j] <= -0.5:
+		# 					continue
+		# 				# Add known square cpt (allow to compute the discovery)
+		# 				new_cpt += 1
+		# 				self.map[i, j] = -1
+		# 				continue
+		
+		return new_cpt
+
+
 
 	def find_close_contour(self):
 		cv2.imwrite("coucou.png", (self.map+1)*120)

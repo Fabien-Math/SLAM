@@ -78,7 +78,7 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	window.fill((150, 150, 150))
 
 	if toggle_draw_live_map:
-		# beacon.live_grid_map.draw(window)
+		beacon.live_grid_map.draw(window)
 		beacon.draw_dot_map(window)
 	if toggle_draw_map:
 		map.draw_map(window)
@@ -118,12 +118,12 @@ def main():
 	# Number of subdivisions in the map, used to list the lines
 	subdiv_number = (25, 25)
 	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, 40, 40)
+	map = Map(map_size, map_offset, subdiv_number, 40, int(np.sin(np.pi/3) * 40))
 
 
 	### ROBOT INITIALISATION
-	# beacon = BeaconRobot((1130, 618), 50, 1000, 100, 25, 100)
-	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 100)
+	beacon = BeaconRobot((216.90, 440.40), 50, 1000, 100, 25, 100)
+	# beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 150)
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=200)
 	beacon.equip_accmeter(acc_prec=5, ang_acc_prec=0.2)

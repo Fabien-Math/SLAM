@@ -157,6 +157,59 @@ def compute_parallel_line(line, dist) -> list:
 	return a, b, c + dist * (a ** 2 + b ** 2) ** 0.5
 
 
+def move_on_line(ids1, ids2, ids1_float, ids2_float):
+    idx, idy = ids1
+    idx_float, idy_float = ids1_float
+    
+    a, b, _ = compute_line_tuple(ids1_float, ids2_float)
+    if b:
+        m = -a / b
+    
+    ids = []
+
+    if ids1[0] == ids2[0]:  # Vertical line
+        direction = 1 * (ids1[1] < ids2[1]) - 1 * (ids1[1] >= ids2[1])
+        for idy in range(ids1[1], ids2[1] + direction, direction):
+            ids.append((idx, idy))
+        return ids
+
+    if ids1[1] == ids2[1]:  # Horizontal line
+        direction = 1 * (ids1[0] < ids2[0]) - 1 * (ids1[0] >= ids2[0])
+        for idx in range(ids1[0], ids2[0] + direction, direction):
+            ids.append((idx, idy))
+        return ids
+
+    direction = np.sign(ids1[0] - ids2[0])
+
+    n = 0
+    if abs(m) < 1:
+        while n <= abs(ids1[0] - ids2[0]):
+            ids.append((idx, idy - 1))
+            ids.append((idx, idy + 1))
+            ids.append((idx, idy))
+            
+            idx_float -= 1 * direction
+            idy_float -= m * direction
+
+            idx = int(idx_float)
+            idy = int(idy_float)
+            n += 1
+    else:
+        while n <= abs(ids1[1] - ids2[1]):
+            ids.append((idx + 1, idy))
+            ids.append((idx - 1, idy))
+            ids.append((idx, idy))
+
+            idx_float -= abs(1 / m) * direction
+            idy_float -= np.sign(m) * direction
+
+            idx = int(idx_float)
+            idy = int(idy_float)
+
+            n += 1
+
+    return ids
+
 ### MATHS
 
 def norm(u:tuple):
@@ -280,13 +333,13 @@ def find_circle_intersection(p1, r1, p2, r2):
 	"""
 	d = distance_tuple(p1, p2)
 	if d >= (r1 + r2):
-		print("No circle intersection found ! Returned None")
+		print("No circle intersection found (d >= (r1 + r2)) ! Returned None")
 		return None
 	if d < abs(r1 - r2):
-		print("No circle intersection found ! Returned None")
+		print("No circle intersection found (d < abs(r1 - r2)) ! Returned None")
 		return None
-	if abs(r1 - r2) < 1e-6:
-		print("No circle intersection found ! Returned None")
+	if d < 1e-6 and abs(r1 - r2) < 1e-6:
+		print("No circle intersection found (abs(r1 - r2) < 1e-6) ! Returned None")
 		return None
 
 	# https://lucidar.me/fr/mathematics/how-to-calculate-the-intersection-points-of-two-circles/
@@ -334,7 +387,39 @@ def compute_segment_rect_intersection(line, line_p1, line_p2, rect):
 		if intersection is not False:
 			if point_in_box(intersection, p1, p2):
 				if point_in_box(intersection, line_p1, line_p2):
-					return True
+					return intersection
+	
+	return False
+
+
+def compute_segment_rect_intersection_tuple(line, line_p1, line_p2, rect):
+	"""Compute the intersection between two segment
+
+	Args:
+		line (tuple): Line
+		line_p1 (tuple): First point of the segment defined by the line
+		line_p2 (tuple): Second point of the segment defined by the line
+		rect (list): List of point of a rect (x1, y1, x2, y2)
+
+	Returns:
+		bool: If the two segment collide
+	"""
+	# rect = (x1, y1, x2, y2) avec p1 top-left et p2 bottom-right 
+	points = [(rect[0], rect[1], rect[0], rect[3]),
+				(rect[0], rect[3], rect[2], rect[3]),
+				(rect[2], rect[3], rect[2], rect[1]),
+				(rect[2], rect[1], rect[0], rect[1])]
+	for p1x, p1y, p2x, p2y in points:
+		p1 = (p1x, p1y)
+		p2 = (p2x, p2y)
+
+		line_rect = compute_line_tuple(p1, p2)
+		intersection = find_intersection(line, line_rect)
+
+		if intersection is not False:
+			if point_in_box_tuple(intersection, p1, p2):
+				if point_in_box_tuple(intersection, line_p1, line_p2):
+					return intersection
 	
 	return False
 
