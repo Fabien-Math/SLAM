@@ -11,7 +11,7 @@ import pygame
 
 
 class BeaconRobot:
-	def __init__(self, pos:Vector2, acc:float, rot_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
+	def __init__(self, pos:Vector2, acc:float, ang_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
 		# Position and rotation
 		self.pos = Vector2(pos[0], pos[1])
 		self.pos_calc = Vector2(pos[0], pos[1])
@@ -21,9 +21,9 @@ class BeaconRobot:
 		
 		# Acceleration and decceleration
 		self.acc = acc
-		self.rot_acc = rot_acc
+		self.ang_acc = ang_acc
 		self.acc_calc = 0
-		self.rot_acc_calc = 0
+		self.ang_acc_calc = 0
 		self.decc = 100
 		self.rot_decc = 1000
 
@@ -88,7 +88,7 @@ class BeaconRobot:
 		self.pos.add(x, y)
 
 
-	def rotate(self, dt:float, direction:float, coef_max_rot_speed:float = 1, coef_max_rot_acc:float = 1):
+	def rotate(self, dt:float, direction:float, coef_max_rot_speed:float = 1, coef_max_ang_acc:float = 1):
 		"""Rotate the robot
 
 		Args:
@@ -100,14 +100,14 @@ class BeaconRobot:
 			max_rot_speed = 0
 		else:
 			max_rot_speed = coef_max_rot_speed * self.max_rot_speed
-		rot_acc = coef_max_rot_acc * self.rot_acc
-		rot_decc = coef_max_rot_acc * self.rot_decc
+		ang_acc = coef_max_ang_acc * self.ang_acc
+		rot_decc = coef_max_ang_acc * self.rot_decc
 
 		abs_rot_speed = abs(self.rot_speed)
 
 		# Accelration
 		if abs_rot_speed < max_rot_speed:
-			self.rot_speed = direction * min(abs_rot_speed + rot_acc*dt, max_rot_speed)
+			self.rot_speed = direction * min(abs_rot_speed + ang_acc*dt, max_rot_speed)
 		
 		# Decceleration
 		if abs_rot_speed >= max_rot_speed:
@@ -130,16 +130,17 @@ class BeaconRobot:
 			return False
 		
 		last_time_scan = self.accmeter.last_scan_time
-		self.acc_calc, self.rot_acc_calc = self.accmeter.get_acc(self.speed, self.rot_speed, t)
+		dt = t - last_time_scan
+		self.acc_calc, self.ang_acc_calc = self.accmeter.get_acc(self.speed, self.rot_speed, t)
 
-		self.speed_calc += self.acc_calc * (t - last_time_scan)
+		self.speed_calc += self.acc_calc * dt
 
-		self.rot_speed_calc += self.rot_acc_calc * (t - last_time_scan)
-		self.rot_calc += self.rot_speed_calc * (t - last_time_scan)
+		self.rot_speed_calc += self.ang_acc_calc * dt
+		self.rot_calc += self.rot_speed_calc * dt
 		self.rot_calc %= 360
 
-		x = self.speed_calc * (t - last_time_scan) * cos(self.rot_calc * pi / 180)
-		y = self.speed_calc * (t - last_time_scan) * sin(self.rot_calc * pi / 180)
+		x = self.speed_calc * dt * cos(self.rot_calc * pi / 180)
+		y = self.speed_calc * dt * sin(self.rot_calc * pi / 180)
 		self.pos_calc.add(x, y)
 
 	
@@ -172,7 +173,7 @@ class BeaconRobot:
 		# Compute position of point given the lidar data
 		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
 
-		# self.controller.find_new_direction(points, window)
+		self.controller.find_new_direction(lidar_data, self.lidar.pos, self.lidar.max_dist, self.live_grid_map, window)
 		self.live_grid_map.update(points, self.lidar.max_dist, window)
 		# self.map += [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
 		pos_lidar = self.correct_pos_with_lidar(points, window)
@@ -214,13 +215,13 @@ class BeaconRobot:
 
 
 	### EQUIP EQUIPEMENT
-	def equip_accmeter(self, acc_prec:float, ang_acc_prec:float):
+	def equip_accmeter(self, precision:tuple, time:float):
 		"""Equip accelerometer to the robot
 
 		Args:
 			prec (float): Precision of the accelerometer in % (0 to 100)
 		"""
-		self.accmeter = Accmeter(acc_prec, ang_acc_prec)
+		self.accmeter = Accmeter(precision, time)
 
 
 	def equip_lidar(self, fov:float, freq:float, res:float, prec:float, max_dist:float):
