@@ -1,4 +1,4 @@
-from math import pi, sin, cos
+from math import pi, sin, cos, atan2
 from random import randint
 from util import *
 import pygame		
@@ -120,65 +120,41 @@ class Controller:
 
 		# self.last_time_check_for_new_path = t
 
-	def find_new_direction(self, lidar_data, lidar_pos, max_lidar_distance, live_grid_map, window):
+	def find_new_direction(self, live_grid_map:list, window):
+		"""Find the next location to be explored
+
+		Args:
+			live_grid_map (list): Live grid map of the robot
+			window (surface): Surface on which to draw
+		"""
 
 		if not self.local_waypoint_reached:
 			return
-
-		i = 0
-		n = len(lidar_data)
-		points = []
-		
-		dist = lidar_data[i][0]
-		crit_dist = 1.5 * max_lidar_distance
-
-		roll = False
-		if dist > crit_dist:
-			roll = True
-
-		while i < n+1 or dist > crit_dist:
-			i += 1
-			dist = lidar_data[i % n][0]
-			dist_next = lidar_data[(i + 1) % n][0]
-			if dist > crit_dist and dist_next < crit_dist:
-				ang = lidar_data[(i + 1) % n][1]
-				points.append((lidar_pos.x + dist_next*cos(ang), lidar_pos.y + dist_next*sin(ang)))
-			elif dist < crit_dist and dist_next > crit_dist:
-				ang = lidar_data[i % n][1]
-				points.append((lidar_pos.x + dist*cos(ang), lidar_pos.y + dist*sin(ang)))
-			
-		if roll:
-			p = points.pop(0)
-			points.append(p)
-		
-		n_mid = len(points)//2
-		mid_points = [0]*n_mid
-		for i in range(n_mid):
-			mid_points[i] = middle_point(points[2*i], points[2*i+1])
 		
 		open_boundaries = self.robot.live_grid_map.find_frontiers()
+
 		if len(open_boundaries):
+			# Connections tables of all frontiers pixels
 			connection_table = make_connection_table(open_boundaries)
+			# Connected lines of indices of frontiers pixels
 			c_lines_ids = connect_lines_ids(connection_table, open_boundaries)
-			c_lines = connect_lines(c_lines_ids, open_boundaries)
+			# Connected lines of frontiers pixels
+			c_lines = convert_lines_ids_to_pixels(c_lines_ids, open_boundaries)
+			# Order pixel lines
 			ordered_lines = order_lines(c_lines, c_lines)
+
+			# If no line, then the map is entierly explored
 			if len(ordered_lines) == 0:
-				print("Goal achieved !")
-				print("Nothing more to explore :)")
+				print("Goal achieved ! \nNothing more to explore :)")
 				self.mode = 100
 				return
+			
+			center_frontiers = [line[len(line)//2] for line in ordered_lines]
 
-			n_r = np.random.randint(0, len(ordered_lines))
-			idy, idx = ordered_lines[n_r][len(ordered_lines[n_r])//2]
+			idy, idx = find_best_point_angle(self.robot, center_frontiers, window)
+			
 			pos = live_grid_map.ids_to_rect(idx, idy)[0:2]
 			self.local_waypoints.append(pos)
-
-
-
-		
-		# if len(self.local_waypoints) == 0:
-		# 	if len(open_boundaries):
-		
 
 
 	def build_voronoi_diagram(self, points):
@@ -277,7 +253,17 @@ class Controller:
 
 
 
-def dfs(start_id, idss, visited):
+def dfs(start_id, ids, visited):
+	"""Depth-First Search algorithme to go through all connected ids
+
+	Args:
+		start_id (int): Start index for going through the line
+		ids (list): List of indices
+		visited (list): List of visited nodes
+
+	Returns:
+		list: List of connected nodes
+	"""
 	stack = [start_id]
 	nodes = []
 	while len(stack):
@@ -286,19 +272,30 @@ def dfs(start_id, idss, visited):
 			visited[node] = True
 			nodes.append(node)
 			
-			for n_node in idss[node]:
+			for n_node in ids[node]:
 				if not visited[n_node]:
 					stack.append(n_node)
 	return nodes
 
 
 def make_connection_table(ids:list):
+	"""Given a list of ids, find all the connection between ids
+
+	Args:
+		ids (list): List of index [[idx0, idy0], [idx1, idy1], ...]
+
+	Returns:
+		list: List of connection between nodes
+	"""
 	connection_table = [[] for _ in range(len(ids))]
+
 	for i in range(len(ids)):
 		for j in range(i+1, len(ids)):
+			# Horizontal connections
 			if abs(ids[i][0] - ids[j][0]) < 2 and ids[i][1] == ids[j][1]:
 				connection_table[i].append(j)
 				connection_table[j].append(i)
+			# Vertical connections
 			if abs(ids[i][1] - ids[j][1]) < 2 and ids[i][0] == ids[j][0]:
 				connection_table[i].append(j)
 				connection_table[j].append(i)
@@ -308,12 +305,13 @@ def make_connection_table(ids:list):
 
 
 def connect_lines_ids(connection_table:list, ids:list):
-	"""Take a list of 2D indices and connect them into separate list
+	"""Take a list of 2D indices (could represent pixels) and connect them into separate list representing connected lines
 
 	Args:
-		ids (list): List of 2D ids to sort
+		ids (list): List of list of indices index (pixel) for each line
 	"""	
 	
+	# Keep track of visited nodes
 	visited = [False] * len(ids)
 
 	c_ids = []
@@ -323,11 +321,11 @@ def connect_lines_ids(connection_table:list, ids:list):
 	
 	return c_ids
 
-def connect_lines(c_ids:list, ids:list):
-	"""Take a list of 2D indices and connect them into separate list
+def convert_lines_ids_to_pixels(c_ids:list, ids:list):
+	"""Take a list of indices (could represent index of pixels) and convert to 2D ids (pixel positions)
 
 	Args:
-		ids (list): List of 2D ids to sort
+		ids (list): List of list of 2D ids (pixel positions) 
 	"""	
 	c_lines = [[[] for _ in range(len(c))] for c in c_ids]
 	for i in range(len(c_ids)):
@@ -339,16 +337,16 @@ def connect_lines(c_ids:list, ids:list):
 
 
 def order_lines(connected_lines:list, ids_lines:list):
-	"""Take a list of connected lines and get the max / min indice along x and y
+	"""Take a list of connected lines and order indices (pixels) from line start to line end
 
 	Args:
-		connected_lines (list): List of connected lines of indices
+		connected_lines (list): List of connected lines of ordered indices
 	"""
 
 	ordonned_lines = []
 	for line, ids_line in zip(connected_lines, ids_lines):
 		c_table = make_connection_table(line)
-		if len(c_table) < 5:
+		if len(c_table) < 4:
 			continue
 
 		start_ids = []
@@ -373,10 +371,26 @@ def order_lines(connected_lines:list, ids_lines:list):
 	return ordonned_lines
 
 
-def compute_ids_center(connected_line, extremum_connected_line):
-	"""Compute the mid point of a line defined by ids
+def find_best_point_angle(robot, center_frontier_points:list, window):
+	robot_ids_pos = robot.live_grid_map.coord_to_ids(robot.pos_calc.to_tuple())
+	robot_idx_pos, robot_idy_pos = robot_ids_pos
+	best_point = center_frontier_points[0]
+	ang_min = 1000
 
-	Args:
-		connected_line (list): Connected line
-		extremum_connected_lines (_type_): Extremum of the connected line
-	"""
+
+	for point in center_frontier_points:
+		idx, idy = point[1], point[0]
+		
+		# In the reference of the robot
+		didx, didy = (idx - robot_idx_pos, idy - robot_idy_pos)
+		# p1 must be of form (-y, x) like point is
+		robot_rot_point_angle = atan2(didy, didx) * 180 / pi
+		
+		ang = abs(robot_rot_point_angle - robot.rot_calc)%360
+		ang = ang * (ang < 180) + (360 - ang) * (ang >= 180)
+		
+		if ang < ang_min:
+			ang_min = ang
+			best_point = point
+	
+	return best_point

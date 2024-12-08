@@ -1,4 +1,4 @@
-from math import sqrt, acos, atan2, pi, sqrt
+from math import sqrt, acos, atan2, atan, pi, sqrt
 
 import pygame
 import numpy as np
@@ -80,8 +80,11 @@ def get_angle(p1:Vector2, p2:Vector2, p3:Vector2):
 
 	return 0
 
+def get_angle_tuple_deg(p : tuple):
+	ang = atan2(p[1], p[0]) * 180 / pi
+	return ang + (360)*(ang < 0)
 
-def get_angle_tuple_deg(p1:tuple, p2:tuple, p3:tuple):
+def get_angle_3tuple_deg(p1:tuple, p2:tuple, p3:tuple):
 	"""Compute the angle with p2 as center
 	"""
 	dx1 = p2[0] - p1[0]
@@ -99,6 +102,7 @@ def get_angle_tuple_deg(p1:tuple, p2:tuple, p3:tuple):
 		ang2 += 2 * pi
 
 	return abs(ang1 - ang2) * 180 / pi
+
 
 
 def get_absolute_angle(p1:tuple, p2:tuple):

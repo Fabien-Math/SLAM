@@ -135,7 +135,7 @@ def main():
 	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 150)
 	# beacon = BeaconRobot((216.90, 440.40), 50, 1000, 100, 25, 150)
 	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=200)
+	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
 	beacon.equip_accmeter(precision=(0.0005, 0.00002), time=t)
 	beacon.equip_controller(check_safe_path_frequency=10, mode=1)
 

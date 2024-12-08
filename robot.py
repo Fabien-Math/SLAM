@@ -173,7 +173,7 @@ class BeaconRobot:
 		# Compute position of point given the lidar data
 		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
 
-		self.controller.find_new_direction(lidar_data, self.lidar.pos, self.lidar.max_dist, self.live_grid_map, window)
+		self.controller.find_new_direction(self.live_grid_map, window)
 		self.live_grid_map.update(points, self.lidar.max_dist, window)
 		# self.map += [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
 		pos_lidar = self.correct_pos_with_lidar(points, window)

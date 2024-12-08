@@ -47,6 +47,22 @@ class Live_grid_map():
 
 		return p1x, p1y, p2x, p2y
 	
+	def ids_to_center(self, idx, idy):
+		"""Give the subdiv rectangle coordinante where the point is
+
+		Returns:
+			rect (tuple): (x1, y1, x2, y2) where p1 is top-left and p2 is bottom-right
+		"""
+		offset_id = self.list_size//2
+		px, py = 0, 0
+
+		if 0 <= idx < self.list_size:
+			px = (idx + 0.5 - offset_id) * self.size + self.centre.x
+		if 0 <= idy < self.list_size:
+			py = (idy + 0.5 - offset_id) * self.size + self.centre.y
+
+		return px, py
+	
 	def update_robot_path(self):
 		# Add robot pos
 		idx, idy = self.vec_to_ids(self.robot.pos_calc)
@@ -149,6 +165,8 @@ class Live_grid_map():
 		img_dilation = cv2.dilate(red_contours, kernel, iterations=1)
 
 		sum_img = img_dilation + all_contours
+
+		cv2.imwrite("frontiers.png", sum_img)
 
 		coords = np.column_stack(np.where(sum_img < 1))
 		return coords
