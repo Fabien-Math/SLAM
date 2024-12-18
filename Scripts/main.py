@@ -91,9 +91,10 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	
 
 	if beacon.controller.mode:
-		beacon.controller.draw_voronoi_diagram(window)
 		if beacon.controller.local_waypoint is not None:
 			pygame.draw.circle(window, (255, 0, 0), beacon.controller.local_waypoint, beacon.controller.waypoint_radius)
+		if beacon.controller.waypoint is not None:
+			pygame.draw.circle(window, (255, 0, 0), beacon.controller.waypoint, beacon.controller.waypoint_radius)
 
 	# Draw the robot
 	beacon.draw(window)
@@ -114,7 +115,7 @@ def main():
 	### TIME INIT
 	real_time = time.time()
 	t = 0
-	dt = 1e-2
+	dt = 1e-3
 
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)

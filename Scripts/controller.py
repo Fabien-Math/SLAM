@@ -1,9 +1,6 @@
 from math import pi, sin, cos, atan2
-from random import randint
 from util import *
-import pygame		
-import cv2
-from test_astar import a_star
+from voronoi import build_voronoi_diagram, draw_voronoi_diagram, draw_polygon
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -26,7 +23,7 @@ class Controller:
 		self.local_waypoint = None
 		self.local_waypoint_reached = True
 
-		self.range_safe_path_computer = 1000	# Range of the robot to find the new path with the voronoi
+		self.range_safe_path_computer = 100	# Range of the robot to find the new path with the voronoi
 
 
 		self.no_safe_path_found_counter = 0
@@ -36,8 +33,6 @@ class Controller:
 		self.thinned_voronoi_polygon = None
 
 	def manage_waypoint_system(self, window):
-		live_grid_map = self.robot.live_grid_map
-
 		# Arrived at waypoint
 		if self.waypoint:
 			if point_in_circle(self.robot.pos_calc.to_tuple(), self.waypoint, self.waypoint_radius):
@@ -67,21 +62,22 @@ class Controller:
 				self.no_safe_path_found_counter += 1
 
 
-
 		if len(self.waypoints) and self.waypoint_reached:
 			self.waypoint = self.waypoints.pop(0)
 			self.waypoint_reached = False
 		
 		### MANAGE LOCAL WAYPOINT
-		if self.waypoint and not len(self.local_waypoints) and self.local_waypoint_reached:
-			# Compute safe path
-			lwps = find_safe_path(self.waypoint, live_grid_map)
-			for lwp in lwps:
-				self.local_waypoints.append(lwp)
+		
+		# if self.waypoint and not len(self.local_waypoints) and self.local_waypoint_reached:
+		# 	# Compute safe path
+		# 	lwps = find_safe_path(self.waypoint, self.robot, self.range_safe_path_computer, window)
+		# 	if lwps:
+		# 		for lwp in lwps:
+		# 			self.local_waypoints.append(lwp)
 
-		if len(self.local_waypoints) and self.local_waypoint_reached:
-			self.local_waypoint = self.local_waypoints.pop(0)
-			self.local_waypoint_reached = False
+		# if len(self.local_waypoints) and self.local_waypoint_reached:
+		# 	self.local_waypoint = self.local_waypoints.pop(0)
+		# 	self.local_waypoint_reached = False
 
 		if self.no_safe_path_found_counter > 100:
 			print("No safe path found ! Exit the simulation, the domain must be explored !")
@@ -96,9 +92,12 @@ class Controller:
 		"""
 		# Point must be safe to go
 		self.manage_waypoint_system(window)
+		
+		if self.waypoint:
+			self.local_waypoint = find_safe_path(self.waypoint, self.robot, 1, window)[0]
+		
 		if self.local_waypoint is None:
 			return
-
 		
 		# Correct angle to point to the local waypoint
 		angle_diff = get_absolute_angle(self.local_waypoint,self.robot.pos_calc.to_tuple()) * 180 / pi - self.robot.rot_calc
@@ -114,104 +113,7 @@ class Controller:
 		self.robot.move(dt, 1, move_speed)
 		self.robot.rotate(dt, rot_dir, abs(rot_speed))
 		
-				
-	def build_voronoi_diagram(self, points):
-		"""
-		Build Voronoi diagram with walls
-		
-		Args:
-			obstacles (list[tuple]): List of lidar points
-		
-		Returns:
-			list: List of centres and edges of the Voronoi diagram
-		"""
-		# Definition de la zone pour effectuer la subdivision
-		rect = (int(self.robot.pos.x - self.range_safe_path_computer), int(self.robot.pos.y - self.range_safe_path_computer), 2*self.range_safe_path_computer + 1, 2*self.range_safe_path_computer + 1)
-		subdiv = cv2.Subdiv2D(rect)
-
-		# Insertion des points dans la subdivision pour en extraire le diagram de Voronoi
-		subdiv.insert(self.robot.pos.to_tuple())
-		for idy, idx in points:
-			point = self.robot.live_grid_map.ids_to_center(idx, idy)
-			if point_in_circle(point, self.robot.pos.to_tuple(), self.range_safe_path_computer):
-				subdiv.insert(point)
-
-		# Calcul du diagramme de Voronoi
-		self.voronoi_diagram  = subdiv.getVoronoiFacetList([])	
-		self.thinned_voronoi_polygon = self.thin_polygon(self.voronoi_diagram[0][0], -self.robot.radius)
-
-
-	def thin_polygon(self, polygon, offset):
-		"""
-		Offset the polygon and make sure no point are in the safe range
-		Other way which don't care of overlap : https://stackoverflow.com/questions/68104969/offset-a-parallel-line-to-a-given-line-python/68109283#68109283
-
-		Args:
-			polygon (_type_): List of point defining the polygon
-			offset (_type_): Signed distance to offset
-		"""
-		num_points = len(polygon)
-
-		thinned_polygon = []
-		lines = [None] * num_points
-		parallel_lines = [None] * num_points
-
-		# Build lines and parallel lines
-		for i in range(num_points):
-			lines[i] = compute_line_tuple(polygon[i-1], polygon[i])
-			parallel_lines[i] = compute_parallel_line(lines[i], offset)
-
-		# Find all parallel line intersections
-		intersections = []
-		for i in range(num_points):
-			for j in range(num_points):
-				if j == i:
-					continue
-				p = find_intersection(parallel_lines[j], parallel_lines[i])
-				if p:
-					if point_in_polygon(p, polygon):
-						intersections.append(p)
-
-		# Check points to be at the right distance from the polygon walls
-		for p in intersections:
-			to_be_added = True
-			for line in lines:
-				if orthogonal_projection(p, line) < abs(offset)*0.98:
-					to_be_added = False
-					break
-				
-			if to_be_added:
-				thinned_polygon.append(p)
-		
-		return convex_hull(thinned_polygon)
-
-
-	def draw_voronoi_diagram(self, window):
-		"""Draw the Voronoi diagram on the screen
-
-		Args:
-			window (surface): Surface on which to draw
-		"""
-		if self.voronoi_diagram is None:
-			return None
-		
-		# Draw complete Voronoi diagram
-		for f in self.voronoi_diagram[0]:
-			polygon = [(float(f[i][0]), float(f[i][1])) for i in range(len(f))]
-			pygame.draw.polygon(window, (100, 255, 100), polygon, 2)
-		
-		if len(self.thinned_voronoi_polygon) < 2:
-			return
-		# Draw robot Voronoi diagram
-		robot_polygon_wrong_type = self.voronoi_diagram[0][0]
-		robot_polygon = [(float(robot_polygon_wrong_type[i][0]), float(robot_polygon_wrong_type[i][1])) for i in range(len(robot_polygon_wrong_type))]
-		pygame.draw.polygon(window, (100, 255, 100), robot_polygon, 1)
-
-		# Draw thinned robot Voronoi diagram
-		robot_polygon_thinned_wrong_type = self.thinned_voronoi_polygon
-		robot_polygon_thinned = [(float(robot_polygon_thinned_wrong_type[i][0]), float(robot_polygon_thinned_wrong_type[i][1])) for i in range(len(robot_polygon_thinned_wrong_type))]
-		pygame.draw.polygon(window, (255, 255, 100), robot_polygon_thinned, 1)
-
+	
 
 ###   WAYPOINTS   ###
 
@@ -280,7 +182,7 @@ def find_new_waypoint(robot, window):
 			break
 
 		# Convert and extract position from live grid map
-		point_id, (idy, idx) = find_best_point_angle(robot, center_frontiers, window)
+		point_id, (idy, idx) = find_best_ids_point_angle(robot, center_frontiers, window)
 		pos = live_grid_map.ids_to_rect(idx, idy)[0:2]
 		
 		safe_waypoint = is_safe_waypoint(pos, 1, live_grid_map)
@@ -294,9 +196,49 @@ def find_new_waypoint(robot, window):
 	return None
 
 
-def find_safe_path(waypoint, live_grid_map):
-	"""In process
+def find_safe_path(waypoint, robot, c_range, window):
+	"""The goal would be to develop an algorithm to avoid obstacle but guaranty that the robot go to the point
+
+	First method would be an AI
 	"""
+	if point_in_circle(waypoint, robot.pos_calc.to_tuple(), robot.lidar.max_dist):
+		return [waypoint]
+
+
+	lidar_data = robot.lidar.data
+	points = [(robot.pos_calc.x + dist/2*cos(ang), robot.pos_calc.y + dist/2*sin(ang)) for dist, ang in lidar_data if dist > 1.5 * robot.lidar.max_dist]
+
+	# for point in points:
+	# 	pygame.draw.line(window, (0, 255, 255), robot.pos_calc.to_tuple(), point, 2)
+	# 	pygame.display.update()
+	# 	pygame.time.delay(10)
+	# Variable to say if a waypoint is accessible and safe
+	safe_waypoint = False
+	n = -1
+	
+	while not safe_waypoint:
+		# Iterate in the first place
+		n += 1
+		
+		# Safe counter
+		if n > 100:
+			print("No safe path found !!")
+			break
+
+		# Convert and extract position from live grid map
+		point_id, pos = find_best_point_dist(robot, points, waypoint)
+		
+		safe_waypoint = is_safe_waypoint(pos, 1, robot.live_grid_map)
+		if safe_waypoint:
+			ids = robot.live_grid_map.coord_to_ids(pos)
+			pos = robot.live_grid_map.ids_to_center(*ids)
+			return [pos]
+				
+		points.pop(point_id)
+		if not len(points):
+			return None
+
+
 
 	return [waypoint]
 
@@ -422,7 +364,7 @@ def order_lines(connected_lines:list, ids_lines:list):
 	return ordonned_lines
 
 
-def find_best_point_angle(robot, center_frontier_points:list, window):
+def find_best_ids_point_angle(robot, center_frontier_points:list, window):
 	robot_ids_pos = robot.live_grid_map.coord_to_ids(robot.pos_calc.to_tuple())
 	robot_idx_pos, robot_idy_pos = robot_ids_pos
 	best_point_id = 0
@@ -446,3 +388,21 @@ def find_best_point_angle(robot, center_frontier_points:list, window):
 			
 	
 	return best_point_id, center_frontier_points[best_point_id]
+
+
+def find_best_point_dist(robot, points:list, waypoint):
+	best_point_id = 0
+	dist_min = 1000
+
+	robot_pos = robot.pos_calc.to_tuple()
+
+	for i, point in enumerate(points):
+		dist1 = distance_tuple(robot_pos, point)
+		dist2 = distance_tuple(waypoint, point)
+		dist = dist1 + dist2
+		
+		if dist < dist_min:
+			dist_min = dist
+			best_point_id = i
+			
+	return best_point_id, points[best_point_id]

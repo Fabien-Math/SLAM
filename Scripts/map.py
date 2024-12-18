@@ -42,6 +42,7 @@ class Map:
 	def initialize_map(self):
 		self.walls = [None for _ in range(len(self.contours) + 4)]
 
+		# Random cave map
 		for i, contour in enumerate(self.contours):
 			contour[0].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*sin(pi/3)))
 			contour[1].add(*(self.map_offset[0], self.map_offset[1] + 0.5*self.dy*sin(pi/3)))

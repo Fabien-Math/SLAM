@@ -39,7 +39,9 @@ class LIDAR:
 		# Last time the lidar scan the environment
 		self.last_scan_time = -100
 		# Position of the LIDAR
-		self.pos = Vector2(0, 0) 
+		self.pos = Vector2(0, 0)
+		# Lidar data
+		self.data = None
 
 
 	def scan_environment(self, t, map:Map, window):
@@ -99,6 +101,7 @@ class LIDAR:
 		# Update last scan time
 		self.last_scan_time = t
 
+		self.data = data
 		return data
 	
 	
