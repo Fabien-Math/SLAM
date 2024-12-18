@@ -37,7 +37,7 @@ class LIDAR:
 		self.angle = 0
 		self.nb_angle = int(360 / res) + 1 * ((360 / res)%1 >= 0.5)
 		# Last time the lidar scan the environment
-		self.last_scan_time = 0
+		self.last_scan_time = -100
 		# Position of the LIDAR
 		self.pos = Vector2(0, 0) 
 

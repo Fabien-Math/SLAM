@@ -112,8 +112,9 @@ def main():
 	pygame.init()
 
 	### TIME INIT
-	t = time.time()
-	t_old = t
+	real_time = time.time()
+	t = 0
+	dt = 1e-2
 
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)
@@ -133,11 +134,11 @@ def main():
 
 	### ROBOT INITIALISATION
 	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 150)
-	# beacon = BeaconRobot((216.90, 440.40), 50, 1000, 100, 25, 150)
+	# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
 	beacon.equip_accmeter(precision=(0.0005, 0.00002), time=t)
-	beacon.equip_controller(check_safe_path_frequency=10, mode=1)
+	beacon.equip_controller(check_safe_path_frequency=5, mode=1)
 
 	# State of the simulation
 	running = True
@@ -146,16 +147,11 @@ def main():
 	toggle_draw_live_map = True
 
 	beacon_crashed = False
-
-	# Desired FPS
-	desired_fps = 60
 	
 	# Display time
-	t_display = t
+	t_display = real_time
+	desired_fps = 20
 	while running:
-		# Time elapsed since the previous step
-		dt = t - t_old
-
 		key_pressed_is = pygame.key.get_pressed()
 		# Handle events
 		
@@ -172,20 +168,23 @@ def main():
 					beacon.controller.mode = 1 * (beacon.controller.mode == 0) + 0 * (beacon.controller.mode != 0)
 				if event.key == K_ESCAPE: 
 					running = False
-		if key_pressed_is[K_LEFT]:
-			desired_fps = max(1, desired_fps - 20*dt)
-		if key_pressed_is[K_LEFT]:
-			desired_fps = max(1, desired_fps - 20*dt)
 		if key_pressed_is[K_RIGHT]:
-			desired_fps = min(500, desired_fps + 20*dt)
+			desired_fps = min(500, desired_fps + 20*1/desired_fps)
 		if key_pressed_is[K_LEFT]:
-			desired_fps = max(1, desired_fps - 20*dt)
+			desired_fps = max(1, desired_fps - 20*1/desired_fps)
 		
+
+		### SIMULATION
+		beacon.compute_pos_calc(t)
+		beacon.scan_environment(t, map, window)
+		beacon.compute_robot_collision(map, window)
+		beacon.live_grid_map.update_robot_path()
 
 		if beacon.controller.mode:
 			# beacon.controller.check_safe_path(t)
-			beacon.controller.move_to_waypoint(dt)
+			beacon.controller.move_to_waypoint(dt, window)
 		else:
+
 			# Direction for rotation and direction
 			rotation = 0
 			direction = 0
@@ -202,16 +201,9 @@ def main():
 			beacon.move(dt, direction)
 			beacon.rotate(dt, rotation)
 		
-
-		### SIMULATION
-		beacon.compute_pos_calc(t)
-		beacon.scan_environment(t, map, window)
-		beacon.compute_robot_collision(map, window)
-		beacon.live_grid_map.update_robot_path()
-		
 		# TIME
-		t_old = t
-		t = time.time()
+		real_time = time.time()
+		t += dt
 		
 		# TIMER
 		if beacon.crashed_in_wall:
@@ -228,10 +220,13 @@ def main():
 				# running = False
 
 		# DRAW THE SCENE
-		if t - t_display > 1/desired_fps:
-			update_display(window, window_size, map, beacon, t - t_display, toggle_draw_map, toggle_draw_live_map, beacon_crashed)
-			t_display = t
 
+		if real_time - t_display > 1/desired_fps:
+			update_display(window, window_size, map, beacon, real_time - t_display, toggle_draw_map, toggle_draw_live_map, beacon_crashed)
+			t_display = real_time
+
+	print(f"Time to explore all the map : {t:.3f} s")
+	print(f"Time to explore all the map : {t//3600:g} h, {(t - t//3600)//60:g} m, {t - (t//3600)*3600 - ((t - t//3600)//60)*60:.3f} s")
 	### DEINITIALIZE PYGAME
 	pygame.quit()
 

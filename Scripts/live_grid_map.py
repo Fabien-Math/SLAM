@@ -97,11 +97,7 @@ class Live_grid_map():
 			else:
 				p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
 				new_cpt += self.fill_subdivision(p1, window)
-		
-		# print(new_cpt)
-
-		# self.find_close_contour()
-	
+			
 
 	def fill_subdivision(self, p1, window):
 		# Initialisation of subdivision list
@@ -134,39 +130,18 @@ class Live_grid_map():
 		return new_cpt
 
 
-
-	def find_close_contour(self, window):
-		cv2.imwrite("coucou.png", (self.map+1)*120)
-		img_color = cv2.imread("coucou.png")
-		img_grey = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
-		img = cv2.threshold(img_grey, 150, 255, cv2.THRESH_BINARY)[1]  # ensure binary
-		
-
-		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		superficie = [cv2.contourArea(cnt) for cnt in contours if cv2.contourArea(cnt) > (self.robot.radius+1)**2]
-		for i in range(len(contours)):
-			cv2.drawContours(img_color, contours, i, (0, i/len(contours) * 125 + 125, 0), 1) 
-		if len(superficie) == 2:
-			print(superficie)
-
-		# for contour i
-		
-
-		print("Number of contours: " + str(len(superficie)))
-
 	def find_frontiers(self):
-
 		map_image = np.array((self.map + 1)*120, dtype=np.uint8)
 		
 		red_contours = cv2.threshold(map_image, 150, 255, cv2.THRESH_BINARY)[1]  # ensure binary
-		all_contours = cv2.adaptiveThreshold(map_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,3,1)
+		all_contours = cv2.adaptiveThreshold(map_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 1)
 
 		kernel = np.ones((3, 3), np.uint8)
 		img_dilation = cv2.dilate(red_contours, kernel, iterations=1)
 
 		sum_img = img_dilation + all_contours
 
-		cv2.imwrite("frontiers.png", sum_img)
+		cv2.imwrite("Images/frontiers.png", sum_img)
 
 		coords = np.column_stack(np.where(sum_img < 1))
 		return coords
@@ -202,5 +177,18 @@ class Live_grid_map():
 				pygame.draw.rect(window, color, rect)
 			
 	def save_map_to_image(self):
-		map_image = np.array((self.map + 1)*120, dtype=np.uint8)
-		cv2.imwrite("map_explored.png", map_image)
+		def set_color(value):
+			if value == 0:
+				color = (0, 0, 0)
+			elif value == -1:
+				color = (200, 255, 70)
+			elif value == -1.01:
+				color = (180, 200, 35)
+			else:
+				gray_scale = min(255, max(0, 255 * (1 - value)))
+				color = (gray_scale//2, gray_scale//2, gray_scale)
+			return color
+				
+		map = [[set_color(value) for value in line] for line in self.map]
+		map_image = np.array(map, dtype=np.uint8)
+		cv2.imwrite("Images/map_explored.png", map_image)
