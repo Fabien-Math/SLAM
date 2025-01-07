@@ -32,7 +32,7 @@ class Controller:
 		self.voronoi_diagram = None
 		self.thinned_voronoi_polygon = None
 
-	def manage_waypoint_system(self, window):
+	def manage_waypoint_system(self):
 		# Arrived at waypoint
 		if self.waypoint:
 			if point_in_circle(self.robot.pos_calc.to_tuple(), self.waypoint, self.waypoint_radius):
@@ -47,7 +47,7 @@ class Controller:
 		### MANAGE WAYPOINT
 		if not len(self.waypoints) and self.waypoint_reached:
 			# Compute the new waypoint to go
-			wp = find_new_waypoint(self.robot, window)
+			wp = find_new_waypoint(self.robot)
 
 			# If the map is completely explored
 			if wp == 1:
@@ -84,20 +84,22 @@ class Controller:
 			exit()
 
 
-	def move_to_waypoint(self, dt, window):
+	def move_to_waypoint(self, dt):
 		"""Move to the next waypoint
 
 		Args:
 			dt (float): Time enlapsed
 		"""
 		# Point must be safe to go
-		self.manage_waypoint_system(window)
+		self.manage_waypoint_system()
 		
 		if self.waypoint:
-			self.local_waypoint = find_safe_path(self.waypoint, self.robot, 1, window)[0]
+			self.local_waypoint = find_safe_path(self.waypoint, self.robot, 1)
 		
 		if self.local_waypoint is None:
 			return
+		else:
+			self.local_waypoint = self.local_waypoint[0]
 		
 		# Correct angle to point to the local waypoint
 		angle_diff = get_absolute_angle(self.local_waypoint,self.robot.pos_calc.to_tuple()) * 180 / pi - self.robot.rot_calc
@@ -129,7 +131,7 @@ def is_safe_waypoint(pos, safe_radius, live_grid_map):
 		return True
 
 
-def find_new_waypoint(robot, window):
+def find_new_waypoint(robot):
 	"""Find the next location to be explored
 
 	Args:
@@ -170,8 +172,9 @@ def find_new_waypoint(robot, window):
 	n = -1
 
 	# Find center of edges
-	# center_frontiers = [line[(len(line)//2 + np.random.randint(0, len(line)//2))%len(line)] for line in ordered_lines]
+	# center_frontiers = [line[len(line)//2] for line in ordered_lines]
 	center_frontiers = [line[(4)%len(line)] for line in ordered_lines]
+
 
 	while not safe_waypoint:
 		# Iterate in the first place
@@ -183,7 +186,7 @@ def find_new_waypoint(robot, window):
 			break
 
 		# Convert and extract position from live grid map
-		point_id, (idy, idx) = find_best_ids_point_angle(robot, center_frontiers, window)
+		point_id, (idy, idx) = find_best_ids_point_angle(robot, center_frontiers)
 		pos = live_grid_map.ids_to_rect(idx, idy)[0:2]
 		
 		safe_waypoint = is_safe_waypoint(pos, 1, live_grid_map)
@@ -197,7 +200,7 @@ def find_new_waypoint(robot, window):
 	return None
 
 
-def find_safe_path(waypoint, robot, c_range, window):
+def find_safe_path(waypoint, robot, safe_radius):
 	"""The goal would be to develop an algorithm to avoid obstacle but guaranty that the robot go to the point
 
 	First method would be an AI
@@ -209,10 +212,6 @@ def find_safe_path(waypoint, robot, c_range, window):
 	lidar_data = robot.lidar.data
 	points = [(robot.pos_calc.x + dist/2*cos(ang), robot.pos_calc.y + dist/2*sin(ang)) for dist, ang in lidar_data if dist > 1.5 * robot.lidar.max_dist]
 
-	# for point in points:
-	# 	pygame.draw.line(window, (0, 255, 255), robot.pos_calc.to_tuple(), point, 2)
-	# 	pygame.display.update()
-	# 	pygame.time.delay(10)
 	# Variable to say if a waypoint is accessible and safe
 	safe_waypoint = False
 	n = -1
@@ -229,7 +228,7 @@ def find_safe_path(waypoint, robot, c_range, window):
 		# Convert and extract position from live grid map
 		point_id, pos = find_best_point_dist(robot, points, waypoint)
 		
-		safe_waypoint = is_safe_waypoint(pos, 1, robot.live_grid_map)
+		safe_waypoint = is_safe_waypoint(pos, safe_radius, robot.live_grid_map)
 		if safe_waypoint:
 			ids = robot.live_grid_map.coord_to_ids(pos)
 			pos = robot.live_grid_map.ids_to_center(*ids)
@@ -238,10 +237,6 @@ def find_safe_path(waypoint, robot, c_range, window):
 		points.pop(point_id)
 		if not len(points):
 			return None
-
-
-
-	return [waypoint]
 
 
 def dfs(start_id, ids, visited):
@@ -365,7 +360,7 @@ def order_lines(connected_lines:list, ids_lines:list):
 	return ordonned_lines
 
 
-def find_best_ids_point_angle(robot, center_frontier_points:list, window):
+def find_best_ids_point_angle(robot, center_frontier_points:list):
 	robot_ids_pos = robot.live_grid_map.coord_to_ids(robot.pos_calc.to_tuple())
 	robot_idx_pos, robot_idy_pos = robot_ids_pos
 	best_point_id = 0

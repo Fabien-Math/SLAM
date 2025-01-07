@@ -115,7 +115,7 @@ def main():
 	### TIME INIT
 	real_time = time.time()
 	t = 0
-	dt = 1e-3
+	dt = 2e-3
 
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)

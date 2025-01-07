@@ -1,0 +1,85 @@
+
+% Couleurs personnalisées
+\definecolor{mainblue}{RGB}{0, 102, 204} % Bleu principal
+\definecolor{lightgray}{RGB}{240, 240, 240} % Gris clair
+\definecolor{darkgray}{RGB}{100, 100, 100} % Gris plus foncé pour les points non actifs
+\definecolor{lightblue}{RGB}{173, 216, 230} % Bleu clair
+\definecolor{darkblue}{RGB}{0, 51, 102} % Bleu foncé
+
+% Configuration des couleurs
+% \setbeamercolor{normal text}{bg=white, fg=black}
+% \setbeamercolor{structure}{fg=mainblue}
+% \setbeamercolor{frametitle}{bg=lightgray, fg=mainblue}
+% \setbeamercolor{title}{fg=mainblue}
+% \setbeamercolor{itemize item}{fg=mainblue}
+
+% Personnalisation des couleurs du thème
+\setbeamercolor{normal text}{bg=white, fg=black} % Texte principal en gris foncé sur fond blanc
+\setbeamercolor{structure}{fg=mainblue} % Couleur principale des titres (sections, sous-sections)
+\setbeamercolor{frametitle}{bg=lightgray, fg=mainblue} % Titre des frames avec fond bleu clair et texte bleu
+\setbeamercolor{title}{fg=mainblue} % Couleur du titre principal
+\setbeamercolor{itemize item}{fg=mainblue} % Couleur des puces (items)
+\setbeamercolor{enumerate item}{fg=mainblue} % Couleur des items des listes numérotées
+\setbeamercolor{section in toc}{fg=mainblue} % Sections dans la table des matières
+\setbeamercolor{subsection in toc}{fg=darkblue} % Sous-sections dans la table des matières
+
+% Personnalisation des blocs de couleur
+\setbeamercolor{block title}{bg=mainblue, fg=white} % Titre des blocs avec fond bleu et texte blanc
+\setbeamercolor{block body}{bg=lightblue, fg=black} % Corps des blocs avec fond bleu clair et texte noir
+\setbeamercolor{alertblock title}{bg=darkblue, fg=white} % Titre des alertes avec fond bleu foncé et texte blanc
+\setbeamercolor{alertblock body}{bg=lightblue, fg=black} % Corps des alertes avec fond bleu clair et texte noir
+\setbeamercolor{exampleblock title}{bg=mainblue, fg=white} % Titre des exemples avec fond bleu et texte blanc
+\setbeamercolor{exampleblock body}{bg=lightblue, fg=black} % Corps des exemples avec fond bleu clair et texte noir
+
+% \setbeamercolor{palette primary}{use=structure,fg=white,bg=structure.fg}
+% \setbeamercolor{palette secondary}{use=structure,fg=white,bg=structure.fg!75}
+% \setbeamercolor{palette tertiary}{use=structure,fg=white,bg=mainblue}
+% \setbeamercolor{palette quaternary}{fg=white,bg=mainblue}
+
+% Modification des puces (bulles) dans les listes
+\setbeamertemplate{itemize item}[circle] % Change les puces classiques en cercles
+%\setbeamertemplate{itemize item}[square] % Change les puces en carrés
+%\setbeamertemplate{itemize item}[triangle] % Change les puces en triangles
+%\setbeamertemplate{itemize item}[rectangle] % Change les puces en rectangles
+
+% Modification des numéros dans les listes numérotées (enumerate)
+\setbeamertemplate{enumerate item}[circle] % Change les numéros en cercles
+%\setbeamertemplate{enumerate item}[square] % Change les numéros en carrés
+%\setbeamertemplate{enumerate item}[triangle] % Change les numéros en triangles
+%\setbeamertemplate{enumerate item}[rectangle] % Change les numéros en rectangles
+
+
+% Bas de page personnalisé (nom, établissement, date, numéro de page)
+\setbeamertemplate{footline}{
+    \begin{beamercolorbox}[ht=2ex, dp=1ex]{}
+        \colorbox{lightgray}{
+            \parbox{\textwidth}{
+                \begin{minipage}{0.19\linewidth}
+                    \centering
+                    \auteur
+                \end{minipage}
+                \hfill
+                \begin{minipage}{0.19\linewidth}
+                    \centering
+                    \institut
+                \end{minipage}
+                \hfill
+                \begin{minipage}{0.19\linewidth}
+                    \centering
+                    \titrefooter
+                \end{minipage}
+                \hfill
+                \begin{minipage}{0.19\linewidth}
+                    \centering
+                    \today
+                \end{minipage}
+                \hfill
+                \begin{minipage}{0.19\linewidth}
+                    \centering
+                    \insertframenumber/\inserttotalframenumber
+                \end{minipage}
+                \vspace{0.5em}
+            }
+        }
+    \end{beamercolorbox}
+}
