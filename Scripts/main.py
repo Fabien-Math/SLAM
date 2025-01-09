@@ -17,14 +17,31 @@ def write_fps(dt, window, window_size):
 		window (surface): Window on which writting
 		window_size (tuple): Size of the window
 	"""
-	font = pygame.font.Font('freesansbold.ttf', 16)
+	font = pygame.font.Font('freesansbold.ttf', 20)
 	if dt:
 		text = font.render(f'FPS {1/dt:.1f}', True, (255, 255, 255))
 
 		textRect = text.get_rect()
 	
-		textRect.center = (window_size[0]*0.9, window_size[1]*0.1)
+		textRect.center = (window_size[0]*0.9, window_size[1]*0.05)
 		window.blit(text, textRect)
+
+def write_time(time, window, window_size):
+	"""Write the FPS on the top-right of the window
+
+	Args:
+		dt (float): Time between two frame
+		window (surface): Window on which writting
+		window_size (tuple): Size of the window
+	"""
+	font = pygame.font.Font('freesansbold.ttf', 20)
+	formated_time = f"{time//3600:g} h, {(time - time//3600)//60:g} m, {time - (time//3600)*3600 - ((time - time//3600)//60)*60:.3f} s"
+	text = font.render(formated_time, True, (255, 255, 255))
+
+	textRect = text.get_rect()
+
+	textRect.center = (window_size[0]*0.5, window_size[1]*0.05)
+	window.blit(text, textRect)
 
 
 def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
@@ -65,7 +82,7 @@ def write_crashed_robot(window, window_size):
 	window.blit(text1, textRect1)
 	window.blit(text2, textRect2)
 
-def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:float, toggle_draw_map:bool, toggle_draw_live_map:bool, beacon_crashed:bool):
+def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, time:float, toggle_draw_map:bool, toggle_draw_live_map:bool, beacon_crashed:bool):
 	"""Update the display
 
 	Args:
@@ -99,8 +116,8 @@ def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, dt:fl
 	# Draw the robot
 	beacon.draw(window)
 	# Draw the FPS
-	write_fps(dt, window, window_size)
-	write_robot_info(dt, window, window_size, beacon)
+	write_time(time, window, window_size)
+	write_robot_info(time, window, window_size, beacon)
 	if beacon_crashed:
 		write_crashed_robot(window, window_size)
 
@@ -116,6 +133,9 @@ def main():
 	real_time = time.time()
 	t = 0
 	dt = 2e-3
+	map_element_size = 40
+	# map_element_size = 100 # (Empty explored loop)
+	# map_element_size = 70 # (Thin Wall Problem)
 
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)
@@ -130,7 +150,7 @@ def main():
 	# Number of subdivisions in the map, used to list the lines
 	subdiv_number = (25, 25)
 	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, 40, int(np.sin(np.pi/3) * 40))
+	map = Map(map_size, map_offset, subdiv_number, map_element_size, int(np.sin(np.pi/3) * map_element_size))
 
 
 	### ROBOT INITIALISATION
@@ -139,7 +159,7 @@ def main():
 	# Equip sensors
 	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
 	beacon.equip_accmeter(precision=(0.0005, 0.00002), time=t)
-	beacon.equip_controller(check_safe_path_frequency=5, mode=1)
+	beacon.equip_controller(mode=1)
 
 	# State of the simulation
 	running = True
@@ -151,7 +171,7 @@ def main():
 	
 	# Display time
 	t_display = real_time
-	desired_fps = 20
+	desired_fps = 25
 	while running:
 		key_pressed_is = pygame.key.get_pressed()
 		# Handle events
@@ -167,7 +187,7 @@ def main():
 					toggle_draw_live_map = not toggle_draw_live_map
 				if event.key == K_a:
 					beacon.controller.mode = 1 * (beacon.controller.mode == 0) + 0 * (beacon.controller.mode != 0)
-				if event.key == K_ESCAPE: 
+				if event.key == K_ESCAPE:
 					running = False
 		if key_pressed_is[K_RIGHT]:
 			desired_fps = min(500, desired_fps + 20*1/desired_fps)
@@ -209,7 +229,8 @@ def main():
 		# TIMER
 		if beacon.crashed_in_wall:
 			t_crashed = t
-			beacon_crashed = True
+			print("\n\n\n###   ROBOT CRASHED !!!   ###\n")
+			# beacon_crashed = True
 
 		if beacon.controller.mode == 100:
 			beacon.live_grid_map.save_map_to_image()
@@ -217,13 +238,12 @@ def main():
 		
 		if beacon_crashed:
 			if t > t_crashed + 2:
-				...
-				# running = False
+				running = False
 
 		# DRAW THE SCENE
 
 		if real_time - t_display > 1/desired_fps:
-			update_display(window, window_size, map, beacon, real_time - t_display, toggle_draw_map, toggle_draw_live_map, beacon_crashed)
+			update_display(window, window_size, map, beacon, t, toggle_draw_map, toggle_draw_live_map, beacon_crashed)
 			t_display = real_time
 
 	print(f"Time to explore all the map : {t:.3f} s")

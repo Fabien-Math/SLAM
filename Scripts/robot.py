@@ -235,8 +235,8 @@ class BeaconRobot:
 		self.lidar = LIDAR(fov, freq, res, max_dist, prec)
 		self.lidar.pos = self.pos
 
-	def equip_controller(self, check_safe_path_frequency, mode):
-		self.controller = Controller(self, check_safe_path_frequency, mode)
+	def equip_controller(self, mode):
+		self.controller = Controller(self, mode)
 		
 	
 	### ROBOT COLLISION

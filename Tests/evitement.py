@@ -201,6 +201,7 @@ def main():
 
 	### WORLD INITIALISATION
 	robot_pos = (200, 350)
+	last_static_pos = robot_pos
 	waypoint_pos = (1000, 350)
 	# map = [((600, 250), 200), ((800, 450), 200)]*10
 	map = [((400, 250), 100), ((800, 450), 100), ((700, 200), 100), ((800, 350), 100), ((800, 700), 100)]
@@ -214,6 +215,9 @@ def main():
 	safe_local_waypoint = waypoint_pos
 	total_dist = 0
 	safe_range = 25
+	static_pos_counter = 0
+	look_for_path_through_known_map = False
+
 
 	i = 0
 	while running:
@@ -246,7 +250,7 @@ def main():
 		### SIMULATION
 		i += 1
 
-		map = [((400 + 100, 250), 100), ((800, 450), 100), ((700, 200), 100), ((800, 350), 100), ((800, 700), 100)]
+		map = [((400 + 100, 250), 100), ((800, 450), 100), ((700, 200), 100), ((800, 350), 100), ((800, 600), 100)]
 		# map = [((400 + 100, 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
 		# map1 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
 		# map2 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
@@ -279,6 +283,16 @@ def main():
 		# if 1/(end_time_cpt-start_time_cpt) < 4000:
 		# 	print(f"Global path enlapse time : {end_time_cpt-start_time_cpt:.3e}s")
 		# 	print(f"Global path FPS : {1/(end_time_cpt-start_time_cpt):.1f} FPS")
+		if not ut.point_in_circle(robot_pos, last_static_pos, 50): 
+			last_static_pos = robot_pos
+			look_for_path_through_known_map = False
+			static_pos_counter = 0
+		else:
+			static_pos_counter += 1
+		
+		if static_pos_counter > 20:
+			print("Robot is in a dead lock")
+			look_for_path_through_known_map = True
 
 		robot_pos = move_robot(robot_pos, safe_local_waypoint)
 		total_dist += 10
@@ -287,7 +301,7 @@ def main():
 		# DRAW THE SCENE
 		update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, None)
 		text_shown = False
-		# next_it = False
+		next_it = False
 
 	### DEINITIALIZE PYGAME
 	pygame.quit()

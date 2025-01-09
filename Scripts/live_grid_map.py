@@ -97,6 +97,68 @@ class Live_grid_map():
 			else:
 				p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
 				new_cpt += self.fill_subdivision(p1, window)
+
+		
+	def points_in_safe_range_to_ids(self, p1, p2, safe_range):
+		"""
+		Get all list indices inside a rotated rectangle on a grid.
+
+		Parameters:
+			p1 (tuple): (x, y) coordinates of the starting point.
+			p2 (tuple): (x, y) coordinates of the ending point.
+			safe_range (float): Additional buffer around the rectangle.
+
+		Returns:
+			list: Indices of grid points inside the rotated rectangle.
+		"""
+		rotation = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+		line = compute_line_tuple(p1, p2)
+
+		# Define perpendicular vector for width
+		ortho_vec = compute_ortho_vec(line)
+		# Distance between points
+		length = distance_tuple(p1, p2)
+
+		p1, p2 = np.array(p1), np.array(p2)
+		half_width = np.array([safe_range * ortho_vec[0], safe_range * ortho_vec[1]])
+		# Rectangle corners for safe range
+		corners = np.array([
+			p1 + half_width,
+			p2 + half_width,
+			p1 - half_width,
+			p2 - half_width,
+		])
+
+		rotation_matrix = np.array([
+			[np.cos(rotation), -np.sin(rotation)],
+			[np.sin(rotation), np.cos(rotation)]
+		])
+		transposed_rot_matrix = rotation_matrix.T
+
+		# Convert corners coordinates into live grid map coordinates
+		ids = np.array([self.coord_to_ids(corner) for corner in corners])
+		x_max = np.max(ids[:, 0])
+		x_min = np.min(ids[:, 0])
+		y_max = np.max(ids[:, 1])
+		y_min = np.min(ids[:, 1])
+
+		# Check grid points within the rotated rectangle
+		inside_points = []
+		for idx in range(x_min, x_max + 1):
+			for idy in range(y_min, y_max + 1):
+				# print("Point in safe range to ids", idx, idy)
+				point = np.array(self.ids_to_center(idx, idy))
+				# Transform the point into the local space of the rectangle
+				local_point = np.dot(transposed_rot_matrix, point - p1)
+				# print("Local point :", local_point)
+				# Check if within bounds of the rectangle
+				if (
+					-safe_range <= local_point[0] <= length + safe_range and
+					-safe_range <= local_point[1] <= safe_range
+				):
+					inside_points.append((idx, idy))
+
+		return inside_points
 			
 
 	def fill_subdivision(self, p1, window):

@@ -161,58 +161,74 @@ def compute_parallel_line(line, dist) -> list:
 	return a, b, c + dist * (a ** 2 + b ** 2) ** 0.5
 
 
+def compute_dir_vec(line):
+	a, b, _ = line	# ax + by = c
+	if a:
+		return normalize_vec((b, -a))
+	else:
+		return (sign(a), 0) 
+	
+def compute_ortho_vec(line):
+	a, b, _ = line	# ax + by = c
+	if a:
+		return normalize_vec((a, b))
+	else:
+		return (0, sign(b)) 
+
 def move_on_line(ids1, ids2, ids1_float, ids2_float):
-    idx, idy = ids1
-    idx_float, idy_float = ids1_float
-    
-    a, b, _ = compute_line_tuple(ids1_float, ids2_float)
-    if b:
-        m = -a / b
-    
-    ids = []
+	idx, idy = ids1
+	idx_float, idy_float = ids1_float
+	
+	a, b, _ = compute_line_tuple(ids1_float, ids2_float)
+	if b:
+		m = -a / b
+	
+	ids = []
 
-    if ids1[0] == ids2[0]:  # Vertical line
-        direction = 1 * (ids1[1] < ids2[1]) - 1 * (ids1[1] >= ids2[1])
-        for idy in range(ids1[1], ids2[1] + direction, direction):
-            ids.append((idx, idy))
-        return ids
+	if ids1[0] == ids2[0]:  # Vertical line
+		direction = 1 * (ids1[1] < ids2[1]) - 1 * (ids1[1] >= ids2[1])
+		for idy in range(ids1[1], ids2[1] + direction, direction):
+			ids.append((idx, idy))
+		return ids
 
-    if ids1[1] == ids2[1]:  # Horizontal line
-        direction = 1 * (ids1[0] < ids2[0]) - 1 * (ids1[0] >= ids2[0])
-        for idx in range(ids1[0], ids2[0] + direction, direction):
-            ids.append((idx, idy))
-        return ids
+	if ids1[1] == ids2[1]:  # Horizontal line
+		direction = 1 * (ids1[0] < ids2[0]) - 1 * (ids1[0] >= ids2[0])
+		for idx in range(ids1[0], ids2[0] + direction, direction):
+			ids.append((idx, idy))
+		return ids
 
-    direction = np.sign(ids1[0] - ids2[0])
+	direction = np.sign(ids1[0] - ids2[0])
 
-    n = 0
-    if abs(m) < 1:
-        while n <= abs(ids1[0] - ids2[0]):
-            ids.append((idx, idy - 1))
-            ids.append((idx, idy + 1))
-            ids.append((idx, idy))
-            
-            idx_float -= 1 * direction
-            idy_float -= m * direction
+	n = 0
+	if abs(m) < 1:
+		while n <= abs(ids1[0] - ids2[0]):
+			ids.append((idx, idy - 1))
+			ids.append((idx, idy + 1))
+			ids.append((idx, idy))
+			
+			idx_float -= 1 * direction
+			idy_float -= m * direction
 
-            idx = int(idx_float)
-            idy = int(idy_float)
-            n += 1
-    else:
-        while n <= abs(ids1[1] - ids2[1]):
-            ids.append((idx + 1, idy))
-            ids.append((idx - 1, idy))
-            ids.append((idx, idy))
+			idx = int(idx_float)
+			idy = int(idy_float)
+			n += 1
+	else:
+		while n <= abs(ids1[1] - ids2[1]):
+			ids.append((idx + 1, idy))
+			ids.append((idx - 1, idy))
+			ids.append((idx, idy))
 
-            idx_float -= abs(1 / m) * direction
-            idy_float -= np.sign(m) * direction
+			idx_float -= abs(1 / m) * direction
+			idy_float -= np.sign(m) * direction
 
-            idx = int(idx_float)
-            idy = int(idy_float)
+			idx = int(idx_float)
+			idy = int(idy_float)
 
-            n += 1
+			n += 1
 
-    return ids
+	return ids
+
+
 
 ### MATHS
 
@@ -545,42 +561,42 @@ def left_point(p1:Vector2, p2:Vector2):
 ### CONVEX HULL
 
 def find_leftmost_point(points:list):
-    leftmost_point = points[0]
-    for point in points[1:]:
-        if point[0] < leftmost_point[0]:
-            leftmost_point = point
-        elif point[0] == leftmost_point[0] and point[1] > leftmost_point[1]:
-            leftmost_point = point
-    return leftmost_point
+	leftmost_point = points[0]
+	for point in points[1:]:
+		if point[0] < leftmost_point[0]:
+			leftmost_point = point
+		elif point[0] == leftmost_point[0] and point[1] > leftmost_point[1]:
+			leftmost_point = point
+	return leftmost_point
 
 def orientation(p:tuple, q:tuple, r:tuple):
-    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
-    if val == 0:
-        return 0
-    elif val > 0:
-        return 1
-    else:
-        return 2
+	val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+	if val == 0:
+		return 0
+	elif val > 0:
+		return 1
+	else:
+		return 2
 
 def convex_hull(points:list):
-    n = len(points)
-    if n < 3:
-        return []
-    hull = []
-    l = find_leftmost_point(points)
-    p = l
-    q = None
-    while True:
-        hull.append(p)
-        q = points[0]
-        for r in points[1:]:
-            o = orientation(p, q, r)
-            if o == 2 or (o == 0 and ((q[0] - p[0])**2 + (q[1] - p[1])**2) < ((r[0] - p[0])**2 + (r[1] - p[1])**2)):
-                q = r
-        p = q
-        if p == l:
-            break
-    return hull
+	n = len(points)
+	if n < 3:
+		return []
+	hull = []
+	l = find_leftmost_point(points)
+	p = l
+	q = None
+	while True:
+		hull.append(p)
+		q = points[0]
+		for r in points[1:]:
+			o = orientation(p, q, r)
+			if o == 2 or (o == 0 and ((q[0] - p[0])**2 + (q[1] - p[1])**2) < ((r[0] - p[0])**2 + (r[1] - p[1])**2)):
+				q = r
+		p = q
+		if p == l:
+			break
+	return hull
 
 ### DISTRIBUTION
 
