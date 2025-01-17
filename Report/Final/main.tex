@@ -1,0 +1,363 @@
+\LoadClass[a4paper,12pt]{article}
+\documentclass{article}
+
+\input{ANNEXES/import.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%    Renseigner les titres et variables importantes     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\titre}{Coordination multi-robot}
+\newcommand{\soustitre}{Exploration autonome de réseaux de galerie}
+\newcommand{\sujet}{Projet de fin d'études}
+\newcommand{\sujets}{Seatech 3A - MOCA}
+\newcommand{\auteur}{Fabien MATHÉ}
+\newcommand{\referent}{M. Mehmet ERSOY}
+\newcommand{\reportdate}{\date}
+
+\newcommand{\partA}{Partie 1}
+\newcommand{\partB}{Partie 2}
+\newcommand{\partC}{Partie 3}
+\newcommand{\partD}{Partie 4}
+\newcommand{\partE}{Partie 5}
+
+%%%%%%%%%%%%%%%%%%%
+%     BOOLEEN     %
+%%%%%%%%%%%%%%%%%%%
+
+% Création des boolean
+\newboolean{abst}
+\newboolean{thx}
+\newboolean{contents}
+\newboolean{introduction}
+\newboolean{pt2}
+\newboolean{pt3}
+\newboolean{pt4}
+\newboolean{pt5}
+\newboolean{conclusion}
+\newboolean{perspectives}
+\newboolean{glossaire}
+\newboolean{biblio}
+\newboolean{annexe}
+
+
+% Renseigner si le Rapport contient un abstract
+\setboolean{abst}{false}
+% Renseigner si le Rapport contient des remerciements
+\setboolean{thx}{false}
+% Renseigner si le Rapport contient une table des matières
+\setboolean{contents}{false}
+% Renseigner si le Rapport contient une introduction
+\setboolean{introduction}{false}
+% Renseigner si le Rapport contient une partie 2
+\setboolean{pt2}{false}
+% Renseigner si le Rapport contient une partie 3
+\setboolean{pt3}{false}
+% Renseigner si le Rapport contient une partie 4
+\setboolean{pt4}{false}
+% Renseigner si le Rapport contient une partie 5
+\setboolean{pt5}{false}
+% Renseigner si le Rapport contient une introduction
+\setboolean{conclusion}{false}
+% Renseigner si le Rapport contient des perspectives
+\setboolean{perspectives}{false}
+% Renseigner si le document contient une bibliographie
+\setboolean{biblio}{false} 
+% Renseigner si le document contient un glossaire
+\setboolean{glossaire}{false}
+% Renseigner si le Rapport contient des annexes 
+\setboolean{annexe}{false}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     En-têtes en pieds de pages     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\geometry{hmargin=2cm,vmargin=2.3cm}
+\pagestyle{fancy}
+\fancyhfoffset[]{0pt}
+\setlength{\headheight}{28pt}
+\lhead{\includegraphics[height = 0.6cm]{IMAGES/logos/Logo_SeaTech_2023.png}}
+% \rhead{\includegraphics[height = 0.7cm]{IMAGES/logos/MOCA.png}}
+\lfoot{\auteur}
+\cfoot{ }
+\rfoot{Page \thepage \ / \pageref{LastPage}}
+
+\title{\titre}
+\author{\auteur}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Autre mise en page     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+
+\setcounter{tocdepth}{2} % Change to 1 to exclude subsections as well
+
+
+\newcommand{\citeURL}[1]{\href{#1}{\detokenize{#1}}}
+
+% Création du compteur d'annexes
+\newcounter{annexecounter}
+
+% Définition de la commande pour les annexes
+\NewDocumentCommand{\annexe}{m}{%
+    \stepcounter{annexecounter} % Incrémenter le compteur d'annexes
+    \subsection*{Annexe \arabic{annexecounter} - #1} % Affichage du texte avec le numéro et le titre
+	\label{sec:#1}
+}
+
+\newcommand{\tobedone}{\textcolor{red}{\LARGE \textbf{TO BE DONE}}}
+\newcommand{\annexetonum}{\textcolor{red}{\LARGE \textbf{ANNEXE ...}}}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Mise en page des codes    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{ANNEXES/codes/display/python_code.tex}
+\input{ANNEXES/codes/display/cpp_code.tex}
+\input{ANNEXES/codes/display/f90_code.tex}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                  Début du document                                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Page de garde     %
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{titlepage}
+	\AddToShipoutPictureBG*{\includegraphics[width=\paperwidth,height=\paperheight]{IMAGES/PageDeGardeRapport.png}}
+	\begin{figure}[H]
+		\begin{subfigure}{0.45\linewidth}
+				\includegraphics[width=0.6\textwidth,left]{IMAGES/logos/Logo_SeaTech_2023.png}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}{0.45\linewidth}
+				% \includegraphics[width=0.6\textwidth,right]{IMAGES/logos/MOCA.png}
+		\end{subfigure}
+	\end{figure}
+
+	\centering
+
+	% Espacement vertical
+	\vspace*{5cm}
+
+	% Barres horizontales
+	\makebox[0.7\linewidth]{\hrulefill}\\[0.2cm]
+
+	% Titre encadré
+	\vspace{0.5cm}
+	\begin{minipage}{\textwidth}
+		\centering
+		{\fontsize{28}{48}\selectfont \textsc{\titre}}\\[0.2cm]
+
+		{\fontsize{18}{48}\selectfont \textsc{\soustitre}}
+	\end{minipage}
+	\vspace{0.3cm}
+
+	% Barres horizontales
+	\makebox[0.8\linewidth]{\hrulefill}\\[0.2cm]
+
+	% Espacement vertical
+	\vspace{3cm}
+
+	% Description
+		\large{\Large \textbf{\sujet}}\\
+		\large{\textbf{\sujets}}\\
+
+		\vspace{0.5cm}
+		\large{\textbf{\reportdate}}
+
+	\vspace{2cm}
+
+	\begin{minipage}{0.20\textwidth}
+
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.35\textwidth}
+		\begin{flushleft}
+			Auteur : \\
+			\auteur
+		\end{flushleft}
+	\end{minipage}
+	\begin{minipage}{0.09\textwidth}
+		% Section vide pour espacement optimal
+	\end{minipage}
+	\hfill
+ 	\begin{minipage}{0.3\textwidth}
+		\begin{flushleft}
+			Enseignant : \\
+			\referent
+
+		\end{flushleft}
+	\end{minipage}
+
+
+\end{titlepage}
+
+\ClearShipoutPictureBG
+
+\newpage
+
+\renewcommand{\thepage}{}
+
+\renewcommand{\thepage}{\arabic{page}}
+\renewcommand{\thesection}{\Roman{section}}
+
+%%%%%%%%%%%%%%%%%%
+%     Résumé     %
+%%%%%%%%%%%%%%%%%%
+\ifthenelse{\boolean{abst}}{
+	\addcontentsline{toc}{section}{\protect\numberline{}Résumé}%
+	\subfile{SECTIONS/1resume}
+
+	\newpage
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Remerciements     %
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifthenelse{\boolean{thx}}{
+	\addcontentsline{toc}{section}{\protect\numberline{}Remerciements}%
+	\subfile{SECTIONS/2remerciements}
+
+	\newpage
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Plan du document     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ifthenelse{\boolean{contents}}{
+	\vfill
+	\tableofcontents
+	\vfill
+	
+	\newpage
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%     INTRODUCTION     %
+%%%%%%%%%%%%%%%%%%%%%%%%
+\ifthenelse{\boolean{introduction}}
+{
+	\section*{Introduction}
+	\addcontentsline{toc}{section}{\protect\numberline{}Introduction}%
+	\subfile{SECTIONS/3introduction}
+
+	\newpage
+}
+
+
+%%% PARTIE 1 %%%
+\section{\partA}
+\subfile{SECTIONS/part1}
+
+%%% PARTIE 2 %%%
+\newpage
+\ifthenelse{\boolean{pt2}}
+{
+	\section{\partB}
+	\subfile{SECTIONS/part2}
+	
+	\newpage
+}
+	
+	
+%%% PARTIE 3 %%%
+\ifthenelse{\boolean{pt3}}
+{
+	\section{\partC}
+	\subfile{SECTIONS/part3}
+	
+	\newpage
+}
+	
+	
+%%% PARTIE 4 %%%
+\ifthenelse{\boolean{pt4}}
+{
+	\section{\partD}
+	\subfile{SECTIONS/part4}
+	
+	\newpage
+}
+	
+%%% PARTIE 5 %%%
+\ifthenelse{\boolean{pt5}}{
+	\section{\partE}
+	\subfile{SECTIONS/part5}
+
+	\newpage
+}
+		
+%%%%%%%%%%%%%%%%%%%%%%
+%     CONCLUSION     %
+%%%%%%%%%%%%%%%%%%%%%%
+\ifthenelse{\boolean{perspectives}}
+{
+	\section*{Conclusion}
+	\addcontentsline{toc}{section}{\protect\numberline{}Conclusion}%
+	\subfile{SECTIONS/Wconclusion}
+
+	\newpage
+}
+
+
+
+\ifthenelse{\boolean{perspectives}}
+{
+	\section*{Perspectives}
+	\addcontentsline{toc}{section}{\protect\numberline{}Perspectives}
+	\subfile{SECTIONS/Xperspectives}
+	
+	\newpage 
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Bibliographie     %
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ifthenelse{\boolean{biblio}}
+{
+	\addcontentsline{toc}{section}{\protect\numberline{}Bibliographie}
+	% \bibliographystyle{unsrt}
+	\bibliographystyle{IEEEtran}
+	\footnotesize{\bibliography{BIBLIOGRAPHY/bib.bib}}
+
+	\newpage
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%
+%     Glossaire     %
+%%%%%%%%%%%%%%%%%%%%%
+\normalsize
+\ifthenelse{\boolean{glossaire}}
+{
+	\section*{Glossaire}
+	\makeglossaries
+	\printglossaries
+	\addcontentsline{toc}{section}{\protect\numberline{}Glossaire}%
+	\subfile{SECTIONS/Yglossaire}
+	
+	\newpage
+}
+
+%%%%%%%%%%%%%%%%%%%
+%     Annexes     %
+%%%%%%%%%%%%%%%%%%%
+\ifthenelse{\boolean{annexe}}
+{
+	\section*{Annexes}
+	\addcontentsline{toc}{section}{\protect\numberline{}Annexes}%
+	\subfile{SECTIONS/Zannexes}
+}
+
+
+\end{document}

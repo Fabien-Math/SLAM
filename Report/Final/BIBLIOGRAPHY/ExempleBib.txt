@@ -1,0 +1,37 @@
+@online{exampleURL,
+  author = {Auteur, John},
+  title = {Titre de la ressource},
+  url = {https://www.example.com},
+  year = {2023},
+  note = {Consulté le 21 juin 2023}
+}
+
+@article{exempleARTICLE,
+    author = {Einstein, Albert},
+    title = {Zur Elektrodynamik bewegter Körper},
+    journal = {Annalen der Physik},
+    volume = {322},
+    number = {10},
+    pages = {891--921},
+    year = {1905},
+    publisher = {Wiley},
+}
+
+@misc{dimBatt,
+    author = {DAMAY Nicolas},
+    title = {Contribution à la modélisation thermique de packs batteries $\text{LiFePO}_4$ pour véhicules décarbonés.},
+    journal = {Université de Technologie de Compiègne},
+    pages = {147},
+    year = {2015}
+}
+
+% site
+@misc{exemple-site,
+  author = {Nom de l'auteur ou de l'organisation},
+  title = {Titre de la page ou du site},
+  howpublished = {\href{https://www.example.com}{example.com}},
+  year = {2023},
+  note = {[Accesssed: June 21, 2023]},
+  keywords = {mot-clé1, mot-clé2},
+  abstract = {Description du site ou de la page.}
+}
