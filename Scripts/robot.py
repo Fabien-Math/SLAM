@@ -171,14 +171,16 @@ class BeaconRobot:
 
 		# Compute position of point given the lidar data
 		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
+		collide_points = [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
 
 		self.live_grid_map.update(points, self.lidar.max_dist, window)
 		# self.map += [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
-		pos_lidar = self.correct_pos_with_lidar(points, window)
+		if len(collide_points):
+			pos_lidar = self.correct_pos_with_lidar(collide_points, window)
 
-		if pos_lidar is not None:
-			self.pos_calc_lidar = pos_lidar
-			self.pos_calc = self.pos_calc_lidar.copy()
+			if pos_lidar is not None:
+				self.pos_calc_lidar = pos_lidar
+				self.pos_calc = self.pos_calc_lidar.copy()
 	
 
 	def correct_pos_with_lidar(self, points:list, window):
@@ -192,7 +194,7 @@ class BeaconRobot:
 			Vector2: Estimated position of the lidar
 		"""
 		n = len(points)
-		if n == 0:
+		if n < 3:
 			return
 		
 		n_circle = 3
@@ -202,6 +204,9 @@ class BeaconRobot:
 			circles[i] = (p, distance(self.pos, p))
 
 		pts = find_all_circle_intersection(circles)
+
+		if not len(pts):
+			return None
 		
 		idpt = find_n_nearest_from_point(pts, int(n_circle/2), self.pos_calc)
 

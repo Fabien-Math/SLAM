@@ -355,15 +355,18 @@ def find_circle_intersection(p1, r1, p2, r2):
 	if d >= (r1 + r2):
 		print("No circle intersection found (d >= (r1 + r2)) ! Returned None")
 		return None
-	if d < abs(r1 - r2):
+	if d <= abs(r1 - r2):
 		print("No circle intersection found (d < abs(r1 - r2)) ! Returned None")
 		return None
 	if d < 1e-6 and abs(r1 - r2) < 1e-6:
 		print("No circle intersection found (abs(r1 - r2) < 1e-6) ! Returned None")
 		return None
+	
+	
 
 	# https://lucidar.me/fr/mathematics/how-to-calculate-the-intersection-points-of-two-circles/
 	a = (r1**2 - r2**2 + d**2)/(2*d)
+	# print(p1, r1, p2, r2, d, a)
 	h = sqrt(r1**2 - a**2)
 
 	x5 = p1[0] + (a / d) * (p2[0] - p1[0]) 

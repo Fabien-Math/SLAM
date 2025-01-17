@@ -133,9 +133,10 @@ def main():
 	real_time = time.time()
 	t = 0
 	dt = 2e-3
-	map_element_size = 40
+	map_element_size = 30
+	# map_element_size = 40 # Demo case
 	# map_element_size = 100 # (Empty explored loop)
-	# map_element_size = 70 # (Thin Wall Problem)
+	map_element_size = 70 # (Thin Wall Problem)
 
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)

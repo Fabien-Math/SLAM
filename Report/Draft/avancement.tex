@@ -1,0 +1,185 @@
+\documentclass[main.tex]{subfiles}
+\input{main}
+
+\begin{document}
+
+\section{Avancement}
+
+\subsection{1ère semaine :}
+
+\begin{itemize}
+    \item Recherche documentaire autour des méthodes pour définir l'espace mathématique dans lequel le robot évolu
+    \item Recherche documentaire autour des méthodes d'exploration multi-robot
+    \item Définition de l'espace étoilé relatif champ de vision du robot
+    \item Définition de la fonctionnelle du robot
+    \item 
+\end{itemize}
+
+
+\subsection{2ème semaine :}
+
+\begin{itemize}
+    \item Début de la rédaction de l'état de l'art autour des méthode de planification de trajectoire
+    \item Définition de la fonctionnelle $J$
+    \item Définition de la borne supérieur de l'intégrale de $J$
+    \item Correction du comportement du lidar pour l'exploration de la map
+    \item Implentation des colision du robot avec la map
+    \item 
+\end{itemize}
+
+
+Note sur les LiDAR (\textit{Wikipedia}): 
+
+La télédétection par laser ou LIDAR, acronyme de l'expression en langue anglaise « light detection and ranging » ou « laser imaging detection and ranging » (soit en français « détection et estimation de la distance par la lumière » ou « par laser »), est une technique de mesure à distance fondée sur l'analyse des propriétés d'un faisceau de lumière renvoyé vers son émetteur.
+
+À la différence du sonar qui utilise des ondes acoustiques et du radar qui emploie des ondes électromagnétiques de plus basse fréquence (ondes radio), le lidar utilise des ondes électromagnétiques proches de la lumière visible (du spectre visible, infrarouge ou ultraviolet). La lumière utilisée par le lidar est presque toujours issue d'un laser, ce qui permet d'avoir une source lumineuse directionnelle, monochromatique, polarisée, de haute amplitude et cohérente.
+
+Le principe de la télémétrie (détermination de la distance d'un objet), qui concerne une grande partie des applications du lidar, requiert généralement l'utilisation d'un laser impulsionnel. La distance est donnée par la mesure du délai (aussi appelé « temps de vol ») entre l'émission d'une impulsion et la détection d'une impulsion réfléchie, connaissant la vitesse de la lumière. Quand la source laser est entretenue et modulée en fréquence, on parle de lidar FMCW (Frequency Modulated Continuous Wave). 
+
+
+\subsubsection{Recherche à faire}
+
+Faire un histogramme des temps de recouvrement de la map en definissant plusieurs critères ou de manière aléatoire afin de dégager des comportements qui semble "optimaux", recommencer afin de trouver le minimum global ou du moins local de manière expérimentale.
+
+Implémentation de l'évitement d'obstacle.
+
+Approfondir la compréhension autour de FMM et des équations Eikonale
+
+Regarder comment le relier avec un portrait de phase, équation différentielle.
+Tracer la trajectoire x1 en fonction de la trajectoire x2.
+Portrait de phase de système dynamique aléatoire ? Est ce possible ?
+
+Systeme dynamique avec controle (optimal dans la suite)
+
+
+\section{Multi-robots control}
+
+This algorithm aim to coordinate the exploration of unknown area by a robot swarm.
+
+\subsection{Operation}
+
+A the beginning of the exploration, we assign a number to each robot, the smallest one is the master.
+The communication is bases on a strong hierarchical structure, the master robot give the direction to all robot link with it with a bigger number.
+
+If the group split, the master change to the strongest robot in the group.
+Robot communicate with each other using light, detecting if the robot can communicate with another is made, in a first time, by ensuring visual contact. A more powerful approach is to simulate the travel of the light in the medium.
+
+The master of a group is a hub for communication, each new direction is given by him using this method :
+
+\begin{itemize}
+	\item Each robot in a group sends the master any part of the map that is new to it
+	\item Each robot of a group sends the master the waypoint with the open frontier index it wants to explore.
+	\item Once all robot of the group send its information to the master, the protocol for gathering information is given later, it compute the normalized cost table for each combination robot-waypoint. Values are given between 0 and 255 to send only one byte information ensuring low communication volume. 
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|c|c|c|c|c|c|}
+			\hline
+			& \textbf{Robot 1} & \textbf{Robot 2} & \textbf{Robot 3} & \textbf{Robot 4} & \textbf{Robot 5}\\
+			\hline
+			\textbf{WP 1} & \textcolor{blue}{$\mathbf{23}$} & $87$ & $234$ & $56$ & $192$ \\
+			\hline
+			\textbf{WP 2} & $245$ & $76$ & \textcolor{blue}{$\mathbf{11}$} & $68$ & $39$ \\
+			\hline
+			\textbf{WP 3} & $90$ & \textcolor{blue}{$\mathbf{21}$} & $73$ & $\mathbf{50}$ & $164$ \\
+			\hline
+			\textbf{WP 4} & $132$ & $58$ & $49$ & $77$ & \textcolor{blue}{$\mathbf{25}$} \\
+			\hline
+			\textbf{WP 5} & $181$ & $\mathbf{13}$ & $66$ & \textcolor{blue}{$\mathbf{39}$} & $70$ \\ 
+			\hline
+	
+		\end{tabular}
+		\caption{Example of costs table for a group of 5 robots with 5 differents waypoints}
+		\label{tab:example_5R5WP}
+	\end{table}
+	
+	In the case, there is less waypoint than robot, the group split in two groups.
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|c|c|c|c|c|c|}
+			\hline
+			& \textbf{Robot 1} & \textbf{Robot 2} & \textbf{Robot 3} & \textbf{Robot 4} & \textbf{Robot 5}\\
+			\hline
+			\textbf{WP 1} & \textcolor{blue}{$\mathbf{61}$} & $125$ & $93$ & $47$ & \textcolor{blue}{$\mathbf{59}$} \\
+			\hline
+			\textbf{WP 2} & $88$ & \textcolor{blue}{$\mathbf{12}$} & \textcolor{blue}{$\mathbf{53}$} & \textcolor{blue}{$\mathbf{29}$} & $174$ \\ 
+			\hline
+		\end{tabular}
+		\caption{Example of costs table for a group of 5 robots with 2 differents waypoints}
+		\label{tab:example_5R2WP}
+	\end{table}
+
+
+	In the case, there is less robot than waypoint, each robot explore a zone.
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|c|c|c|c|c|c|}
+			\hline
+			& \textbf{Robot 1} & \textbf{Robot 2} & \textbf{Robot 3} & \textbf{Robot 4} & \textbf{Robot 5}\\
+			\hline
+			\textbf{WP 1} & \textcolor{blue}{$\mathbf{42}$} & $134$ & $212$ & $63$ & $189$ \\
+			\hline
+			\textbf{WP 2} & $215$ & $98$ & $\mathbf{19}$ & $75$ & $48$ \\
+			\hline
+			\textbf{WP 3} & $102$ & \textcolor{blue}{$\mathbf{32}$} & $95$ & $68$ & $141$ \\
+			\hline
+			\textbf{WP 4} & $142$ & $74$ & $58$ & $89$ & $\mathbf{31}$ \\
+			\hline
+			\textbf{WP 5} & $193$ & $\mathbf{27}$ & $78$ & \textcolor{blue}{$\mathbf{54}$} & $83$ \\ 
+			\hline
+			\textbf{WP 6} & $156$ & $63$ & \textcolor{blue}{$\mathbf{17}$} & $99$ & $115$ \\
+			\hline
+			\textbf{WP 7} & $173$ & $49$ & $132$ & $82$ & \textcolor{blue}{$\mathbf{23}$} \\
+			\hline
+			\textbf{WP 8} & $204$ & $\mathbf{57}$ & $146$ & $71$ & $94$ \\ 
+			\hline
+		\end{tabular}
+		\caption{Example of costs table for a group of 5 robots with 8 differents waypoints}
+		\label{tab:example_5R8WP}
+	\end{table}
+
+	\item The master, after computing the cost table, distribute the waypoint across the group minimizing the cost combination. For instance, in the \autoref{tab:example_5R5WP}, \autoref{tab:example_5R2WP} and \autoref{tab:example_5R8WP}, bold number are the minimum cost for each robot and each waypoint, however the minimun combination of cost is given by the blue one.
+
+\end{itemize}
+
+\subsubsection{Meeting of two groups}
+
+If 2 groups met, both master share all the information they have without moving. Once the trasfert is done, the strongest master take control of all the group and continue the exploration.
+
+
+
+
+\subsection{Inter-robot communication protocol}
+For each robot one at a time in the group.
+The master asked for informations.
+Listen for the answer.
+If an answer is given, the master validate the tranfert of information.
+Else, retry, retry and retry and skip it.
+Compute thing.
+Give an order to the robot.
+The robot listen for the order.
+If an answer is received, the robot validate the tranfert of information.
+Else, retry, retry and retry and skip it.
+
+
+
+\subsection{Analysis scheme}
+
+\subsubsection{Delimited range of application}
+Can be for all type of environment
+
+\subsection{Robustness to failure and uncertainty}
+Must handle all possible cases, for instance if a robot is in a dead lock and doesn't succed in exit it
+
+\subsection{Completeness}
+Must explore all the domain or accomplish all the task given to it
+
+\subsection{Effectiveness}
+Must spread the work efficiently
+
+\subsection{Speed}
+Must be a rapid algorithm
+
+\end{document}

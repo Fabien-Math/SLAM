@@ -66,10 +66,10 @@ class Controller:
 			# 	self.local_waypoint_reached = True
 			# 	self.local_waypoints = []
 
-			# # If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
-			# if need_line_split(self.robot.live_grid_map, self.robot.pos.to_tuple(), self.local_waypoint, 2 * self.robot.radius):
-			# 	self.local_waypoint_reached = True
-			# 	self.local_waypoints = []
+			# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
+			if need_line_split(self.robot.live_grid_map, self.robot.pos.to_tuple(), self.local_waypoint, 2 * self.robot.radius):
+				self.local_waypoint_reached = True
+				self.local_waypoints = []
 				
 
 		### MANAGE WAYPOINT
@@ -121,7 +121,7 @@ class Controller:
 			self.local_waypoint_reached = False
 
 		# If no path is found several times, exit
-		if self.no_safe_path_found_counter > 20:
+		if self.no_safe_path_found_counter > 30:
 			print("No safe path found ! Exit the simulation, the domain must be explored !")
 			self.mode = 100
 			return
