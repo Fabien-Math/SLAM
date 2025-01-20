@@ -6,12 +6,15 @@ from accelerometer import Accmeter
 from live_grid_map import Live_grid_map
 from controller import Controller
 from map import Map
+from communicator import Communicator
 
 import pygame
 
 
 class BeaconRobot:
-	def __init__(self, pos:Vector2, acc:float, ang_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
+	def __init__(self, id:int, pos:Vector2, acc:float, ang_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
+		self.id = id
+		
 		# Position and rotation
 		self.pos = Vector2(pos[0], pos[1])
 		self.pos_calc = Vector2(pos[0], pos[1])
@@ -39,7 +42,7 @@ class BeaconRobot:
 		# Robot attribute
 		self.radius = 10
 		self.color = (0, 200, 255)
-		self.crashed_in_wall = False
+		self.crashed = False
 
 		# Robot map
 		self.map = []
@@ -49,6 +52,9 @@ class BeaconRobot:
 		self.lidar = None
 		self.accmeter = None
 		self.controller = None
+
+		# Communication
+		self.communicator = None
 
 	def move(self, dt:float, direction:int, coef_max_speed:float = 1, coef_max_acc:float = 1):
 		"""Move the robot
@@ -242,6 +248,9 @@ class BeaconRobot:
 
 	def equip_controller(self, mode):
 		self.controller = Controller(self, mode)
+
+	def equip_communicator(self, world):
+		self.communicator = Communicator(self.id, 1000, 10, 10, world)
 		
 	
 	### ROBOT COLLISION

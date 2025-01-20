@@ -5,8 +5,7 @@ import time
 import numpy as np
 np.random.seed(5)
 
-from robot import BeaconRobot
-from map import Map
+from world import World
 
 
 def write_fps(dt, window, window_size):
@@ -44,27 +43,34 @@ def write_time(time, window, window_size):
 	window.blit(text, textRect)
 
 
-def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
-	"""Write the robot info on the bottom of the window
-
-	Args:
-		dt (float): Time between two frame
-		window (surface): Window on which writting
-		window_size (tuple): Size of the window
-		beacon (BeaconRobot): Robot class
-	"""
-	font = pygame.font.Font('freesansbold.ttf', 16)
-	if dt:
-		text1 = font.render(f"Calculated : [Acc {beacon.acc_calc:.1f}, Speed {beacon.speed_calc:.1f}, Pos {beacon.pos_calc}]; Real : [Acc {beacon.acc:.1f}, Speed {beacon.speed:.1f}, Pos {beacon.pos}]", True, (255, 255, 255))
-		text2 = font.render(f"Calculated : [Ang acc {beacon.ang_acc_calc:.1f}, Ang speed {beacon.rot_speed_calc:.1f}, Angle {beacon.rot_calc:.1f}]; Real : [Ang acc {beacon.ang_acc:.1f}, Ang speed {beacon.rot_speed:.1f}, Angle {beacon.rot:.1f}]", True, (255, 255, 255))
-
-		textRect1 = text1.get_rect()
-		textRect2 = text2.get_rect()
+def draw_links(world:World, window):
+	for rs in world.linked_robot:
+		r1, r2 = world.robots[rs[0]], world.robots[rs[1]]
+		
+		pygame.draw.line(window, (100, 50, 255), r1.pos.to_tuple(), r2.pos.to_tuple())
 	
-		textRect1.center = (window_size[0]*0.5, window_size[1]*0.98)
-		textRect2.center = (window_size[0]*0.5, window_size[1]*0.95)
-		window.blit(text1, textRect1)
-		window.blit(text2, textRect2)
+
+# def write_robot_info(dt, window, window_size, beacon:BeaconRobot):
+# 	"""Write the robot info on the bottom of the window
+
+# 	Args:
+# 		dt (float): Time between two frame
+# 		window (surface): Window on which writting
+# 		window_size (tuple): Size of the window
+# 		beacon (BeaconRobot): Robot class
+# 	"""
+# 	font = pygame.font.Font('freesansbold.ttf', 16)
+# 	if dt:
+# 		text1 = font.render(f"Calculated : [Acc {beacon.acc_calc:.1f}, Speed {beacon.speed_calc:.1f}, Pos {beacon.pos_calc}]; Real : [Acc {beacon.acc:.1f}, Speed {beacon.speed:.1f}, Pos {beacon.pos}]", True, (255, 255, 255))
+# 		text2 = font.render(f"Calculated : [Ang acc {beacon.ang_acc_calc:.1f}, Ang speed {beacon.rot_speed_calc:.1f}, Angle {beacon.rot_calc:.1f}]; Real : [Ang acc {beacon.ang_acc:.1f}, Ang speed {beacon.rot_speed:.1f}, Angle {beacon.rot:.1f}]", True, (255, 255, 255))
+
+# 		textRect1 = text1.get_rect()
+# 		textRect2 = text2.get_rect()
+	
+# 		textRect1.center = (window_size[0]*0.5, window_size[1]*0.98)
+# 		textRect2.center = (window_size[0]*0.5, window_size[1]*0.95)
+# 		window.blit(text1, textRect1)
+# 		window.blit(text2, textRect2)
 
 def write_crashed_robot(window, window_size):
 	font1 = pygame.font.Font('freesansbold.ttf', 54)
@@ -82,44 +88,41 @@ def write_crashed_robot(window, window_size):
 	window.blit(text1, textRect1)
 	window.blit(text2, textRect2)
 
-def update_display(window, window_size:float, map:Map, beacon:BeaconRobot, time:float, toggle_draw_map:bool, toggle_draw_live_map:bool, beacon_crashed:bool):
+def update_display(window, window_size:float, world:World, time:float):
 	"""Update the display
 
 	Args:
 		window (surface): Surface on which the scene is drawn
 		window_size (tuple): Window size
 		map (Map): Scene map
-		beacon (BeaconRobot): Robot
+		robots (List(BeaconRobot)): List of robots
 		dt (float): Display time step
-		env_scanned (bool): Redraw the scene when the live grid map is updated
-		toggle_draw_map (bool): Toggle to draw the map
 	"""
-	
+	map = world.map
+	robots = world.robots
 	# Erase the display
 	window.fill((150, 150, 150))
 
-	if toggle_draw_live_map:
-		beacon.live_grid_map.draw(window)
-		beacon.draw_dot_map(window)
-	if toggle_draw_map:
-		map.draw_map(window)
-	
+	map.draw_map(window)
 	# map.draw_subdiv_points(window)
+
+	# Draw communication links
+	draw_links(world, window)
 	
+	for robot in robots:
+		if robot.controller.mode:
+			if robot.controller.local_waypoint is not None:
+				pygame.draw.circle(window, (255, 0, 0), robot.controller.local_waypoint, robot.controller.waypoint_radius)
+			if robot.controller.waypoint is not None:
+				pygame.draw.circle(window, (255, 0, 0), robot.controller.waypoint, robot.controller.waypoint_radius)
 
-	if beacon.controller.mode:
-		if beacon.controller.local_waypoint is not None:
-			pygame.draw.circle(window, (255, 0, 0), beacon.controller.local_waypoint, beacon.controller.waypoint_radius)
-		if beacon.controller.waypoint is not None:
-			pygame.draw.circle(window, (255, 0, 0), beacon.controller.waypoint, beacon.controller.waypoint_radius)
-
-	# Draw the robot
-	beacon.draw(window)
+		# Draw the robot
+		robot.draw(window)
 	# Draw the FPS
 	write_time(time, window, window_size)
-	write_robot_info(time, window, window_size, beacon)
-	if beacon_crashed:
-		write_crashed_robot(window, window_size)
+	# write_robot_info(time, window, window_size, beacon)
+	# if beacon_crashed:
+	# 	write_crashed_robot(window, window_size)
 
 	# Update scene display
 	pygame.display.update()
@@ -129,51 +132,26 @@ def main():
 	### INITIALISAZE PYGAME
 	pygame.init()
 
-	### TIME INIT
-	real_time = time.time()
-	t = 0
-	dt = 2e-3
-	map_element_size = 30
-	# map_element_size = 40 # Demo case
-	# map_element_size = 100 # (Empty explored loop)
-	map_element_size = 70 # (Thin Wall Problem)
-
 	### WINDOW INITIALISATION
 	window_size = (1200, 700)
-	# Initialize the window
 	window = pygame.display.set_mode(window_size)
-	# Set the title of the window
 	pygame.display.set_caption("Map")
+	
+	### WORLD INIT
+	main_world = World(window)
 
-	# MAP INITIALISATION
-	map_size = (1100, 600)
-	map_offset = (50, 50)
-	# Number of subdivisions in the map, used to list the lines
-	subdiv_number = (25, 25)
-	# Initilize the map
-	map = Map(map_size, map_offset, subdiv_number, map_element_size, int(np.sin(np.pi/3) * map_element_size))
-
-
-	### ROBOT INITIALISATION
-	beacon = BeaconRobot((500, 300), 50, 1000, 100, 25, 150)
-	# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
-	# Equip sensors
-	beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
-	beacon.equip_accmeter(precision=(0.0005, 0.00002), time=t)
-	beacon.equip_controller(mode=1)
 
 	# State of the simulation
 	running = True
-	# Toggle to draw the map
-	toggle_draw_map = True
-	toggle_draw_live_map = True
 
-	beacon_crashed = False
-	
 	# Display time
+	real_time = time.time()
 	t_display = real_time
 	desired_fps = 25
+
 	while running:
+		real_time = time.time()
+		t = main_world.time
 		key_pressed_is = pygame.key.get_pressed()
 		# Handle events
 		
@@ -186,65 +164,22 @@ def main():
 					toggle_draw_map = not toggle_draw_map
 				if event.key == K_l:
 					toggle_draw_live_map = not toggle_draw_live_map
-				if event.key == K_a:
-					beacon.controller.mode = 1 * (beacon.controller.mode == 0) + 0 * (beacon.controller.mode != 0)
 				if event.key == K_ESCAPE:
 					running = False
 		if key_pressed_is[K_RIGHT]:
 			desired_fps = min(500, desired_fps + 20*1/desired_fps)
 		if key_pressed_is[K_LEFT]:
 			desired_fps = max(1, desired_fps - 20*1/desired_fps)
-		
 
-		### SIMULATION
-		beacon.compute_pos_calc(t)
-		beacon.scan_environment(t, map, window)
-		beacon.compute_robot_collision(map, window)
-		beacon.live_grid_map.update_robot_path()
+		main_world.update()
 
-		if beacon.controller.mode:
-			# beacon.controller.check_safe_path(t)
-			beacon.controller.move_to_waypoint(dt, window)
-		else:
-
-			# Direction for rotation and direction
-			rotation = 0
-			direction = 0
-			if key_pressed_is[K_q]:
-				rotation -= 1
-			if key_pressed_is[K_d]: 
-				rotation += 1
-			if key_pressed_is[K_z]: 
-				direction += 1
-			if key_pressed_is[K_s]: 
-				direction -= 1
-
-			# Robot movement
-			beacon.move(dt, direction)
-			beacon.rotate(dt, rotation)
-		
-		# TIME
-		real_time = time.time()
-		t += dt
-		
-		# TIMER
-		if beacon.crashed_in_wall:
-			t_crashed = t
-			print("\n\n\n###   ROBOT CRASHED !!!   ###\n")
-			# beacon_crashed = True
-
-		if beacon.controller.mode == 100:
-			beacon.live_grid_map.save_map_to_image()
+		if main_world.map_explored:
+			main_world.robots[0].live_grid_map.save_map_to_image()
 			running = False
-		
-		if beacon_crashed:
-			if t > t_crashed + 2:
-				running = False
 
 		# DRAW THE SCENE
-
 		if real_time - t_display > 1/desired_fps:
-			update_display(window, window_size, map, beacon, t, toggle_draw_map, toggle_draw_live_map, beacon_crashed)
+			update_display(window, window_size, main_world, t)
 			t_display = real_time
 
 	print(f"Time to explore all the map : {t:.3f} s")
