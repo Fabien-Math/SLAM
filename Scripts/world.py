@@ -31,9 +31,9 @@ class World:
 		self.linked_robot = []
 		
 		# MAP INITIALIZATION
-		# self.map_element_size:float = 30
+		self.map_element_size:float = 30
 		# self.map_element_size = 40		# Demo case
-		self.map_element_size = 70		# (Thin Wall Problem)
+		# self.map_element_size = 70		# (Thin Wall Problem)
 		self.map_element_size = 100		# (Empty explored loop)
 		self.map_size:tuple = (1100, 600)
 		self.map_offset = (50, 50)

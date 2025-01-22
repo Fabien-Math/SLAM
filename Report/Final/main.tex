@@ -14,7 +14,7 @@
 \newcommand{\referent}{M. Mehmet ERSOY}
 \newcommand{\reportdate}{\date}
 
-\newcommand{\partA}{Partie 1}
+\newcommand{\partA}{State of the art}
 \newcommand{\partB}{Partie 2}
 \newcommand{\partC}{Partie 3}
 \newcommand{\partD}{Partie 4}
@@ -41,31 +41,31 @@
 
 
 % Renseigner si le Rapport contient un abstract
-\setboolean{abst}{false}
+\setboolean{abst}{true}
 % Renseigner si le Rapport contient des remerciements
-\setboolean{thx}{false}
+\setboolean{thx}{true}
 % Renseigner si le Rapport contient une table des matières
-\setboolean{contents}{false}
+\setboolean{contents}{true}
 % Renseigner si le Rapport contient une introduction
-\setboolean{introduction}{false}
+\setboolean{introduction}{true}
 % Renseigner si le Rapport contient une partie 2
-\setboolean{pt2}{false}
+\setboolean{pt2}{true}
 % Renseigner si le Rapport contient une partie 3
-\setboolean{pt3}{false}
+\setboolean{pt3}{true}
 % Renseigner si le Rapport contient une partie 4
-\setboolean{pt4}{false}
+\setboolean{pt4}{true}
 % Renseigner si le Rapport contient une partie 5
-\setboolean{pt5}{false}
+\setboolean{pt5}{true}
 % Renseigner si le Rapport contient une introduction
-\setboolean{conclusion}{false}
+\setboolean{conclusion}{true}
 % Renseigner si le Rapport contient des perspectives
-\setboolean{perspectives}{false}
+\setboolean{perspectives}{true}
 % Renseigner si le document contient une bibliographie
-\setboolean{biblio}{false} 
+\setboolean{biblio}{true} 
 % Renseigner si le document contient un glossaire
 \setboolean{glossaire}{false}
 % Renseigner si le Rapport contient des annexes 
-\setboolean{annexe}{false}
+\setboolean{annexe}{true}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,6 +77,12 @@
 \setlength{\headheight}{28pt}
 \lhead{\includegraphics[height = 0.6cm]{IMAGES/logos/Logo_SeaTech_2023.png}}
 % \rhead{\includegraphics[height = 0.7cm]{IMAGES/logos/MOCA.png}}
+\rhead{\textsc{\leftmark}}
+
+% Update \rightmark with \section name
+\renewcommand{\sectionmark}[1]{\markboth{#1}{#1}}
+
+
 \lfoot{\auteur}
 \cfoot{ }
 \rfoot{Page \thepage \ / \pageref{LastPage}}
@@ -246,9 +252,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 \ifthenelse{\boolean{introduction}}
 {
-	\section*{Introduction}
 	\addcontentsline{toc}{section}{\protect\numberline{}Introduction}%
+	\section*{Introduction}
+
+	\markboth{Introduction}{Introduction} % Manually update \rightmark for section*
 	\subfile{SECTIONS/3introduction}
+
 
 	\newpage
 }
@@ -301,8 +310,10 @@
 %%%%%%%%%%%%%%%%%%%%%%
 \ifthenelse{\boolean{perspectives}}
 {
-	\section*{Conclusion}
 	\addcontentsline{toc}{section}{\protect\numberline{}Conclusion}%
+	\section*{Conclusion}
+	\markboth{Introduction}{Introduction} % Manually update \rightmark for section*
+
 	\subfile{SECTIONS/Wconclusion}
 
 	\newpage
@@ -325,7 +336,7 @@
 
 \ifthenelse{\boolean{biblio}}
 {
-	\addcontentsline{toc}{section}{\protect\numberline{}Bibliographie}
+	\addcontentsline{toc}{section}{\protect\numberline{}References}
 	% \bibliographystyle{unsrt}
 	\bibliographystyle{IEEEtran}
 	\footnotesize{\bibliography{BIBLIOGRAPHY/bib.bib}}

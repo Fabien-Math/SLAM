@@ -250,7 +250,7 @@ class BeaconRobot:
 		self.controller = Controller(self, mode)
 
 	def equip_communicator(self, world):
-		self.communicator = Communicator(self.id, 1000, 10, 10, world)
+		self.communicator = Communicator(self.id, 1000, 1000, 1000, world)
 		
 	
 	### ROBOT COLLISION

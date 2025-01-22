@@ -207,7 +207,7 @@ def main():
 	last_static_pos = robot_pos
 	waypoint_pos = (1100, 350)
 	map = [((600, 350), 200)]
-	map = [((400, 350), 100), ((800, 350), 100)]
+	# map = [((400, 350), 100), ((800, 350), 100)]
 	# map = [((400, 350), 100), ((800, 350), 100), ((600, 350), 100)]
 	"""map = [((226.66666666666666, -23.333333333333332), 12), 
 ((280.0, -23.333333333333332), 12), 
@@ -625,7 +625,7 @@ def main():
 	# Simulation variables 
 	safe_local_waypoint = waypoint_pos
 	total_dist = 0
-	safe_range = 25
+	safe_range = 0
 	static_pos_counter = 0
 	look_for_path_through_known_map = False
 
@@ -661,13 +661,13 @@ def main():
 		i += 1
 
 		# map = [((600, 350), 200)]
-		map = [((400 + 100, 250), 100), ((800, 450), 100), ((700, 200), 100), ((800, 350), 100), ((800, 600), 100)]
-		map = [((400 + 100, 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
-		map1 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
-		map2 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
-		map3 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
+		# map = [((400 + 100, 250), 100), ((800, 450), 100), ((700, 200), 100), ((800, 350), 100), ((800, 600), 100)]
+		# # map = [((400 + , 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
+		# # map1 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
+		# map2 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
+		# map3 = [((400 + rd(), 250 + rd()), 100), ((800 + rd(), 450 + rd()), 100), ((700 + rd(), 200 + rd()), 100), ((800 + rd(), 350 + rd()), 100), ((800 + rd(), 700 + rd()), 100)]
 
-		map = map + map1 + map2 + map3
+		# map = map  + map2 + map3
 
 		if ut.point_in_circle(robot_pos, waypoint_pos, 10):
 			continue
@@ -691,8 +691,8 @@ def main():
 		# end_time_cpt = time.perf_counter()
 		# print(safe_local_waypoints)
 
-		# total_path_length = np.sum([ut.distance_tuple(safe_local_waypoints[i], safe_local_waypoints[i+1]) for i in range(len(safe_local_waypoints[1::]))])
-		# print(total_path_length)
+		total_path_length = np.sum([ut.distance_tuple(safe_local_waypoints[i], safe_local_waypoints[i+1]) for i in range(len(safe_local_waypoints[1::]))])
+		print(total_path_length)
 
 
 		# if 1/(end_time_cpt-start_time_cpt) < 4000:

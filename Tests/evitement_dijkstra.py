@@ -80,7 +80,11 @@ def dijkstra(grid, start, end):
 
 		for neighbor in current_node.neighbors:
 			if not neighbor.visited:
-				tentative_g_cost = current_node.g_cost + 1
+				if neighbor.x != current_node.x and neighbor.y != current_node.y:
+					tentative_g_cost = current_node.g_cost + math.sqrt(2)
+				else:
+					tentative_g_cost = current_node.g_cost + 1
+
 				if tentative_g_cost < neighbor.g_cost:
 					neighbor.g_cost = tentative_g_cost
 					neighbor.previous = current_node
