@@ -625,7 +625,7 @@ def main():
 	# Simulation variables 
 	safe_local_waypoint = waypoint_pos
 	total_dist = 0
-	safe_range = 0
+	safe_range = 25
 	static_pos_counter = 0
 	look_for_path_through_known_map = False
 

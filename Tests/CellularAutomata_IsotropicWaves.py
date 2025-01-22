@@ -55,7 +55,7 @@ def in_obstacle(i, j):
 	return False
 
 def compute_angle(p1, p2):
-	ang = np.atan2(p2[1] - p1[1], p2[0] - p1[0])
+	ang = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
 	return ang + (2 * np.pi)*(ang < 0)
 
 
@@ -212,16 +212,18 @@ def update_lattice(t, a_lattice, z_lattice, Gamma):
 
 
 ####  SHORTEST PATH CASE   ##### 
-scale = 5
+scale = 2
 n, m = int(700 / scale), int(1200 / scale)
 
 a_lattice = np.zeros((n, m))
 z_lattice = np.zeros((n, m, 2))
 # B = []
-B = [((int(350/scale), int(600/scale)), int(200/scale))]
-# B = [(int(150 / scale), int(550 / scale), int(400 / scale), int(800 / scale))]
+# B = [((int(350/scale), int(600/scale)), int(200/scale))]
+B = [(int(150 / scale), int(550 / scale), int(400 / scale), int(800 / scale))]
 lambda_ch = 5
 Gamma = build_gamma(B, n, m, lambda_ch)
+# print(Gamma)
+# exit()
 
 a_lattice[int(350 / scale), int(100 / scale)] = 1
 
@@ -302,7 +304,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 # Étape 3 : Fonction d'animation
 def update(frame):
 	global t, a_lattice, z_lattice, Gamma, scale
-	print(t, end='\r')
+	print(t, '/', int(1200 / scale), end='\r')
 	# Met à jour le réseau en fonction de votre logique
 	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
 	
@@ -350,7 +352,7 @@ ani = FuncAnimation(
 )
 
 # Étape 5 : Enregistrement de l'animation au format GIF
-filename = "Tests/isotropic_wave_anim.gif"
+filename = "Tests/isotropic_wave_square_obst_anim.gif"
 writer = PillowWriter(fps=25)  # Définir les images par seconde
 ani.save(filename, writer=writer)
 print(f"Animation sauvegardée sous le nom {filename}")
