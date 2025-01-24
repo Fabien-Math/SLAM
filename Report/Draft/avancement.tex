@@ -163,6 +163,78 @@ The robot listen for the order.
 If an answer is received, the robot validate the tranfert of information.
 Else, retry, retry and retry and skip it.
 
+\subsection{Encoding}
+
+To encode the message, we use a specific message frame. This frame ensures that if part of the message is incorrectly transmitted, such as when a bit in the message is flipped, the receiver will detect the error and request the message to be resent until it is received correctly. This method is known as Automatic Repeat reQuest (ARQ).
+
+The message includes two verification mechanisms, unit sum check and parity bit: one to check the integrity of the transmitted message and another to confirm the identity of the sender.
+
+$$
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{ID of the sender}}~~
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Number of Receivers}}~~
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile}_{4 \times \text{Number of Receivers}}~~
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Message}}
+~~~ \cdots
+$$
+$$
+\cdots ~~~
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Message end indicator}}\;
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Units sum}}~~
+\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Sender ID with parity bit}}
+$$
+
+\subsubsection{Description}
+
+\textbf{Emitter ID:} $\smallsmile \smallsmile \smallsmile \smallsmile$\\
+The unique 4-bit identifier for the sender of the message (range: 0-15).\\
+
+\textbf{Number of Receivers:} $\smallsmile \smallsmile \smallsmile \smallsmile$\\
+Optional 4-bit field indicating the number of receivers. If there is only one receiver, this field is set to \textit{0000}.\\
+
+\textbf{Receiver IDs:} $\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile$\\
+Each receiver's ID is encoded in 4 bits. For multiple receivers, these IDs are listed sequentially.\\
+
+\textbf{Message Content:} $\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile$\\
+
+Type indicators (up to 15 indicator types):\\
+\begin{table}[H]
+	\centering
+	\begin{tabular}{c c c}
+		\texttt{0001} & Float & \texttt{32} bits\\
+		\texttt{0010} & Integer & \texttt{32} bits\\
+		\texttt{0011} & String & \texttt{8} bits for length + \texttt{8} bits per character\\
+		\texttt{0100} & List of float & \texttt{16} bits for length + \texttt{32} bits per float\\
+	\end{tabular}
+	\caption{}
+\end{table}
+
+\textbf{Units sum:} $\smallsmile \smallsmile \smallsmile \smallsmile$\\
+\texttt{4} bits representing the sum of the bit in the message frame modulo 16. \\ 
+
+\textbf{Emitter ID with Parity:} $\smallsmile \smallsmile \smallsmile \smallsmile$\\
+The emitter ID is repeated with a parity bit. The parity ensures the total number of 1s in the message frame up to the emitter ID with parity is correct. If odd, the last bit is flipped. \\
+
+
+
+\subsection{Dencoding}
+
+
+\subsection{Implementation}
+
+To implement it, we define a table of message with their specification, for each message received, there is a frame of response with some test.
+
+Exemple of table of response :
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|}
+		\textbf{Message received} & \textbf{Possible responses}\\
+		\hline
+		No message
+		
+	\end{tabular}
+\end{table}
+
 
 
 \subsection{Analysis scheme}

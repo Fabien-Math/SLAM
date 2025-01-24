@@ -175,7 +175,7 @@ class Communicator:
 		binary_message += f"{sum_units:04b}"
 		
 		# Step 6: Add Emitter ID with Parity Bit (4 bits)
-		parity_bit = bin(self.id).count('1') % 2
+		parity_bit = binary_message.count('1') % 2
 		final_emitter_id = self.id
 		if parity_bit == 1:
 			final_emitter_id ^= 1  # Flip the last bit if parity is odd
@@ -290,7 +290,7 @@ class Communicator:
 
 
 		# Parity check (optional)
-		parity_bit = bin(emitter_id).count('1') % 2
+		parity_bit = binary_message[:-4].count('1') % 2
 		is_parity_valid = ((emitter_id ^ emitter_id_with_parity) & 1) == parity_bit
 		if not is_parity_valid:
 			raise ValueError("Parity check failed.")

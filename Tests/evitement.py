@@ -58,6 +58,7 @@ def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, sa
 	# Update scene display
 	pygame.display.update()
 
+
 def need_line_split(map, p1, p2, line, safe_range):
 	for c in map:
 		ortho_point = ut.orthogonal_point(c[0], p1, p2, line)
@@ -206,8 +207,8 @@ def main():
 	robot_pos = (100, 350)
 	last_static_pos = robot_pos
 	waypoint_pos = (1100, 350)
-	map = [((600, 350), 200)]
-	# map = [((400, 350), 100), ((800, 350), 100)]
+	# map = [((600, 350), 200)]
+	map = [((400, 350), 100), ((800, 200), 130), ((800, 500), 130)]
 	# map = [((400, 350), 100), ((800, 350), 100), ((600, 350), 100)]
 	"""map = [((226.66666666666666, -23.333333333333332), 12), 
 ((280.0, -23.333333333333332), 12), 
@@ -625,7 +626,7 @@ def main():
 	# Simulation variables 
 	safe_local_waypoint = waypoint_pos
 	total_dist = 0
-	safe_range = 25
+	safe_range = 0
 	static_pos_counter = 0
 	look_for_path_through_known_map = False
 

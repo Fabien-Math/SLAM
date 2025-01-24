@@ -69,7 +69,6 @@ def order_point(vertexes):
 	return ordered_vertexes
 
 
-
 def build_gamma(B, n, m, lambda_ch):
 	potential_gamma = []
 	for id_obs, obstacle in enumerate(B):
@@ -128,15 +127,14 @@ def build_gamma(B, n, m, lambda_ch):
 
 
 
-
 def update_lattice(t, a_lattice, z_lattice, Gamma):
 	new_a_lattice = a_lattice.copy()
 	new_z_lattice = z_lattice.copy()
 
 	for i in range(n):
 		for j in range(m):
-			if (i, j) not in Gamma:
-				if in_obstacle(i, j):
+			if in_obstacle(i, j):
+				if (i, j) not in Gamma:
 					continue
 
 			if a_lattice[i, j]:
@@ -158,8 +156,11 @@ def update_lattice(t, a_lattice, z_lattice, Gamma):
 
 			istar, jstar = ijstar(i, j, Wtij, a_lattice, z_lattice)
 
-			if (i, j) in Gamma and sum:
-				new_a_lattice[i, j] = t + 1
+			if in_obstacle(i, j) and sum:
+				if (i,j) in Gamma:
+					new_a_lattice[i, j] = t + 1
+				else:
+					new_a_lattice[i, j] = a_lattice[istar, jstar]
 			else:
 				new_a_lattice[i, j] = a_lattice[istar, jstar]
 
@@ -169,6 +170,9 @@ def update_lattice(t, a_lattice, z_lattice, Gamma):
 			# if not ((a_lattice[i, j] and (i, j) not in Gamma) or not len(Wtij)):
 				new_z_lattice[i, j] = calc_rt(i, j, istar, jstar, a_lattice, z_lattice)
 	
+	if np.sum(a_lattice) == np.sum(new_a_lattice):
+		return None, None, None
+
 	a_lattice = new_a_lattice.copy()
 	z_lattice = new_z_lattice.copy()
 
@@ -177,183 +181,199 @@ def update_lattice(t, a_lattice, z_lattice, Gamma):
 	return t, a_lattice, z_lattice
 
 
-# n, m = 101, 101
+####################################################################################################
+# TEST CASES
+####################################################################################################
 
-# a_lattice = np.zeros((n, m))
-# z_lattice = np.zeros((n, m, 2))
+TEST_CASE = False
+ARTICLE_TEST_CASE = False
 
-# # (xmin, xmax, ymin, ymax)
-# B = [(50, 100, 40, 45), ((20, 50), 10)]
-# # B = [(50, 100, 40, 45)]
-# lambda_ch = 5
-# Gamma = build_gamma(B, n, m, lambda_ch)
-# a_lattice[50, 75] = 1
+if ARTICLE_TEST_CASE:
+	plt.figure("Article test case", figsize=(19.2, 10.8), layout="constrained")
 
-# t = 1
-# for i in tqdm(range(int(100))):
-# 	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
-# 	# for i,j in Gamma:
-# 	# 	if a_lattice[i, j]:
-# 	# 		print('Gamma', i, j)
-# 	# 		plt.pause(1)
-# 	plt.figure(1)
-# 	plt.clf()
-# 	modif_a_lattice = a_lattice.copy()
+	n, m = 101, 101
 
-# 	for i in range(n):
-# 		for j in range(m):
-# 			if in_obstacle(i, j):
-# 				modif_a_lattice[i, j] = -1
-# 	for i,j in Gamma:
-# 		modif_a_lattice[i, j] = -0.5
-# 	plt.imshow(modif_a_lattice, cmap='rainbow')
-# 	plt.pause(0.01)
+	a_lattice = np.zeros((n, m))
+	z_lattice = np.zeros((n, m, 2))
+
+	# (xmin, xmax, ymin, ymax)
+	# B = [(50, 100, 40, 45), ((20, 50), 10)]
+	B = [(50, 100, 40, 45)]
+	lambda_ch = 5
+	Gamma = build_gamma(B, n, m, lambda_ch)
+	a_lattice[50, 75] = 1
+
+	t = 1
+	for i in tqdm(range(int(np.sqrt(n**2 + m**2)))):
+		t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
+
+		if t is None:
+			break
+
+		a_lattice_plot = a_lattice.copy()
+
+		# Colors from secondary sources
+		for i, v in enumerate(np.unique(a_lattice)):
+			mask = a_lattice == v
+			a_lattice_plot[mask] = i
 
 
+		for i in range(n):
+			for j in range(m):
+				if in_obstacle(i, j):
+					a_lattice_plot[i, j] = -2
+		# for i,j in Gamma:
+		# 	modif_a_lattice[i, j] = -0.5
+
+
+		plt.clf()
+		plt.imshow(a_lattice_plot, cmap='gist_rainbow')
+		# plt.imshow(a_lattice_plot, cmap='tab10')
+		plt.pause(0.01)
+
+	plt.show()
+
+
+####################################################################################################
+# RUN IN REAL TIME
+####################################################################################################
+RUN_IN_REAL_TIME = True
 
 ####  SHORTEST PATH CASE   ##### 
-scale = 2
+scale = 25
+
+
 n, m = int(700 / scale), int(1200 / scale)
 
 a_lattice = np.zeros((n, m))
 z_lattice = np.zeros((n, m, 2))
-# B = []
+# Round
 # B = [((int(350/scale), int(600/scale)), int(200/scale))]
-B = [(int(150 / scale), int(550 / scale), int(400 / scale), int(800 / scale))]
+# Square
+# B = [(int(150 / scale), int(550 / scale), int(400 / scale), int(800 / scale))]
+# 2 Rounds
+B = [((int(350 / scale), int(400 / scale)), int(100 / scale)), ((int(200 / scale), int(800 / scale)), int(130 / scale)), ((int(500 / scale), int(800 / scale)), int(130 / scale))]
+
+# Granularity
 lambda_ch = 5
+
+# Secondary sources
 Gamma = build_gamma(B, n, m, lambda_ch)
-# print(Gamma)
-# exit()
+print(len(Gamma))
+
 
 a_lattice[int(350 / scale), int(100 / scale)] = 1
 
 t = 1
-# plt.figure(1, layout='constrained')
-# for i in tqdm(range(int(1200/scale))):
-# 	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
-# 	if a_lattice[int(350 / scale), int(1100 / scale)]:
-# 		print("Time to reach the waypoint :", (t-1) * scale)
-# 		break
-	
-# 	mask = a_lattice > 0
-# 	a_lattice_plot = a_lattice.copy()
-# 	a_lattice_plot[mask] = 1
-
-	# # WITH COLOR FROM SECONDARY SOURCES
-	# a_lattice_plot = a_lattice.copy()
-	# for i, v in enumerate(np.unique(a_lattice)):
-	# 	mask = a_lattice == v
-	# 	a_lattice_plot[mask] = i
-
-# 	for i in range(n):
-# 		for j in range(m):
-# 			if in_obstacle(i, j):
-# 				a_lattice_plot[i, j] = -1
-# 	plt.clf()
-# 	plt.imshow(a_lattice_plot, cmap='Blues')
-# 	plt.pause(0.01)
 
 
+if RUN_IN_REAL_TIME:
+	plt.figure("Test case 2", layout="constrained")
+
+	for i in tqdm(range(int(1200/scale))):
+		t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
+
+		if a_lattice[int(350 / scale), int(1100 / scale)]:
+			print("Time to reach the waypoint :", (t-1) * scale)
+			break
+		
+		a_lattice_plot = a_lattice.copy()
+		mask = a_lattice > 0
+		a_lattice_plot[mask] = 1
+
+		# WITH COLOR FROM SECONDARY SOURCES
+		# a_lattice_plot = a_lattice.copy()
+		# for i, v in enumerate(np.unique(a_lattice)):
+		# 	mask = a_lattice == v
+		# 	a_lattice_plot[mask] = i
+
+		for i in range(n):
+			for j in range(m):
+				if in_obstacle(i, j):
+					a_lattice_plot[i, j] = -1
+		plt.clf()
+		plt.imshow(a_lattice_plot, cmap='Blues')
+		plt.pause(0.01)
 
 
-# # plt.imshow(a_lattice_plot, cmap='gray')
-# # plt.show()
+####################################################################################################
+# ANIMATION SAVING
+####################################################################################################
 
-from matplotlib.animation import FuncAnimation, PillowWriter
+SAVE_ANIMATION = False
 
-# # Étape 3 : Fonction d'animation
-# def update(frame, t, a_lattice, z_lattice, Gamma, scale):
-# 	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
-# 	if a_lattice[int(350 / scale), int(1100 / scale)]:
-# 		print("Time to reach the waypoint :", (t-1) * scale)
-# 		return
-	
-# 	mask = a_lattice > 0
-# 	a_lattice_plot = a_lattice.copy()
-# 	a_lattice_plot[mask] = 1
+if not SAVE_ANIMATION:
+	exit()
 
-# 	# WITH COLOR FROM SECONDARY SOURCES
-# 	a_lattice_plot = a_lattice.copy()
-# 	for i, v in enumerate(np.unique(a_lattice)):
-# 		mask = a_lattice == v
-# 		a_lattice_plot[mask] = i
+one_color = True
+sec_colors = False
+obst_color = True
+wp_color = True
 
-# 	for i in range(n):
-# 		for j in range(m):
-# 			if in_obstacle(i, j):
-# 				a_lattice_plot[i, j] = -1
-
-
-# 	plt.clf()
-# 	plt.imshow(a_lattice_plot, cmap='Blues')
-# 	return
-
-# fig = plt.figure("Animation Isotropic Wave", layout='constrained')
-
-# num_frames = 100
-# interval = 40  # Intervalle de 50ms entre les frames
-# ani = FuncAnimation(fig, update, frames=num_frames, interval=interval, fargs=(t, a_lattice, z_lattice, Gamma, scale))
-
-# # Étape 5 : Enregistrement de l'animation au format GIF
-# filename = "Tests/animation.gif"
-# writer = PillowWriter(fps=25)  # Définir les images par seconde
-# ani.save(filename, writer=writer)
-# print(f"Animation sauvegardée sous le nom {filename}")
-
-
-# Étape 3 : Fonction d'animation
 def update(frame):
 	global t, a_lattice, z_lattice, Gamma, scale
+	global one_color, sec_colors, obst_color, wp_color
 	print(t, '/', int(1200 / scale), end='\r')
-	# Met à jour le réseau en fonction de votre logique
-	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
+
+	if t is None:
+		return
 	
-	# Vérifie une condition pour afficher le temps de parcours
+	t, a_lattice, z_lattice = update_lattice(t, a_lattice, z_lattice, Gamma)
+
+	if t is None:
+		return
+	
 	if a_lattice[int(350 / scale), int(1100 / scale)]:
 		print("Time to reach the waypoint :", (t - 1) * scale)
 		return
 	
-	# Crée un masque pour gérer les données
-	mask = a_lattice > 0
 	a_lattice_plot = a_lattice.copy()
-	a_lattice_plot[mask] = 1
 
-	# Applique des couleurs à partir des sources secondaires
-	# a_lattice_plot = a_lattice.copy()
-	# for i, v in enumerate(np.unique(a_lattice)):
-	# 	mask = a_lattice == v
-	# 	a_lattice_plot[mask] = i
+	# Only one color for the wave
+	if one_color:
+		mask = a_lattice > 0
+		a_lattice_plot[mask] = 1
+	
+	# Display obstacle in a different from the others
+	if obst_color:
+		for i in range(a_lattice.shape[0]):
+			for j in range(a_lattice.shape[1]):
+				if in_obstacle(i, j):
+					a_lattice_plot[i, j] = -1
 
-	# Marque les obstacles
-	for i in range(a_lattice.shape[0]):
-		for j in range(a_lattice.shape[1]):
-			if in_obstacle(i, j):
-				a_lattice_plot[i, j] = -1
-		
-	a_lattice_plot[int(350 / scale), int(1100 / scale)] = 0.5
+	# Colors from secondary sources
+	if sec_colors:
+		for i, v in enumerate(np.unique(a_lattice)):
+			mask = a_lattice == v
+			a_lattice_plot[mask] = i
 
-	# Met à jour l'image de la matrice
-	plt.clf()  # Efface la figure pour actualiser correctement
+	
+	# Waypoint color
+	if wp_color:
+		a_lattice_plot[int(350 / scale), int(1100 / scale)] = 0.5
+
+	# Update image
+	plt.clf() 
 	plt.imshow(a_lattice_plot, cmap='Blues', interpolation='nearest')
-	# plt.suptitle(f"")
 	plt.title(f"Isotropic wave, minimal distance to reach the target : {(t-1) * scale} um")
-	return  # Pas besoin de retourner un objet avec plt.imshow
+	return
 
-# Étape 4 : Initialisation de la figure
-fig = plt.figure("Animation Isotropic Wave", layout='constrained')
+from matplotlib.animation import FuncAnimation, PillowWriter
+# Init figure
+fig = plt.figure("Animation Isotropic Wave", figsize=(19.2, 10.8), layout='constrained')
 
-# Paramètres d'animation
+# Animation parameters
 num_frames = int(1200/scale)
-interval = 40  # Intervalle en millisecondes entre les frames
+interval = 40  # ms
 
-# Crée l'animation
+# Create the animation
 ani = FuncAnimation(
 	fig, update, frames=num_frames, interval=interval, blit=False
 )
 
-# Étape 5 : Enregistrement de l'animation au format GIF
-filename = "Tests/isotropic_wave_square_obst_anim.gif"
-writer = PillowWriter(fps=25)  # Définir les images par seconde
+# Save animation as a GIF
+filename = "Tests/isotropic_wave_test2_anim.gif"
+writer = PillowWriter(fps=25)
 ani.save(filename, writer=writer)
 print(f"Animation sauvegardée sous le nom {filename}")
 
