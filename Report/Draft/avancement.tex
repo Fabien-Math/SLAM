@@ -58,7 +58,8 @@ This algorithm aim to coordinate the exploration of unknown area by a robot swar
 
 \subsection{Operation}
 
-A the beginning of the exploration, we assign a number to each robot, the smallest one is the master.
+A the beginning of the exploration, we assign a number to each robot, the smallest one is the master. Another Implementation would be to choose the master accordingly to their battery level, the one with the higher battery level is the master. Indeed, the master robot is the one that consume more due to all the calculation it will do. To keep it simple, we choose the smallest number.
+
 The communication is bases on a strong hierarchical structure, the master robot give the direction to all robot link with it with a bigger number.
 
 If the group split, the master change to the strongest robot in the group.
@@ -199,11 +200,27 @@ Each receiver's ID is encoded in 4 bits. For multiple receivers, these IDs are l
 Type indicators (up to 15 indicator types):\\
 \begin{table}[H]
 	\centering
-	\begin{tabular}{c c c}
-		\texttt{0001} & Float & \texttt{32} bits\\
+	\begin{tabular}{c l l}
+		\hline
+		Type indicator & Type & Data size\\
+		\hline
+		\texttt{0000} & Message end & \texttt{4} bits\\
+		\texttt{0001} & Integer & \texttt{8} bits\\
 		\texttt{0010} & Integer & \texttt{32} bits\\
-		\texttt{0011} & String & \texttt{8} bits for length + \texttt{8} bits per character\\
-		\texttt{0100} & List of float & \texttt{16} bits for length + \texttt{32} bits per float\\
+		\texttt{0011} & Float & \texttt{32} bits\\
+		\texttt{0100} & String & \texttt{8} bits for length + \texttt{8} bits per character\\
+		\texttt{0101} & List of int8 & \texttt{16} bits for length + \texttt{8} bits per integer\\
+		\texttt{0110} & List of float & \texttt{16} bits for length + \texttt{32} bits per float\\
+		\texttt{0111} & Message type ID & \texttt{8} bits\\
+		\texttt{1000} & Robot info & \texttt{168} bits\\
+		\texttt{1001} & & \\
+		\texttt{1010} & Binary message & \texttt{16} bits for length + \texttt{1} bit per binary bit\\
+		\texttt{1011} & & \\
+		\texttt{1100} & & \\
+		\texttt{1101} & & \\
+		\texttt{1110} & & \\
+		\texttt{1111} & & \\
+		\hline
 	\end{tabular}
 	\caption{}
 \end{table}
@@ -223,17 +240,45 @@ The emitter ID is repeated with a parity bit. The parity ensures the total numbe
 
 To implement it, we define a table of message with their specification, for each message received, there is a frame of response with some test.
 
-Exemple of table of response :
 
+Message ID table:
 \begin{table}[H]
 	\centering
-	\begin{tabular}{|c|c|}
-		\textbf{Message received} & \textbf{Possible responses}\\
+	\begin{tabular}{c l}
 		\hline
-		No message
+		\textbf{Message ID} & \textbf{Description} \\
+		\hline
+		\texttt{00000000} & Ask to repeat the last message\\
+		\texttt{00000001} & Last message received correctly\\[5pt]
 		
+		\texttt{00010000} & Ask the connected robot set\\
+		\texttt{00010001} & Send the connected robot set\\[5pt]
+		
+		\texttt{00100000} & Ask to all where they want to go\\
+		\texttt{00100001} & Send next waypoint position with frontier ID\\
+		\texttt{00100010} & Send robot info\\
+		\texttt{00100011} & Send next position to reach\\[5pt]
+		
+		\texttt{00110000} & Ask for live grid map synchronisation\\
+		\texttt{00110001} & Send updated live grid map\\[5pt]
+		
+		\texttt{01110000} & Ask info gainned since last connection\\
+		\texttt{01110001} & Send nothing gainned\\
+		\texttt{01110010} & Send what was gainned on the live-grid map\\[5pt]
+
+		\texttt{01010101} & Transmit message from another robot\\
+		\hline
 	\end{tabular}
 \end{table}
+
+
+Information sent for each message type could be found in the \textcolor{red}{\textbf{Appendix ...}}.
+
+Robot info:
+2 \textit{float32} for position, 1 \textit{float32} for velocity, 1 \textit{float32} for rotation, 1 \textit{float32} for angular velocity, 1 \textit{int8} for energy\\
+
+Connected robot set:
+\texttt{4} bits for set length + \texttt{4} bits per robot id
 
 
 

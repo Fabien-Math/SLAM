@@ -33,72 +33,6 @@ class Communicator:
 		self.scan_signal()
 		
 
-	
-	def compute_message_size(self, receivers, message):
-		"""Compute the total length of the message once encoded
-
-		Args:
-			receivers (list): List of 4-bit receiver IDs (0-15).
-			message (list): List of elements to encode. Elements can be strings, floats, or integers.
-		
-		Returns:
-			str: Encoded message as a binary string.
-		"""
-		
-		# Step 1: Add Emitter ID (4 bits)
-		const_size = 4
-		
-		# Step 2: Add number of receivers (4 bits) if needed
-		if isinstance(receivers, list):
-			const_size += 4 * (len(receivers) + 1)
-		elif isinstance(receivers, str):
-			if receivers == 'all':
-				const_size += 4  # Default if there's all receiver
-		
-		binary_message_size = 0
-		# Step 4: Encode Message
-		for item in message:
-			if isinstance(item, float):
-				binary_message_size += 4 + 32
-			elif isinstance(item, int):
-				binary_message_size += 4 + 32
-			elif isinstance(item, str):
-				binary_message_size += 4  # Type indicator for string
-				binary_message_size += 8  # Length of the string (8 bits) 256 caracters max
-				binary_message_size += 8 * len(item)
-		
-		const_size += 8
-		
-		return const_size, const_size + binary_message_size
-	
-
-	def split_message(self, message, message_const_size, max_size):
-
-		splitters = [0]
-		current_message_size = message_const_size
-		for i, item in enumerate(message):
-			if isinstance(item, float):
-				current_message_size += 4 + 32
-			elif isinstance(item, int):
-				current_message_size += 4 + 32
-			elif isinstance(item, str):
-				str_length = 4 + 8 + 8 * len(item)
-				if str_length > max_size:
-					raise ValueError(f"Message to long : {str_length}")
-				current_message_size += str_length
-
-			if current_message_size > max_size:
-				splitters.append(i)
-				current_message_size = message_const_size
-
-		messages = []
-		for i in range(len(splitters)-1):
-			messages.append(message[splitters[i]:splitters[i+1]])
-		messages.append(message[splitters[i+1]:])
-
-		return messages
-
-
 	def encode_message_binary(self, receivers, messages):
 		"""The encoding method uses an Automatic Repeat Query protocol. This means that a verification is send with the message to ensure than the message is well distributed.
 			The format of the encoding will be very simple as follow
@@ -110,29 +44,20 @@ class Communicator:
 			|----|			4 bits emiter ID with parity bit encode in the last one, change it if odd.
 			A 272 (34 bytes) to 332 bits (41.5 bytes) message template
 		"""
-
-		# m_const_size, m_size = self.compute_message_size(self.id, receivers, messages)
-		# if m_size > 512:
-		# 	messages = self.split_message(messages, m_const_size, 512)
-		# 	print(messages)
-		# else:
-		# 	messages = [messages]
-
-		# binary_messages = []
-		# for message in messages:
+		
 		binary_message = ""
 		
-		# Step 1: Add Emitter ID (4 bits)
+		# Add Emitter ID (4 bits)
 		binary_message += f"{self.id:04b}"
 		
-		# Step 2: Add number of receivers (4 bits) if needed
+		# Add number of receivers (4 bits) if needed
 		if isinstance(receivers, list):
 			if len(receivers) > 1:
 				binary_message += f"{len(receivers):04b}"
 			else:
 				binary_message += "0001"  # Default if there's only 1 receiver
 
-			# Step 3: Add Receiver IDs (4 bits each)
+			# Add Receiver IDs (4 bits each)
 			for receiver_id in receivers:
 				binary_message += f"{receiver_id:04b}"
 		elif isinstance(receivers, str):
