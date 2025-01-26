@@ -56,6 +56,9 @@ class BeaconRobot:
 		# Communication
 		self.communicator = None
 
+		# Battery
+		self.battery = 255
+
 	def move(self, dt:float, direction:int, coef_max_speed:float = 1, coef_max_acc:float = 1):
 		"""Move the robot
 
@@ -250,7 +253,7 @@ class BeaconRobot:
 		self.controller = Controller(self, mode)
 
 	def equip_communicator(self, world):
-		self.communicator = Communicator(self.id, 1000, 1000, 1000, world)
+		self.communicator = Communicator(self, 1000, 1000, 1000, world)
 		
 	
 	### ROBOT COLLISION

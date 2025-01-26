@@ -626,3 +626,6 @@ def write_text(text, window, pos):
 	textRect.center = pos
 	window.blit(text, textRect)
 	pygame.display.update()
+
+
+
