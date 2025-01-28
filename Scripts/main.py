@@ -117,7 +117,8 @@ def update_display(window, window_size:float, world:World, time:float):
 				pygame.draw.circle(window, (255, 0, 0), robot.controller.waypoint, robot.controller.waypoint_radius)
 
 		# Draw the robot
-		robot.live_grid_map.draw(window)
+		if robot.id == 0:
+			robot.live_grid_map.draw(window)
 		robot.draw(window)
 	# Draw the FPS
 	write_time(time, window, window_size)

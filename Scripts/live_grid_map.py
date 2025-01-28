@@ -179,8 +179,8 @@ class Live_grid_map():
 
 			# If the second point is in the box
 			if is_in_rect:
-				# If the distance between the robot and the rect wall is lower than the distince between the robot and the obstacle
-				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1):
+				# If the distance between the robot and the rect wall is lower than the distance between the robot and the obstacle
+				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 1 * self.size:
 					if self.map[i, j] == 0:
 						if self.map[i, j] == 19:
 							continue
@@ -223,12 +223,12 @@ class Live_grid_map():
 				if value == 0:
 					continue
 				elif value == 20:
-					color = (70, 255, 200)
+					color = (130, 240, 130)
 				elif value == 19:
 					color = (35, 200, 180)
 				else:
 					# gray_scale = min(255, max(0, 255 * (1 - value)))
-					color = (value, value//2, value//2)
+					color = (value, value//2, value)
 
 				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
 				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
@@ -244,12 +244,11 @@ class Live_grid_map():
 			if value == 0:
 				color = (0, 0, 0)
 			elif value == 20:
-				color = (200, 255, 70)
+				color = (130, 240, 130)
 			elif value == 19:
 				color = (180, 200, 35)
 			else:
-				gray_scale = min(255, max(0, 255 * (1 - value)))
-				color = (gray_scale//2, gray_scale//2, gray_scale)
+				color = (value, value//2, value)
 			return color
 				
 		map = [[set_color(value) for value in line] for line in self.map]

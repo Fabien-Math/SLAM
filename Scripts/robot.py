@@ -155,7 +155,7 @@ class BeaconRobot:
 	
 
 
-	def scan_environment(self, time, map:Map, window):
+	def scan_environment(self, time, map:Map, robot_id, robots, window):
 		"""Request a scanning of the environment to the lidar
 
 		Args:
@@ -170,7 +170,7 @@ class BeaconRobot:
 			print("No lidar equiped !")
 			return False
 		
-		lidar_data = self.lidar.scan_environment(time, map, window)
+		lidar_data = self.lidar.scan_environment(time, map, robot_id, robots, window)
 		if lidar_data is None:
 			return None
 		

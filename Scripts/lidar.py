@@ -44,7 +44,7 @@ class LIDAR:
 		self.data = None
 
 
-	def scan_environment(self, t, map:Map, window):
+	def scan_environment(self, t, map:Map, robot_id, robots, window):
 		"""
 		Perform a Lidar scan of the environment.
 
@@ -83,8 +83,23 @@ class LIDAR:
 			ids_line = move_on_line(ids1, ids2, ids1_float, ids2_float)
 			for ids in ids_line:
 				intersection = self.check_wall_collision(map, ids, p_r, window)
+
 				if intersection is not None:
 					break;
+
+			robot_intersection = None
+			for robot in robots:
+				if robot.id != robot_id:
+					line = compute_line(self.pos, p_r)
+					if orthogonal_projection(robot.pos.to_tuple(), line) < robot.radius:
+						robot_intersection = orthogonal_point(robot.pos.to_tuple(), self.pos.to_tuple(), p_r.to_tuple(), line)
+
+			if robot_intersection is not None and intersection is not None:
+				d_r = distance_tuple(robot_intersection, self.pos.to_tuple())
+				d_i = distance_tuple(intersection, self.pos.to_tuple())
+				if d_r < d_i:
+					print("Robot intercepted !!")
+					intersection = robot_intersection
 
 			if intersection is not None:
 				dist, ang = add_uncertainty(distance_tuple(intersection, self.pos.to_tuple()), self.angle, self.sigma)

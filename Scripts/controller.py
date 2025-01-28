@@ -127,7 +127,7 @@ class Controller:
 			return
 		
 	def check_if_in_deadlock(self, dt):
-		if not ut.point_in_circle(self.robot.pos.to_tuple(), self.last_static_pos, 50):
+		if not ut.point_in_circle(self.robot.pos.to_tuple(), self.last_static_pos, 40):
 			self.last_static_pos = self.robot.pos.to_tuple()
 			self.last_time_static_pos = 0
 		else:
@@ -152,7 +152,7 @@ class Controller:
 		"""
 
 		# Before planning path, check if in a deadlock
-		self.check_if_in_deadlock(dt)
+		# self.check_if_in_deadlock(dt)
 
 		# Point must be safe to go
 		self.manage_waypoint_system(window)
@@ -257,28 +257,32 @@ def find_new_waypoint(robot, window):
 	safe_waypoint = False
 	n = 0
 
-	center_frontiers = list(np.concatenate([[point for point in line] for line in c_lines]))
+	# center_frontiers = list(np.concatenate([[point for point in line] for line in c_lines]))
+	ordered_lines = order_lines_by_length(c_lines)
+	# frontiers = list(np.concatenate([[point for point in line] for line in ordered_lines]))
+	frontiers = ordered_lines.copy()
 
-	while not safe_waypoint:
-		# Iterate in the first place
-		n += 1
-		
-		# Safe counter
-		if n > 100:
-			print("No safe waypoint found !!")
-			break
+	for i in range(len(ordered_lines)):
+		while not safe_waypoint:
+			# Iterate in the first place
+			n += 1
+			
+			# Safe counter
+			if n > 100:
+				print("No safe waypoint found !!")
+				break
 
-		# Convert and extract position from live grid map
-		point_id, (idy, idx) = find_best_ids_point_angle(robot, center_frontiers, window)
-		pos = live_grid_map.ids_to_center(idx, idy)
-		
-		safe_waypoint = is_safe_waypoint(pos, robot.radius*2, live_grid_map)
-		if safe_waypoint:
-			return pos
-				
-		center_frontiers.pop(point_id)
-		if not len(center_frontiers):
-			return None
+			# Convert and extract position from live grid map
+			point_id, (idy, idx) = find_best_ids_point_angle(robot, frontiers[i], window)
+			pos = live_grid_map.ids_to_center(idx, idy)
+			
+			safe_waypoint = is_safe_waypoint(pos, robot.radius*2, live_grid_map)
+			if safe_waypoint:
+				return pos
+					
+			frontiers[i].pop(point_id)
+			if not len(frontiers[i]):
+				break
 
 	return None
 
@@ -371,13 +375,13 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 		cpt += 1
 		if mdp_1:
 			# Normal projection from the line
-			mdp_1 = (mdp_1[0] + 0.5 * safe_range * ortho_vec[0], mdp_1[1] + 0.5 * safe_range * ortho_vec[1])
+			mdp_1 = (mdp_1[0] + 0.25 * safe_range * ortho_vec[0], mdp_1[1] + 0.25 * safe_range * ortho_vec[1])
 			ids_mdp1 = live_grid_map.coord_to_ids(mdp_1)
 
 			safe = True
 			for idx in range(ids_mdp1[0] - ids_range, ids_mdp1[0] + ids_range + 1):
 				for idy in range(ids_mdp1[1] - ids_range, ids_mdp1[1] + ids_range + 1):
-					if map[idy][idx] > 100:
+					if map[idy][idx] > 99:
 						safe = False
 						break
 			if safe:
@@ -674,6 +678,10 @@ def order_lines(connected_lines:list):
 		line_ids = dfs(start_ids[0], c_table, visited)
 		ordonned_lines.append([line[p_id] for p_id in line_ids])
 	return ordonned_lines
+
+def order_lines_by_length(c_lines):
+	lines_length = [len(line) for line in c_lines]
+	return [c_lines[i] for i in np.argsort(lines_length)]
 
 
 def find_best_ids_point_angle(robot, center_frontier_points:list, window):

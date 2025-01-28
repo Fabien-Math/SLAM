@@ -11,17 +11,17 @@ class World:
 		# TIME INITIALIZATION
 		self.real_time: float = time.time()
 		self.time: float = 0
-		self.dt: float = 0.02
+		self.dt: float = 1/60
 
 		# ROBOT INITIALIZATION
 		self.robots: list[BeaconRobot] = []
 		self.crashed_robot: list = []
 
-		for i in range(1):
+		for i in range(2):
 			beacon = BeaconRobot(i, (500+10*i, 300+20*i), 50, 1000, 100, 25, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
-			beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
+			beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=200)
 			beacon.equip_accmeter(precision=(0.0005, 0.00002), time=self.time)
 			beacon.equip_controller(mode=1)
 			beacon.equip_communicator(self)
@@ -62,7 +62,7 @@ class World:
 
 			### SIMULATION
 			robot.compute_pos_calc(self.time)
-			robot.scan_environment(self.time, self.map, self.window)
+			robot.scan_environment(self.time, self.map, robot.id, self.robots, self.window)
 			robot.compute_robot_collision(self.map, self.window)
 			robot.live_grid_map.update_robot_path()
 			robot.communicator.update_communicator()

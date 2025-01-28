@@ -269,6 +269,34 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 	a, b, c = line
 	return abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
 
+def orthogonal_point(p, p1, p2, line):
+	vec = (p2[0] - p1[0] , p2[1] - p1[1])
+	a, b, c = line
+
+	dir_vec = normalize_vec(vec)
+
+	yp1 = evaluate_line(line, p[0])
+	y_point = (p[0], yp1)
+	d = abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
+
+	h2 = (p[1] - yp1)**2 - d**2
+	if h2 > 0:
+		h = sqrt(h2)
+		if y_point[1] > p[1]:
+			if p1[1] > p2[1]:
+				H = (y_point[0] + h*dir_vec[0], y_point[1] + h*dir_vec[1])
+			else:
+				H = (y_point[0] - h*dir_vec[0], y_point[1] - h*dir_vec[1])
+		else:
+			if p1[1] > p2[1]:
+				H = (y_point[0] - h*dir_vec[0], y_point[1] - h*dir_vec[1])
+			else:
+				H = (y_point[0] + h*dir_vec[0], y_point[1] + h*dir_vec[1])
+
+		return H
+	else:
+		return y_point
+
 def wall_orthogonal_point(p:tuple, wall, window):
 	p1, p2 = left_point(wall.p1, wall.p2)
 	vec = (p2.x - p1.x , p2.y - p1.y)
