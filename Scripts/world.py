@@ -81,8 +81,10 @@ class World:
 			if len(self.message_buffer[str(robot.id)]):
 				for link in self.linked_robot:
 					if link[0] == robot.id:
+						# print(robot.id, "send message to", link[1])
 						self.robots[link[1]].communicator.receiver_buffer[str(robot.id)] += self.message_buffer[str(robot.id)]
 					if link[1] == robot.id:
+						# print(robot.id, "send message to", link[0])
 						self.robots[link[0]].communicator.receiver_buffer[str(robot.id)] += self.message_buffer[str(robot.id)]
 				self.message_buffer[str(robot.id)] = ''
 

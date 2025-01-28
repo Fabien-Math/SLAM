@@ -24,19 +24,22 @@ class Communicator:
 
 		self.sender_buffer: str = []
 		self.sender_history: dict = {str(i): [] for i in range(15) if i != self.id}
-		self.receiver_buffer: str = {str(i): [] for i in range(15) if i != self.id}
+		self.receiver_buffer: str = {str(i): '' for i in range(15) if i != self.id}
 		self.receiver_history: list = []
 
 		self.conv_history_file = "conv_history.txt"
 
 		self.robot_connection_set: list = [] 
+		self.send_message('all', [])
+		# if self.id == 0:
+		# 	self.robot_connection_set: list = [1, 2] 
+		# 	self.send_message([1], [{"type": 'mID', 'mID' : '00010001'}])
 
-		if self.id == 0:
-			self.send_message('all', [f"Bonjour, je suis {self.id}"])
 
 	def update_communicator(self):
 		self.diffuse_signal()
 		self.scan_signal()
+
 
 	def encode_message_id(self, message_id, receiver):
 		if message_id[4:] == '0000':
@@ -45,10 +48,10 @@ class Communicator:
 		match message_id:
 			case "00000001":
 				return ""
-			case "00010001":
+			case "00000010":
 				return self.sender_history[receiver][-1]
-			case "00100001":	# Encode robot connection set
-				bm = f"{len(self.robot_connection_set):.04b}"
+			case "00010001":	# Encode robot connection set
+				bm = f"{len(self.robot_connection_set):04b}"
 				for r_id in self.robot_connection_set:
 					bm += f"{r_id:04b}"
 				return bm
@@ -86,28 +89,36 @@ class Communicator:
 			case "00010000":	# Send robot connection set
 				self.send_message([sender], {"type": "mID", "mID" : "00010001"})
 			case "00010001":	# Decode robot connection set
-				list_length = binary_message[index:index+4]
+				print("Set")
+				if len(binary_message[index:index+4]) != 4:
+					return None, None
+				print("Set length passed")
+				list_length = int(binary_message[index:index+4], 2)
+				m = []
+				if len(binary_message[index + 4: index + (list_length+1)*4]) != list_length*4:
+					return None, None
+				print("Set passed")
 				for i in range(list_length):
-					robot_id = int(binary_message[index + (i+1)*4:index + (i+2)*4])
-					if robot_id not in self.robot_connection_set:
-						self.connection_set.append(robot_id)
-				return None, index + 4 * (list_length + 1)
+					robot_id = int(binary_message[index + (i+1)*4:index + (i+2)*4], 2)
+					if robot_id not in self.robot_connection_set and self.id != robot_id:
+						self.robot_connection_set.append(robot_id)
+					m.append(robot_id)
+				return m, index + 4 * (list_length + 1)
 			case "00100000":	# Send next wp
 				self.send_message([sender], {"type": "mID"})
 			case "00100010":	# Decode robot info
-				return decode_robot_info(self.robot), index + 168
+				if len(binary_message[index:index+168]) != 168:
+					return None, None
+				return decode_robot_info(binary_message[index:index+168]), index + 168
 			case "00100011":	# Decode next waypoint to reach as an order
 				...
 			case "00110001":	# Decode live grid update
 				...
 			case _:
 				print(f"WARNING : Message id not recognized {message_id}")
+				return None, None
 		
 		return None, index
-
-
-
-
 		
 
 	def encode_message_binary(self, receivers, messages):
@@ -127,10 +138,7 @@ class Communicator:
 		
 		# Add number of receivers (4 bits) if needed
 		if isinstance(receivers, list):
-			if len(receivers) > 1:
-				binary_message += f"{len(receivers):04b}"
-			else:
-				binary_message += "0001"  # Default if there's only 1 receiver
+			binary_message += f"{len(receivers):04b}"
 
 			# Add Receiver IDs (4 bits each)
 			for receiver_id in receivers:
@@ -182,9 +190,7 @@ class Communicator:
 		if parity_bit == 1:
 			final_emitter_id ^= 1  # Flip the last bit if parity is odd
 		binary_message += f"{final_emitter_id:04b}"
-	
 		return binary_message
-	
 
 	def decode_message_binary(self, binary_message):
 		"""
@@ -197,7 +203,7 @@ class Communicator:
 			dict: Decoded message components, including emitter ID, receiver IDs, and the message content.
 		"""
 		index = 0
-		
+
 		if len(binary_message) < 4:
 			return
 		# Step 1: Extract Emitter ID (4 bits)
@@ -225,8 +231,8 @@ class Communicator:
 				receivers.append(int(binary_message[index:index+4], 2))
 				index += 4
 
-		# Minimal length of the message 4 + 4 + 8 + 4
-		if len(binary_message) < index + 20:
+		# Minimal length of the message 4
+		if len(binary_message) < index + 4:
 			return
 		
 		# Step 4: Extract the message
@@ -235,7 +241,7 @@ class Communicator:
 			type_indicator = int(binary_message[index:index+4], 2)
 			index += 4
 			match type_indicator:
-				case 0b000:
+				case 0b0000:
 					break
 				case 0b0001:	# Int8
 					i = int(binary_message[index:index+8], 2)  # 8 bits for length
@@ -258,7 +264,7 @@ class Communicator:
 					s = decode_string(string_bits)
 					message.append(s)
 					index += 8 * str_length
-				case 0b0101:	# List of int8
+				case 0b0110:	# List of int8
 					list_length = int(binary_message[index:index+16], 2)  # 8 bits for length
 					index += 16
 					int_list_bits = binary_message[index:index+8*list_length]
@@ -269,7 +275,7 @@ class Communicator:
 					list_length = int(binary_message[index:index+16], 2)  # 8 bits for length
 					index += 16
 					float_list_bits = binary_message[index:index+32*list_length]
-					fl = decode_int8_list(float_list_bits, list_length)
+					fl = decode_float_list(float_list_bits, list_length)
 					message.append(fl)
 					index += 32 * list_length
 				case 0b0111:	# Message with ID
@@ -283,7 +289,7 @@ class Communicator:
 					rinfo, index = decode_robot_info(rb)
 					message.append(rinfo)	
 				case _:
-					raise ValueError(f"Unknown type indicator: {type_indicator}")
+					print(f"Unknown type indicator: {type_indicator}, {bin(type_indicator)}")
 				
 		
 
@@ -301,14 +307,13 @@ class Communicator:
 		emitter_id_with_parity = int(binary_message[index:index+4], 2)
 		index += 4
 
-		sum_units_check = int(sum(int(bit) for bit in binary_message[:-8]) % 16)
+		sum_units_check = int(sum(int(bit) for bit in binary_message[:index-8]) % 16)
 
 		if sum_units != sum_units_check:
 			raise ValueError("Sum check failed.")
 
-
 		# Parity check (optional)
-		parity_bit = binary_message[:-4].count('1') % 2
+		parity_bit = binary_message[:index-4].count('1') % 2
 		is_parity_valid = ((emitter_id ^ emitter_id_with_parity) & 1) == parity_bit
 		if not is_parity_valid:
 			raise ValueError("Parity check failed.")
@@ -318,61 +323,243 @@ class Communicator:
 			"emitter_id": emitter_id,
 			"receivers": receivers,
 			"message": message,
-			"sum_units": sum_units,
+			"sum_units": (sum_units == sum_units_check, sum_units, sum_units_check),
 			"parity_valid": is_parity_valid
 		}
 
+	def check_message(self, binary_message):
+		if len(binary_message) < 20:
+			return False, None
+		
+		emitter_id = int(binary_message[0:4], 2)
+		receiver_nb = int(binary_message[4:8], 2)
+
+		if receiver_nb == 15:
+			receivers = [i for i in range(receiver_nb) if i != emitter_id]
+			index = 8
+		else:
+			receivers = [int(binary_message[8 + i * 4: 8 + (i + 1) * 4], 2)for i in range(receiver_nb)]
+			if len(binary_message[8:8+receiver_nb*4]) != receiver_nb*4:
+				return False, None
+			index = 8+receiver_nb*4
+
+		message = []
+		max_cpt = 0
+		while max_cpt < 100000:  # Leave space for sum and parity bits
+			max_cpt += 1
+			if len(binary_message[index:index+4]) != 4:
+				return False, None
+			
+			type_indicator = int(binary_message[index:index+4], 2)
+			index += 4
+			match type_indicator:
+				case 0b0000:
+					print("Message end")
+					break
+				case 0b0001:	# Int8
+					print("Int8")
+					if len(binary_message[index:index+8]) != 8:
+						return False, None
+					i = int(binary_message[index:index+8], 2)
+					message.append(i)
+					print("Int8 passed")
+					index += 8
+				case 0b0011:	# Float32
+					print("Float32")
+					if len(binary_message[index:index+32]) != 32:
+						return False, None
+					print("Float32 passed")
+					float_bits = binary_message[index:index+32]
+					f = decode_float(float_bits)
+					message.append(f)
+					index += 32
+				case 0b0010:	# Int32
+					print("Int32")
+					if len(binary_message[index:index+32]) != 32:
+						return False, None
+					print("Int32 passed")
+					int_bits = binary_message[index:index+32]
+					i = decode_int(int_bits)
+					message.append(i)
+					index += 32
+				case 0b0100:	# String 
+					print("String")
+					if len(binary_message[index:index+8]) != 8:
+						return False, None
+					print("String length passed")
+					str_length = int(binary_message[index:index+8], 2)  # 8 bits for length
+					index += 8
+					if len(binary_message[index:index+8*str_length]) != 8*str_length:
+						return False, None
+					print("String passed")
+					string_bits = binary_message[index:index+8*str_length]
+					s = decode_string(string_bits)
+					message.append(s)
+					index += 8 * str_length
+				case 0b0110:	# List of int8
+					print("Int8 list")
+					if len(binary_message[index:index+16]) != 16:
+						return False, None
+					print("Int8 list length passed")
+					list_length = int(binary_message[index:index+16], 2)  # 8 bits for length
+					index += 16
+					if len(binary_message[index:index+8*list_length]) != 8*list_length:
+						return False, None
+					print("Int8 list passed")
+					int_list_bits = binary_message[index:index+8*list_length]
+					il = decode_int8_list(int_list_bits, list_length)
+					message.append(il)
+					index += 8 * list_length
+				case 0b0101:	# List of float32
+					print("Float32 list")
+					if len(binary_message[index:index+16]) != 16:
+						return False, None
+					print("Float32 list length passed")
+					list_length = int(binary_message[index:index+16], 2)  # 8 bits for length
+					index += 16
+					if len(binary_message[index:index+32*list_length]) != 32*list_length:
+						return False, None
+					float_list_bits = binary_message[index:index+32*list_length]
+					fl = decode_float_list(float_list_bits, list_length)
+					message.append(fl)
+					print("Float32 list passed")
+					index += 32 * list_length
+				case 0b0111:	# Message with ID
+					print("Message ID")
+					if len(binary_message[index:index+8]) != 8:
+						return False, None
+					print("Message ID mID passed", binary_message[index:index+8])
+					mID = binary_message[index:index+8]
+					index += 8
+					m, index = self.decode_message_id(mID, binary_message, index, emitter_id)
+					if index is None:
+						return False, None
+					print("Message ID passed")
+					if m:
+						message.append(m)
+				case 0b1000:	# Robot info
+					if len(binary_message[index:index+168]) != 168:
+						return False, None
+					rb = binary_message[index:index+168]
+					rinfo, index = decode_robot_info(rb)
+					message.append(rinfo)
+				case _:
+					print(f"Unknown type indicator: {type_indicator}, {bin(type_indicator)}")
+		
+		print("check_sum and parity")
+		if len(binary_message[index:index+8]) != 8:
+			return False, None
+
+		# Units of the sum (4 bits)
+		sum_units = int(binary_message[index:index+4], 2)
+		index += 4
+		
+		# Parity bit (4 bits)
+		emitter_id_with_parity = int(binary_message[index:index+4], 2)
+		index += 4
+
+		sum_units_check = int(sum(int(bit) for bit in binary_message[:index-8]) % 16)
+
+		# Sum check
+		if sum_units != sum_units_check:
+			raise ValueError("Sum check failed.")
+
+		# Parity check
+		parity_bit = binary_message[:index-4].count('1') % 2
+		is_parity_valid = ((emitter_id ^ emitter_id_with_parity) & 1) == parity_bit
+		if not is_parity_valid:
+			raise ValueError("Parity check failed.")
+		
+		
+		return True, {
+			"message_length": index,
+			"emitter_id": emitter_id,
+			"receivers": receivers,
+			"message": message,
+			"sum_units": (sum_units == sum_units_check, sum_units, sum_units_check),
+			"parity_valid": is_parity_valid
+		}
+			
+
 
 	def diffuse_signal(self):
-		if not len(self.sender_buffer):
-			return
-
 		self.available_emit_bit += self.bit_rate_emission * self.world.dt
 
 		if self.available_emit_bit < 1:
 			return
 		
-		for receivers, message in self.sender_buffer:
+		nb_message_sent = 0
+		for k, (receivers, message) in enumerate(self.sender_buffer):
 			if self.available_emit_bit < 1:
 				break
 		
-			bits_to_send = min(len(message), int(self.available_emit_bit))
-			for r in receivers:
-				message_diffused = message[:bits_to_send]
-				self.sender_history[str(r)].append(message_diffused)
-				self.world.message_buffer[str(self.id)] += message_diffused
+			nb_bits_to_send = min(len(message), int(self.available_emit_bit))
+			message_to_diffuse = message[:nb_bits_to_send]
 			
+			if receivers == 'all':
+				for i in range(15):
+					if i != self.id:
+						self.sender_history[str(i)].append(message_to_diffuse)
+			else:
+				print("Robot", self.id, "send to robot.s", receivers, "the following message")
+				print(message_to_diffuse)
+				print()
+				for r in receivers:
+					self.sender_history[str(r)].append(message_to_diffuse)
+			
+			self.world.message_buffer[str(self.id)] += message_to_diffuse
+
 			self.available_emit_bit -= min(len(message), int(self.available_emit_bit))
 
-			if bits_to_send == len(message):
-				...
-				#TO BE DONE 
-
-
-		self.sender_buffer = self.sender_buffer[int(self.available_emit_bit):]
-
-		self.available_emit_bit -= int(self.available_emit_bit)
+			if nb_bits_to_send == len(message):
+				nb_message_sent += 1
+			else:
+				self.sender_buffer[k][1] = message[nb_bits_to_send:]
+		
+		self.sender_buffer = self.sender_buffer[nb_message_sent:]
 
 	def scan_signal(self):
-		if not len(self.receiver_buffer):
-			return
-		
-		if len(self.receiver_buffer) < 8:
-			return
-		
-		message_received = self.decode_message_binary(self.receiver_buffer)
-		if message_received:
-			self.receiver_history.append(message_received)
-			self.receiver_buffer = self.receiver_buffer[message_received["message_length"]+1:]
 
-			print(self.id)
-			print(message_received)
-			print('\n')
+		print("Receive buffer from robot", self.id)
+		print(self.receiver_buffer)
+		print()
+		for i in range(15):
+			if self.id == i:
+				continue
+
+			message = self.receiver_buffer[str(i)]
+			if len(message) < 20:
+				return
+			
+			received_message = False
+
+			check_message, message_info = self.check_message(message)
+			if check_message:
+				if self.id in message_info["receivers"]:
+					received_message = True
+				else:
+					emitter_id = str(message_info["emitter_id"])
+					self.receiver_buffer[emitter_id] = self.receiver_buffer[emitter_id][message_info["message_length"]:]
+
+
+			if received_message:
+				self.receiver_history.append(message_info)
+				self.receiver_buffer[str(i)] = self.receiver_buffer[str(i)][message_info["message_length"]:]
+
+				if len(message_info):
+					emitter_id = message_info['emitter_id']
+					if emitter_id not in self.robot_connection_set:
+						self.robot_connection_set.append(emitter_id)
+
+					print("Robot:", self.id, "receive the following message from", emitter_id)
+					print(message_info)
+					print()
+					# self.send_message([emitter_id], [{"type": 'mID', 'mID' : '00010001'}])
 
 
 	def send_message(self, receivers, message):
 		encoded_message = self.encode_message_binary(receivers, message)
-		self.sender_buffer.append((receivers, encoded_message))
+		self.sender_buffer.append([receivers, encoded_message])
 
 
 
