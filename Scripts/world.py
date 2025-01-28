@@ -17,7 +17,7 @@ class World:
 		self.robots: list[BeaconRobot] = []
 		self.crashed_robot: list = []
 
-		for i in range(4):
+		for i in range(1):
 			beacon = BeaconRobot(i, (500+10*i, 300+20*i), 50, 1000, 100, 25, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
@@ -31,10 +31,10 @@ class World:
 		self.linked_robot = []
 		
 		# MAP INITIALIZATION
-		self.map_element_size:float = 30
+		# self.map_element_size:float = 30
 		# self.map_element_size = 40		# Demo case
 		# self.map_element_size = 70		# (Thin Wall Problem)
-		self.map_element_size = 100		# (Empty explored loop)
+		self.map_element_size = 100		# (Empty explored loop SOLVED)
 		self.map_size:tuple = (1100, 600)
 		self.map_offset = (50, 50)
 		# Number of subdivisions in the map, used to list the lines
@@ -70,6 +70,7 @@ class World:
 			robot.controller.move_to_waypoint(self.dt, self.window)
 
 			if robot.controller.mode == 100:
+				robot.live_grid_map.save_map_to_image()
 				self.map_explored = True
 			
 			if robot.crashed:

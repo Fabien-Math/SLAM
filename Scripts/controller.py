@@ -198,7 +198,7 @@ def is_safe_waypoint(wp_pos, safe_range, live_grid_map) -> bool:
 	# Check the box around the known map of the robot to see if an obstacle is there
 	for i in range(ids_wp[1] - ids_range, ids_wp[1] + ids_range + 1):
 		for j in range(ids_wp[0] - ids_range, ids_wp[0] + ids_range + 1):
-			if live_grid_map.map[i, j] > 0:
+			if live_grid_map.map[i, j] > 99:
 				return False
 			
 	return True
@@ -231,9 +231,9 @@ def find_frontiers(live_grid_map, window):
 	c_lines = convert_lines_ids_to_pixels(c_lines_ids, open_boundaries)
 
 	# Order pixel lines
-	ordered_lines = order_lines(c_lines, c_lines)
+	# ordered_lines = order_lines(c_lines)
 
-	return c_lines, ordered_lines
+	return c_lines
 
 def find_new_waypoint(robot, window):
 	"""Find a safe new waypoint from the open frontiers
@@ -246,26 +246,18 @@ def find_new_waypoint(robot, window):
 	"""
 	live_grid_map = robot.live_grid_map
 
-	c_lines, ordered_lines = find_frontiers(live_grid_map, window)
+	c_lines = find_frontiers(live_grid_map, window)
 
 	# If no line, then the map is entierly explored
-	if len(ordered_lines) == 0:
-		if len(c_lines):
-			for c_line in c_lines:
-				if len(c_line) > 4:
-					pos = (robot.pos_calc.x, robot.pos_calc.y - 50)
-					return pos
+	if not len(c_lines):
 		print("Goal achieved ! \nNothing more to explore :)")
 		return 1
-	
+		
 	# Variable to say if a waypoint is accessible and safe
 	safe_waypoint = False
 	n = 0
 
-	# Find center of edges
-	# center_frontiers = [line[(len(line)//2 + np.random.randint(0, len(line)//2))%len(line)] for line in ordered_lines]
-	# Find all live_grid_map ids of open frontiers
-	center_frontiers = list(np.concatenate([[point for point in line] for line in ordered_lines]))
+	center_frontiers = list(np.concatenate([[point for point in line] for line in c_lines]))
 
 	while not safe_waypoint:
 		# Iterate in the first place
@@ -320,7 +312,7 @@ def need_line_split(live_grid_map, p1, p2, safe_range):
 	
 	map_line_ids = live_grid_map.points_in_safe_range_to_ids(p1, p2, safe_range)
 	for ids in map_line_ids:
-		if live_grid_map.map[ids[1], ids[0]] > 0:
+		if live_grid_map.map[ids[1], ids[0]] > 99:
 			return True	
 	return False
 
@@ -385,7 +377,7 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 			safe = True
 			for idx in range(ids_mdp1[0] - ids_range, ids_mdp1[0] + ids_range + 1):
 				for idy in range(ids_mdp1[1] - ids_range, ids_mdp1[1] + ids_range + 1):
-					if map[idy][idx] >= 0:
+					if map[idy][idx] > 100:
 						safe = False
 						break
 			if safe:
@@ -402,7 +394,7 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 			safe = True
 			for idx in range(ids_mdp2[0] - ids_range, ids_mdp2[0] + ids_range + 1):
 				for idy in range(ids_mdp2[1] - ids_range, ids_mdp2[1] + ids_range + 1):
-					if map[idy][idx] >= 0:
+					if map[idy][idx] > 100:
 						safe = False
 						break
 			if safe:
@@ -645,7 +637,7 @@ def convert_lines_ids_to_pixels(c_ids:list, ids:list):
 	return c_lines
 
 
-def order_lines(connected_lines:list, ids_lines:list):
+def order_lines(connected_lines:list):
 	"""Take a list of connected lines and order indices (pixels) from line start to line end
 
 	Args:
@@ -653,7 +645,7 @@ def order_lines(connected_lines:list, ids_lines:list):
 	"""
 
 	ordonned_lines = []
-	for line, ids_line in zip(connected_lines, ids_lines):
+	for line in connected_lines:
 		c_table = make_connection_table(line)
 		if len(c_table) < 3:
 			continue
@@ -680,7 +672,7 @@ def order_lines(connected_lines:list, ids_lines:list):
 			continue
 
 		line_ids = dfs(start_ids[0], c_table, visited)
-		ordonned_lines.append([ids_line[p_id] for p_id in line_ids])
+		ordonned_lines.append([line[p_id] for p_id in line_ids])
 	return ordonned_lines
 
 

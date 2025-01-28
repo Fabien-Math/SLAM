@@ -117,6 +117,7 @@ def update_display(window, window_size:float, world:World, time:float):
 				pygame.draw.circle(window, (255, 0, 0), robot.controller.waypoint, robot.controller.waypoint_radius)
 
 		# Draw the robot
+		robot.live_grid_map.draw(window)
 		robot.draw(window)
 	# Draw the FPS
 	write_time(time, window, window_size)
@@ -174,7 +175,6 @@ def main():
 		main_world.update()
 
 		if main_world.map_explored:
-			main_world.robots[0].live_grid_map.save_map_to_image()
 			running = False
 
 		# DRAW THE SCENE
@@ -184,6 +184,7 @@ def main():
 
 	print(f"Time to explore all the map : {t:.3f} s")
 	print(f"Time to explore all the map : {t//3600:g} h, {(t - t//3600)//60:g} m, {t - (t//3600)*3600 - ((t - t//3600)//60)*60:.3f} s")
+	
 	### DEINITIALIZE PYGAME
 	pygame.quit()
 

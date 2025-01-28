@@ -69,7 +69,7 @@ class Live_grid_map():
 		# If ids are in the range of the live map
 		if 0 < idx < self.list_size and 0 < idy < self.list_size:
 			# Set to safe path
-			self.map[idy, idx] = -1.01
+			self.map[idy, idx] = 19
 	
 	
 	def update(self, points, max_lidar_distance, window):
@@ -90,7 +90,7 @@ class Live_grid_map():
 			# If ids are in the range of the live map
 			if distance(self.robot.pos_calc, point) <= 1.5*max_lidar_distance:
 				if 0 < idx < self.list_size and 0 < idy < self.list_size:
-					self.map[idy, idx] = max(self.map[idy, idx], 0.5 + (1 - distance(self.robot.pos_calc, point)/max_lidar_distance) / 2)
+					self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - distance(self.robot.pos_calc, point)/max_lidar_distance)))
 
 				p1 = (point[0], point[1])
 				new_cpt += self.fill_subdivision(p1, window)
@@ -181,28 +181,29 @@ class Live_grid_map():
 			if is_in_rect:
 				# If the distance between the robot and the rect wall is lower than the distince between the robot and the obstacle
 				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1):
-					if self.map[i, j] <= 0:
-						if self.map[i, j] <= -0.5:
+					if self.map[i, j] == 0:
+						if self.map[i, j] == 19:
 							continue
-						# Add known square cpt (allow to compute the discovery)
+						# Add known square cpt (allow to compute the discovery score)
 						new_cpt += 1
-						self.map[i, j] = -1
+						self.map[i, j] = 20
 						continue
 
 		return new_cpt
 
 
 	def find_frontiers(self):
-		map_image = np.array((self.map + 1)*120, dtype=np.uint8)
+		mask = self.map == 19
+		map_image = np.array(self.map, dtype=np.uint8)
+		map_image[mask] += 1
 		
-		red_contours = cv2.threshold(map_image, 150, 255, cv2.THRESH_BINARY)[1]  # ensure binary
+		red_contours = cv2.threshold(map_image, 99, 255, cv2.THRESH_BINARY)[1]  # ensure binary
 		all_contours = cv2.adaptiveThreshold(map_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 1)
 
 		kernel = np.ones((3, 3), np.uint8)
 		img_dilation = cv2.dilate(red_contours, kernel, iterations=1)
 
 		sum_img = img_dilation + all_contours
-
 		cv2.imwrite("Images/frontiers.png", sum_img)
 
 		coords = np.column_stack(np.where(sum_img < 1))
@@ -221,13 +222,13 @@ class Live_grid_map():
 				value = self.map[idy, idx]
 				if value == 0:
 					continue
-				elif value == -1:
+				elif value == 20:
 					color = (70, 255, 200)
-				elif value == -1.01:
+				elif value == 19:
 					color = (35, 200, 180)
 				else:
-					gray_scale = min(255, max(0, 255 * (1 - value)))
-					color = (gray_scale, gray_scale//2, gray_scale//2)
+					# gray_scale = min(255, max(0, 255 * (1 - value)))
+					color = (value, value//2, value//2)
 
 				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
 				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
@@ -242,9 +243,9 @@ class Live_grid_map():
 		def set_color(value):
 			if value == 0:
 				color = (0, 0, 0)
-			elif value == -1:
+			elif value == 20:
 				color = (200, 255, 70)
-			elif value == -1.01:
+			elif value == 19:
 				color = (180, 200, 35)
 			else:
 				gray_scale = min(255, max(0, 255 * (1 - value)))
