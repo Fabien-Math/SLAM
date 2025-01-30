@@ -21,7 +21,7 @@ class World:
 			beacon = BeaconRobot(i, (500+10*i, 300+20*i), 50, 1000, 100, 25, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
-			beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=200)
+			beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
 			beacon.equip_accmeter(precision=(0.0005, 0.00002), time=self.time)
 			beacon.equip_controller(mode=1)
 			beacon.equip_communicator(self)
@@ -31,10 +31,10 @@ class World:
 		self.linked_robot = []
 		
 		# MAP INITIALIZATION
-		# self.map_element_size:float = 30
+		self.map_element_size:float = 40
 		# self.map_element_size = 40		# Demo case
 		# self.map_element_size = 70		# (Thin Wall Problem)
-		self.map_element_size = 100		# (Empty explored loop SOLVED)
+		# self.map_element_size = 100		# (Empty explored loop SOLVED)
 		self.map_size:tuple = (1100, 600)
 		self.map_offset = (50, 50)
 		# Number of subdivisions in the map, used to list the lines

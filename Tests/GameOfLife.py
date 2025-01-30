@@ -102,6 +102,7 @@ def update_table(table : np.array):
 times = []
 plt.figure(0)
 plt.imshow(init_square, cmap='gray_r')
+plt.show()
 
 n_cells = np.sum(table)
 cpt = 0
@@ -119,13 +120,13 @@ for i in range(263):
 	# 	cpt = 0
 	# times.append(time.perf_counter() - a)
 
-	# plt.clf()
-	# plt.suptitle("Conway's Game of life")
-	# plt.title(f"Generation {i} with {n_cells:g} activated", fontsize=18)
-	# plt.imshow(table, cmap='gray')
-	# plt.pause(0.01)
+	plt.clf()
+	plt.suptitle("Conway's Game of life")
+	plt.title(f"Generation {i} with {n_cells:g} activated", fontsize=18)
+	plt.imshow(table, cmap='gray')
+	plt.pause(0.01)
 	
 	
-print(np.mean(times))
-plt.imsave("Images/maze2.png", table, cmap='gray')
+# print(np.mean(times))
+# plt.imsave("Images/maze2.png", table, cmap='gray')
 

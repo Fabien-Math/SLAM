@@ -12,10 +12,6 @@ Leur exploration multi-robot est un domaine de recherche en plein essor dans le 
 
 L'exploration de cavités avec plusieurs robots implique plusieurs défis techniques. En particulier, la gestion de la coopération entre robots et la gestion de l'information dans des environnements complexes sont deux aspects fondamentaux de ce type de mission. Les défis peuvent être classés en plusieurs catégories : 
 
-\subsection{État de l'Art des Techniques de SLAM}
-
-Le Simultaneous Localization and Mapping (SLAM) est un problème clé en robotique qui permet à un robot de localiser sa position tout en construisant une carte de son environnement. Plusieurs techniques ont été développées pour résoudre ce problème, telles que le EKF-SLAM, qui utilise un filtre de Kalman pour estimer la localisation et la carte, mais souffre de limitations en termes de scalabilité dans de grands environnements. Le FastSLAM, basé sur un filtre de particules, améliore cette scalabilité en traitant les caractéristiques du monde à l'aide de multiples hypothèses. Les approches basées sur les graphes, comme le Graph-SLAM, sont efficaces pour résoudre des problèmes d'optimisation à grande échelle, bien qu'elles nécessitent une gestion complexe des données. Le SLAM visuel (V-SLAM) repose sur des caméras pour estimer la localisation et construire une carte, tandis que le SLAM LiDAR utilise des capteurs laser pour des mesures de profondeur précises, particulièrement efficaces pour des environnements extérieurs. Des variantes comme le SLAM dynamique gèrent les environnements avec des objets mobiles en excluant ces derniers des mises à jour de la carte. Ces méthodes varient en fonction des environnements, des ressources du robot et des contraintes en temps réel, avec pour objectif de maintenir une localisation et une cartographie précises dans des conditions dynamiques et complexes.
-
 
 \subsection{État de l'Art des Méthodes de Communication Inter-Robot dans un Environnement de Cavité}
 

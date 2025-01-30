@@ -1,56 +1,65 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
-import itertools as it
+from itertools import product
+from tqdm import tqdm
 
-def make_possibilities(N):
 
-	left_right = []
-	for p1 in poss:
-		for p2 in poss:
-			for p3 in poss:
-				left_right.append([p1, p2, p3])
+def generate_combinations(N):
+	possibilities = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 	
-	return left_right
+	# Generate all possible combinations of length N
+	combinations = list(product(possibilities, repeat=N))
 	
-max_left_ang_speed = 1
-max_right_ang_speed = 1
-R = 0.04
-d = 0.15
-instants = [1, 2, 3 ]
+	return combinations
 
+def compute_range(nt, R, d, tf):
+	left_right = generate_combinations(nt)
+	if tf:
+		dt = tf / nt
+	else:
+		dt = ((d / R) * 0.5* np.pi) / nt
 
-poss = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
-
-
-N = 1000
-X, Y = [], []
-for j, instant in enumerate(instants):
-
-	left_right = np.array([p for p in it.combinations(poss, instant)])
-	print(left_right)
-	print(len(left_right))
-
-	time = np.linspace(0, 1, instant)
-
-	for lr_speed in left_right:
-		right_ang_speed, left_ang_speed = lr_speed[0]
-
-		theta = np.zeros(instant)
-		for i, t in enumerate(time[1::]):
-			theta_i = R/(2 * d) * (right_ang_speed - left_ang_speed)
-			theta[i+1] = theta[i] + theta_i
-		x1 = np.sum(1/(2 * R) * (left_ang_speed + right_ang_speed) * np.cos(theta) * time) / instant
-		y1 = np.sum(1/(2 * R) * (left_ang_speed + right_ang_speed) * np.sin(theta) * time) / instant
+	X, Y = [], []
+	for k in tqdm(range(len(left_right))):
+		lr = left_right[k]
+		x1, y1, theta = 0, 0, 0
+		for i in range(nt):
+			left_ang_speed, right_ang_speed = lr[i]
+			theta += R/(2 * d) * (right_ang_speed - left_ang_speed) * dt
+			x1 += R/2 * (left_ang_speed + right_ang_speed) * np.cos(theta) * dt
+			y1 += R/2 * (left_ang_speed + right_ang_speed) * np.sin(theta) * dt
 
 		X.append(x1)
 		Y.append(y1)
+
+	return np.array(X), np.array(Y)
+
+
+
+max_left_ang_speed = 1	# rad/s
+max_right_ang_speed = 1	# rad/s
+R = 0.04				# m
+d = 0.15				# m
+
+
+nt = 6
+tf = None
+X, Y = compute_range(nt, R, d, tf)
+maskX = X > 0
+X_tronc = X[maskX]
+Y_tronc = Y[maskX]
+maskY = Y_tronc >= 0
+X_tronc = X_tronc[maskY]
+Y_tronc = Y_tronc[maskY]
+plt.figure(f"Available locations for {nt} commands in {tf}s", layout="constrained", figsize=(19.2, 10.8))
+plt.scatter(X, Y, s=10)
 
 points = np.array([(xi, yi) for xi, yi in zip(X, Y)])
 hull = ConvexHull(points)
 valid_ids = np.append(hull.vertices, hull.vertices[0])
 
-plt.scatter(X, Y)
 plt.plot(points[valid_ids, 0], points[valid_ids, 1], color="C1")
+
 plt.axis("equal")
 plt.show()

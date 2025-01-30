@@ -3,5 +3,129 @@
 
 \begin{document}
 
+\subsection{Purpose and range of the simulator}
+
+The simulator is designed to test various algorithms and methods for multi-robot exploration of caves. The robots operate in the air while moving along the floor. To simplify the problem, we approximate the floor as a 2D plane without any surface irregularities.
+
+\subsection{Creation of the map}
+
+The map consist in succession of straight lines generate by a simple cellular automata. 
+
+A cellular automaton is a grid of cells, where each cell can exist in different states based on predefined rules. The concept was developed by Stanislaw Ulam and John von Neumann in the 1940s.  
+
+The most famous cellular automaton, which helped popularize its use, was developed by John Conway: \textit{Conway's Game of Life}. This model follows a set of four simple rules, which can be found \href{URL}{here}. The rules are based on the properties of neighboring cells.  
+
+There are two commonly used neighborhood types in cellular automata:  
+\begin{itemize}  
+    \item \textbf{Von Neumann neighborhood}, which considers the four direct neighbors (left, top, right and bottom).  
+    \item \textbf{Moore neighborhood}, an extension that includes all eight surrounding cells, both diagonal and direct neighbors.  
+\end{itemize}
+
+
+The beauty of this system lies in the complexity that emerges from such simple rules. Beginning with the configuration shown in \autoref{fig:startconfigcgof}, the system evolves into the states illustrated in \autoref{fig:CGOF} at generations 87 and 263.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.2\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/StartConfigCGOF.png}
+        \caption{Iteration 0}
+		\label{fig:startconfigcgof}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/CGOF_1.png}
+        \caption{Iteration 87}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/CGOF_2.png}
+        \caption{Iteration 263}
+    \end{subfigure}
+    \caption{Conway's Game of Life}
+    \label{fig:CGOF}
+\end{figure}
+
+Programmers, computer scientists, and mathematicians began cataloging all the \href{https://en.wikipedia.org/wiki/Conway's_Game_of_Life#Examples_of_patterns}{patterns they encountered} and constructed remarkably complex machines.
+
+In our case, the rules are defined as follows:
+\begin{itemize}  
+    \item If there are more than 4 activated cells in the Moore neighborhood, the cell activates. 
+    \item Otherwise, the cell deactivates. 
+\end{itemize}
+
+I implement the method on a Cartesian grid and then transform it into a triangular mesh, as shown in \autoref{fig:triag_transform}. The maps generated after this transformation improved in quality.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{IMAGES/part2/grid_transform_map_generation.png}
+	\caption{Grid transformation}
+	\label{fig:triag_transform}
+\end{figure}
+
+Using the Marching Squares method, I draw the boundaries between occupied cells (red dots) and unoccupied cells (green dots).
+
+Marching Squares is a technique for generating the contours of a two-dimensional grid, which, in our case, is a triangular mesh. As we traverse the domain, the boundaries are drawn accordingly. \autoref{fig:marching_triag} illustrates all possible states of an element composed of three cells.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{IMAGES/part2/marching_square_triangle.png}
+	\caption{Isolines, possible states of a triangular element}
+	\label{fig:marching_triag}
+\end{figure}
+
+At the end of both steps—transformation and Marching Squares—we obtain the following schematic representation:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.3\linewidth]{IMAGES/part2/map_generation_example.png}
+	\caption{Exemple scheme of map generated}
+	\label{fig:map_gen_scheme}
+\end{figure}
+
+In the simulator, maps are generated based on a seed and a random generator. The shape of each map is controlled by three parameters: the step size along the x-axis, the step size along the y-axis, and the overall map size.
+
+This allows for a vast variety of map configurations. \autoref{fig:three_map_example} illustrate some examples.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/map_dx100.png}
+        \caption{$\delta x = 100$ mu}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/map_dx40.png}
+        \caption{$\delta x = 40$ mu}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{IMAGES/part2/map_dx10.png}
+        \caption{$\delta x = 10$ mu}
+    \end{subfigure}
+    \caption{Different maps made with equilateral triangles}
+    \label{fig:three_map_example}
+\end{figure}
+
+\tobedone
+
+
+\subsection{Robot implementation}
+
+
+\subsubsection{Sensors}
+
+The robot is equiped with 2 sensors by default, an accelerometer that calculates acceleration in x and y axis and the rotation along z
+
+Simultaneous Localization and Mapping (SLAM) is a key problem in robotics, enabling a robot to determine its position while simultaneously building a map of its environment. Various techniques have been developed to tackle this challenge. For instance, EKF-SLAM uses a Kalman filter to estimate both the localization and the map but faces scalability limitations in large environments. FastSLAM, which relies on a particle filter, enhances scalability by handling world features through multiple hypotheses.  
+
+Graph-based approaches, such as Graph-SLAM, are effective for large-scale optimization problems but require complex data management. Visual SLAM (V-SLAM) leverages cameras to estimate localization and construct maps, whereas LiDAR-based SLAM relies on laser sensors for precise depth measurements, making it particularly useful for outdoor environments. Dynamic SLAM variants manage environments with moving objects by excluding them from map updates.\cite{ding_2024}
+
+In this report, I used LiDAR-based SLAM, 
+
 
 \end{document}
