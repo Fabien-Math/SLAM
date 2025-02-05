@@ -105,7 +105,7 @@ class World:
 						if (r1.id, r2.id) in self.linked_robot:
 							self.linked_robot.remove((r1.id, r2.id))
 					else:
-						if self.is_wall_between(r1.pos.to_tuple(), r2.pos.to_tuple()):
+						if self.is_wall_between(r1.pos, r2.pos):
 							if (r1.id, r2.id) in self.linked_robot:
 								self.linked_robot.remove((r1.id, r2.id))
 						else:
@@ -147,10 +147,10 @@ class World:
 					# Go through all walls in the map subdivision
 					for k in subdiv:
 						wall = self.map.walls[k]
-						intersection = ut.find_segment_intersection_tuple(wall.p1.to_tuple(), wall.p2.to_tuple(), r1_pos, r2_pos)
+						intersection = ut.compute_segment_inter(wall.p1, wall.p2, r1_pos, r2_pos)
 												
 						if intersection:
 							rect = self.map.subdiv_ids_to_rect(ids[0], ids[1])
-							if ut.point_in_box_tuple(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
+							if ut.point_in_box(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
 								return intersection
 		return None

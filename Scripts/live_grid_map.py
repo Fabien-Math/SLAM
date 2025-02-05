@@ -1,7 +1,8 @@
-from util import *
+import util as ut
 import numpy as np
 import cv2
 from PIL import Image
+import pygame
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -13,21 +14,16 @@ class Live_grid_map():
 	def __init__(self, robot, list_size, size):
 		self.robot:BeaconRobot = robot
 
-		self.centre = robot.pos.copy()
+		self.centre = robot.pos
 		self.list_size = list_size
 		self.size = size
 		self.map = np.zeros((self.list_size, self.list_size))
 		self.occurance_map = np.zeros((self.list_size, self.list_size))
 		self.saved_map = None
-	
-	def vec_to_ids(self, vector2):
-		idx = int((vector2.x - self.centre.x)/self.size + self.list_size//2)
-		idy = int((vector2.y - self.centre.y)/self.size + self.list_size//2)
-		return idx, idy
 
 	def coord_to_ids(self, point):
-		idx = int((point[0] - self.centre.x)/self.size + self.list_size//2)
-		idy = int((point[1] - self.centre.y)/self.size + self.list_size//2)
+		idx = int((point[0] - self.centre[0])/self.size + self.list_size//2)
+		idy = int((point[1] - self.centre[1])/self.size + self.list_size//2)
 		return idx, idy
 
 	def ids_to_rect(self, idx, idy):
@@ -40,11 +36,11 @@ class Live_grid_map():
 		p1x, p1y, p2x, p2y = 0, 0, 0, 0
 
 		if 0 <= idx < self.list_size:
-			p1x = (idx - offset_id) * self.size + self.centre.x
-			p2x = (idx + 1 - offset_id) * self.size + self.centre.x
+			p1x = (idx - offset_id) * self.size + self.centre[0]
+			p2x = (idx + 1 - offset_id) * self.size + self.centre[0]
 		if 0 <= idy < self.list_size:
-			p1y = (idy - offset_id) * self.size + self.centre.y
-			p2y = (idy + 1 - offset_id) * self.size + self.centre.y
+			p1y = (idy - offset_id) * self.size + self.centre[1]
+			p2y = (idy + 1 - offset_id) * self.size + self.centre[1]
 
 		return p1x, p1y, p2x, p2y
 	
@@ -58,15 +54,15 @@ class Live_grid_map():
 		px, py = 0, 0
 
 		if 0 <= idx < self.list_size:
-			px = (idx + 0.5 - offset_id) * self.size + self.centre.x
+			px = (idx + 0.5 - offset_id) * self.size + self.centre[0]
 		if 0 <= idy < self.list_size:
-			py = (idy + 0.5 - offset_id) * self.size + self.centre.y
+			py = (idy + 0.5 - offset_id) * self.size + self.centre[1]
 
 		return px, py
 	
 	def update_robot_path(self):
 		# Add robot pos
-		idx, idy = self.vec_to_ids(self.robot.pos_calc)
+		idx, idy = self.coord_to_ids(self.robot.pos_calc)
 		# If ids are in the range of the live map
 		if 0 < idx < self.list_size and 0 < idy < self.list_size:
 			# Set to safe path
@@ -87,7 +83,7 @@ class Live_grid_map():
 		
 		# Add lidar points pos
 		for point in no_collide_points:
-			p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
+			p1 = ((self.robot.pos_calc[0] + point[0])/2, (self.robot.pos_calc[1] + point[1])/2)
 			new_cpt += self.fill_subdivision(p1, intercept=False, window=window)
 		
 		for point in collide_points:
@@ -96,7 +92,7 @@ class Live_grid_map():
 			# If ids are in the range of the live map
 			idx, idy = self.coord_to_ids(point)
 			if 0 < idx < self.list_size and 0 < idy < self.list_size:
-				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - distance(self.robot.pos_calc, point)/max_lidar_distance)))
+				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - ut.distance(self.robot.pos_calc, point)/max_lidar_distance)))
 				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 1, 100)
 
 		
@@ -113,12 +109,12 @@ class Live_grid_map():
 			list: Indices of grid points inside the rotated rectangle.
 		"""
 		rotation = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
-		line = compute_line_tuple(p1, p2)
+		line = ut.compute_line(p1, p2)
 
 		# Define perpendicular vector for width
-		ortho_vec = compute_ortho_vec(line)
+		ortho_vec = ut.compute_ortho_vec(line)
 		# Distance between points
-		length = distance_tuple(p1, p2)
+		length = ut.distance(p1, p2)
 
 		p1, p2 = np.array(p1), np.array(p2)
 		half_width = np.array([safe_range * ortho_vec[0], safe_range * ortho_vec[1]])
@@ -164,19 +160,19 @@ class Live_grid_map():
 
 	def fill_subdivision(self, p1, intercept, window):
 		# Initialisation of subdivision list
-		robot_pos = self.robot.pos_calc.to_tuple()
-		line = compute_line_tuple(p1, robot_pos)
+		robot_pos = self.robot.pos_calc
+		line = ut.compute_line(p1, robot_pos)
 
 		new_cpt = 0
 
 		p1_ids = self.coord_to_ids(p1)
 		p2_ids = self.coord_to_ids(robot_pos)
 
-		ids_line = move_on_line(p2_ids, p1_ids, p2_ids, p1_ids)
+		ids_line = ut.move_on_line(p2_ids, p1_ids, p2_ids, p1_ids)
 		for ids in ids_line:
 			j, i = ids
 			rect = self.ids_to_rect(*ids)
-			is_in_rect = compute_segment_rect_intersection_tuple(line, p1, robot_pos, rect)
+			is_in_rect = ut.compute_segment_rect_inter(line, p1, robot_pos, rect)
 
 			if self.coord_to_ids(p1) == ids:
 				break
@@ -185,9 +181,9 @@ class Live_grid_map():
 			if is_in_rect:
 				# If the distance between the robot and the rect wall is lower than the distance between the robot and the obstacle
 				if not intercept:
-					if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 2 * self.size:
+					if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 2 * self.size:
 						self.occurance_map[i, j] = max(0, self.occurance_map[i, j]-1)
-				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 1.42 * self.size:
+				if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 1.42 * self.size:
 					if self.occurance_map[i, j] > 25:
 						continue
 					else:
@@ -245,7 +241,7 @@ class Live_grid_map():
 
 				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
 				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
-				# pygame.draw.circle(window, (255, 255, 0), self.pos.to_tuple(), 2)
+				# pygame.draw.circle(window, (255, 255, 0), self.pos, 2)
 				# pygame.display.update()				
 
 
@@ -272,7 +268,7 @@ class Live_grid_map():
 
 				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
 				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
-				# pygame.draw.circle(window, (255, 255, 0), self.pos.to_tuple(), 2)
+				# pygame.draw.circle(window, (255, 255, 0), self.pos, 2)
 				# pygame.display.update()				
 
 

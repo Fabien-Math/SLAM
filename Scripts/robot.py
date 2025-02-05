@@ -1,4 +1,4 @@
-from util import Vector2, sign, distance_tuple, wall_orthogonal_point, point_in_circle, point_in_box, find_id_min, distance, find_circle_intersection
+import util as ut
 from math import cos, sin ,pi
 
 from lidar import LIDAR
@@ -12,13 +12,13 @@ import pygame
 
 
 class BeaconRobot:
-	def __init__(self, id:int, pos:Vector2, acc:float, ang_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
+	def __init__(self, id:int, pos:tuple, acc:float, ang_acc:float, max_forward_speed:float, max_backward_speed:float, max_rot_speed:float) -> None:
 		self.id = id
 		
 		# Position and rotation
-		self.pos = Vector2(pos[0], pos[1])
-		self.pos_calc = Vector2(pos[0], pos[1])
-		self.pos_calc_lidar = Vector2(pos[0], pos[1])
+		self.pos = (pos[0], pos[1])
+		self.pos_calc = (pos[0], pos[1])
+		self.pos_calc_lidar = (pos[0], pos[1])
 		self.rot = 0
 		self.rot_calc = 0
 		
@@ -86,7 +86,7 @@ class BeaconRobot:
 		
 		# Decceleration
 		if abs_speed > max_speed:
-			self.speed = sign(self.speed) * max(abs_speed - decc*dt, 0)
+			self.speed = ut.sign(self.speed) * max(abs_speed - decc*dt, 0)
 
 	
 		# Compute traveled distance
@@ -94,7 +94,7 @@ class BeaconRobot:
 		y = self.speed * sin(self.rot * pi / 180) * dt
 		
 		# Update robot position
-		self.pos.add(x, y)
+		self.pos = ut.add(self.pos, (x, y))
 
 
 	def rotate(self, dt:float, direction:float, coef_max_rot_speed:float = 1, coef_max_ang_acc:float = 1):
@@ -120,7 +120,7 @@ class BeaconRobot:
 		
 		# Decceleration
 		if abs_rot_speed >= max_rot_speed:
-			self.rot_speed = sign(self.rot_speed) * max(abs_rot_speed - rot_decc*dt, 0)
+			self.rot_speed = ut.sign(self.rot_speed) * max(abs_rot_speed - rot_decc*dt, 0)
 		
 		# Update rotation
 		self.rot += self.rot_speed * dt
@@ -150,7 +150,7 @@ class BeaconRobot:
 
 		x = self.speed_calc * dt * cos(self.rot_calc * pi / 180)
 		y = self.speed_calc * dt * sin(self.rot_calc * pi / 180)
-		self.pos_calc.add(x, y)
+		self.pos_calc = ut.add(self.pos_calc, (x, y))
 
 	
 
@@ -170,7 +170,7 @@ class BeaconRobot:
 			print("No lidar equiped !")
 			return False
 		
-		lidar_data = self.lidar.scan_environment(time, map, robot_id, robots, window)
+		lidar_data = self.lidar.scan_environment(time, map, self.pos, robot_id, robots, window)
 		if lidar_data is None:
 			return None
 		
@@ -179,9 +179,9 @@ class BeaconRobot:
 		# 	self.live_grid_map.update(points, self.lidar.max_dist)
 
 		# Compute position of point given the lidar data
-		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
-		collide_points = [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
-		no_collide_points = [point for point in points if distance(self.pos_calc, point) > self.lidar.max_dist*1.5]
+		points = [(self.pos_calc[0] + dist*cos(ang), self.pos_calc[1] + dist*sin(ang)) for dist, ang in lidar_data]
+		collide_points = [point for point in points if ut.distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
+		no_collide_points = [point for point in points if ut.distance(self.pos_calc, point) > self.lidar.max_dist*1.5]
 
 		# for p in collide_points:
 		# 	pygame.draw.circle(window, (255, 0, 0), p, 2)
@@ -195,7 +195,7 @@ class BeaconRobot:
 
 			if pos_lidar is not None:
 				self.pos_calc_lidar = pos_lidar
-				self.pos_calc = self.pos_calc_lidar.copy()
+				self.pos_calc = self.pos_calc_lidar
 	
 
 	def correct_pos_with_lidar(self, points:list, window):
@@ -216,7 +216,7 @@ class BeaconRobot:
 		circles = [0] * n_circle
 		for i in range(n_circle):
 			p = points[(i*n)//n_circle]
-			circles[i] = (p, distance(self.pos, p))
+			circles[i] = (p, ut.distance(self.pos, p))
 
 		pts = find_all_circle_intersection(circles)
 
@@ -228,7 +228,7 @@ class BeaconRobot:
 		# Average coordinate
 		x, y = pts[idpt[0]]
 		
-		return Vector2(x, y)
+		return (x, y)
 
 
 
@@ -253,7 +253,6 @@ class BeaconRobot:
 			max_dist (float): Max range of the Lidar
 		"""
 		self.lidar = LIDAR(fov, freq, res, max_dist, prec)
-		self.lidar.pos = self.pos
 
 	def equip_controller(self, mode):
 		self.controller = Controller(self, mode)
@@ -267,7 +266,7 @@ class BeaconRobot:
 	def compute_robot_collision(self, map:Map, robots, window):
 		"""Compute collision between the robot and walls
 		"""
-		idx, idy = map.subdiv_coord_to_ids(self.pos.to_tuple())
+		idx, idy = map.subdiv_coord_to_ids(self.pos)
 		
 		if map.subdivision is None:
 			return None
@@ -283,23 +282,24 @@ class BeaconRobot:
 				if map_subdiv != []:
 					walls = [map.walls[i] for i in map_subdiv]
 					for wall in walls:
-						if point_in_circle(wall.p1.to_tuple(), self.pos.to_tuple(), self.radius):
+						if ut.point_in_circle(wall.p1, self.pos, self.radius):
 							self.crashed = True
 							return
-						if point_in_circle(wall.p2.to_tuple(), self.pos.to_tuple(), self.radius):
+						if ut.point_in_circle(wall.p2, self.pos, self.radius):
 							self.crashed = True
 							return
 
-						ortho_point = wall_orthogonal_point(self.pos.to_tuple(), wall, window)
+						line = ut.compute_line(wall.p1, wall.p2)
+						ortho_point = ut.orthogonal_point(self.pos, wall.p1, wall.p2, line)
 
-						if point_in_box(ortho_point, wall.p1, wall.p2):
-							if point_in_circle(ortho_point, self.pos.to_tuple(), self.radius):
+						if ut.point_in_box(ortho_point, wall.p1, wall.p2):
+							if ut.point_in_circle(ortho_point, self.pos, self.radius):
 								self.crashed = True
 								return
 							
 		for robot in robots:
 			if robot.id != self.id:
-				if point_in_circle(robot.pos.to_tuple(), self.pos.to_tuple(), self.radius + robot.radius):
+				if ut.point_in_circle(robot.pos, self.pos, self.radius + robot.radius):
 					self.crashed = True
 					return
 
@@ -314,11 +314,11 @@ class BeaconRobot:
 		Args:
 			window (surface): Surface on which to draw
 		"""
-		pygame.draw.circle(window, self.color, (self.pos.x, self.pos.y), self.radius)
-		pygame.draw.line(window, (255,255,255), (self.pos.x, self.pos.y), (self.pos.x + self.radius * cos(self.rot * pi / 180), self.pos.y  + self.radius * sin(self.rot * pi / 180)), 2)
-		pygame.draw.circle(window, (100,100,100), (self.pos_calc.x, self.pos_calc.y), 0.8*self.radius)
-		pygame.draw.line(window, (255,255,255), (self.pos_calc.x, self.pos_calc.y), (self.pos_calc.x + self.radius * cos(self.rot_calc * pi / 180), self.pos_calc.y  + self.radius * sin(self.rot_calc * pi / 180)), 2)
-		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar.x, self.pos_calc_lidar.y), 0.5*self.radius)
+		pygame.draw.circle(window, self.color, (self.pos[0], self.pos[1]), self.radius)
+		pygame.draw.line(window, (255,255,255), (self.pos[0], self.pos[1]), (self.pos[0] + self.radius * cos(self.rot * pi / 180), self.pos[1]  + self.radius * sin(self.rot * pi / 180)), 2)
+		pygame.draw.circle(window, (100,100,100), (self.pos_calc[0], self.pos_calc[1]), 0.8*self.radius)
+		pygame.draw.line(window, (255,255,255), (self.pos_calc[0], self.pos_calc[1]), (self.pos_calc[0] + self.radius * cos(self.rot_calc * pi / 180), self.pos_calc[1]  + self.radius * sin(self.rot_calc * pi / 180)), 2)
+		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar[0], self.pos_calc_lidar[1]), 0.5*self.radius)
 	
 
 	def draw_dot_map(self, window):
@@ -352,7 +352,7 @@ def find_all_circle_intersection(circles):
 			p1, r1 = c1
 			p2, r2 = c2
 
-			ps = find_circle_intersection(p1, r1, p2, r2)
+			ps = ut.compute_circle_inter(p1, r1, p2, r2)
 			# If intersection found
 			if ps is not None:
 				pi1, pi2 = ps
@@ -362,16 +362,16 @@ def find_all_circle_intersection(circles):
 	return points
 
 
-def find_n_nearest_from_point(ps: list, n: int, pos:Vector2):
+def find_n_nearest_from_point(ps: list, n: int, pos:tuple):
 	"""Find the 'n' nearest point from a position
 	"""
 	ds = [0]*len(ps)
 	for i, p in enumerate(ps):
-		ds[i] = distance(pos, p)
+		ds[i] = ut.distance(pos, p)
 
 	ds_min = [0]*n
 	for i in range(n):
-		id_min = find_id_min(ds)
+		id_min = ut.find_id_min(ds)
 		ds_min[i] = id_min + i
 		ds.pop(id_min)
 

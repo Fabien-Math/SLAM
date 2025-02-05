@@ -34,7 +34,7 @@ class Controller:
 		self.no_safe_path_found_counter = 0
 
 		# Last position, check robot deadlock
-		self.last_static_pos = self.robot.pos.to_tuple()
+		self.last_static_pos = self.robot.pos
 		# Last time the robot is known to move outside a deadlock
 		self.last_time_static_pos = 0
 		# Boolean to asked for global path planning in case of a deadlock
@@ -47,7 +47,7 @@ class Controller:
 
 		if self.waypoint:
 			# Arrived at waypoint
-			if ut.point_in_circle(self.robot.pos_calc.to_tuple(), self.waypoint, self.waypoint_radius):
+			if ut.point_in_circle(self.robot.pos_calc, self.waypoint, self.waypoint_radius):
 				self.waypoint_reached = True
 
 			# If the waypoint is too close to a wall
@@ -58,7 +58,7 @@ class Controller:
 			
 		if self.local_waypoint:
 			# Arrived at local waypoint
-			if ut.point_in_circle(self.robot.pos_calc.to_tuple(), self.local_waypoint, self.local_waypoint_radius):
+			if ut.point_in_circle(self.robot.pos_calc, self.local_waypoint, self.local_waypoint_radius):
 				self.local_waypoint_reached = True
 
 			# If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
@@ -69,7 +69,7 @@ class Controller:
 				self.local_waypoint = None
 
 			# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
-			elif need_line_split(self.robot.live_grid_map, self.robot.pos.to_tuple(), self.local_waypoint, 2 * self.robot.radius, window):
+			elif need_line_split(self.robot.live_grid_map, self.robot.pos, self.local_waypoint, 2 * self.robot.radius, window):
 				self.local_waypoint_reached = True
 				self.local_waypoints = []
 				self.local_waypoint = None
@@ -130,8 +130,8 @@ class Controller:
 			return
 		
 	def check_if_in_deadlock(self, dt):
-		if not ut.point_in_circle(self.robot.pos.to_tuple(), self.last_static_pos, 40):
-			self.last_static_pos = self.robot.pos.to_tuple()
+		if not ut.point_in_circle(self.robot.pos, self.last_static_pos, 40):
+			self.last_static_pos = self.robot.pos
 			self.last_time_static_pos = 0
 		else:
 			self.last_time_static_pos += dt
@@ -168,7 +168,7 @@ class Controller:
 			return
 		
 		# Correct angle to point to the local waypoint
-		angle_diff = ut.get_absolute_angle(self.local_waypoint,self.robot.pos_calc.to_tuple()) * 180 / pi - self.robot.rot_calc
+		angle_diff = ut.abs_angle(self.local_waypoint,self.robot.pos_calc) * 180 / pi - self.robot.rot_calc
 		angle_diff %= 360
 		if angle_diff > 180:
 			angle_diff -= 360
@@ -397,7 +397,7 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 			if safe:
 				return mdp_1
 
-			if not ut.point_in_box_tuple(mdp_1, (0, 0), map_size):
+			if not ut.point_in_box(mdp_1, (0, 0), map_size):
 				mdp_1 = None
 			
 
@@ -414,7 +414,7 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 			if safe:
 				return mdp_2
 
-			if not ut.point_in_box_tuple(mdp_2, (0, 0), map_size):
+			if not ut.point_in_box(mdp_2, (0, 0), map_size):
 				mdp_2 = None
 		
 
@@ -458,7 +458,7 @@ def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window):
 	while True and cpt < 100:
 		cpt += 1
 		if need_line_split(map, robot_pos, safe_local_waypoint, safe_range, window) or not is_safe_waypoint(safe_local_waypoint, safe_range, map):
-			line = ut.compute_line_tuple(robot_pos, safe_local_waypoint)
+			line = ut.compute_line(robot_pos, safe_local_waypoint)
 			mdp = split_line(map, map_size, robot_pos, safe_local_waypoint, line, safe_range, 0)
 			if mdp:
 				# pygame.draw.circle(window, (0, 255, 0), mdp, 2)
@@ -480,7 +480,7 @@ def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window):
 
 ### NEED TO BE CHANGE
 def find_global_path(robot, waypoint_pos, safe_range, window):
-	robot_pos = robot.pos.to_tuple()
+	robot_pos = robot.pos
 	map = robot.live_grid_map
 	valid_sub_wp = [robot_pos, waypoint_pos]
 	map_size = (1100, 600)
@@ -496,7 +496,7 @@ def find_global_path(robot, waypoint_pos, safe_range, window):
 		for i in range(len(valid_sub_wp) - 1):
 			p1 = valid_sub_wp[i]
 			p2 = valid_sub_wp[i+1]
-			line = ut.compute_line_tuple(p1, p2)
+			line = ut.compute_line(p1, p2)
 			if need_line_split(map, p1, p2, safe_range, window):
 				mdp = split_line(map, map_size, p1, p2, line, safe_range)
 				if mdp:
@@ -541,7 +541,7 @@ def find_safe_path(waypoint, robot, safe_range, window):
 		- The underlying safety and navigation logic is handled by `find_next_local_waypoint`.
 	"""
 
-	safe_local_waypoint = find_next_local_waypoint(robot.live_grid_map, robot.pos.to_tuple(), waypoint, safe_range, window)
+	safe_local_waypoint = find_next_local_waypoint(robot.live_grid_map, robot.pos, waypoint, safe_range, window)
 
 	if safe_local_waypoint:
 		return [safe_local_waypoint]
@@ -700,7 +700,7 @@ def order_lines_by_length(c_lines):
 
 
 def find_best_ids_point_angle(robot, center_frontier_points:list, window):
-	robot_ids_pos = robot.live_grid_map.coord_to_ids(robot.pos_calc.to_tuple())
+	robot_ids_pos = robot.live_grid_map.coord_to_ids(robot.pos_calc)
 	robot_idx_pos, robot_idy_pos = robot_ids_pos
 	best_point_id = 0
 	ang_min = 1000
@@ -729,11 +729,11 @@ def find_best_point_dist(robot, points:list, waypoint):
 	best_point_id = 0
 	dist_min = 1000
 
-	robot_pos = robot.pos_calc.to_tuple()
+	robot_pos = robot.pos_calc
 
 	for i, point in enumerate(points):
-		dist1 = ut.distance_tuple(robot_pos, point)
-		dist2 = ut.distance_tuple(waypoint, point)
+		dist1 = ut.distance(robot_pos, point)
+		dist2 = ut.distance(waypoint, point)
 		dist = dist1 + dist2
 		
 		if dist < dist_min:

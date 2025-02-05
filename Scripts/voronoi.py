@@ -56,7 +56,7 @@ def thin_polygon(polygon, offset):
 
     # Build lines and parallel lines
     for i in range(num_points):
-        lines[i] = compute_line_tuple(polygon[i-1], polygon[i])
+        lines[i] = compute_line(polygon[i-1], polygon[i])
         parallel_lines[i] = compute_parallel_line(lines[i], offset)
 
     # Find all parallel line intersections
@@ -65,7 +65,7 @@ def thin_polygon(polygon, offset):
         for j in range(num_points):
             if j == i:
                 continue
-            p = find_intersection(parallel_lines[j], parallel_lines[i])
+            p = compute_line_inter(parallel_lines[j], parallel_lines[i])
             if p:
                 if point_in_polygon(p, polygon):
                     intersections.append(p)

@@ -82,7 +82,7 @@ class Window:
 	def draw_links(self, world:World):
 		for rs in world.linked_robot:
 			r1, r2 = world.robots[rs[0]], world.robots[rs[1]]
-			pygame.draw.line(self.window, (100, 50, 255), r1.pos.to_tuple(), r2.pos.to_tuple())
+			pygame.draw.line(self.window, (100, 50, 255), r1.pos, r2.pos)
 
 
 	def destroy(self):

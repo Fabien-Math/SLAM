@@ -38,12 +38,12 @@ class LIDAR:
 		# Last time the lidar scan the environment
 		self.last_scan_time = -100
 		# Position of the LIDAR
-		self.pos = ut.Vector2(0, 0)
+		self.pos = (0, 0)
 		# Lidar data
 		self.data = None
 
 
-	def scan_environment(self, t, map:Map, robot_id, robots, window):
+	def scan_environment(self, t, map:Map, robot_pos, robot_id, robots, window):
 		"""
 		Perform a Lidar scan of the environment.
 
@@ -68,18 +68,19 @@ class LIDAR:
 
 		# Initialize intersection point list
 		data = []
+		self.pos = robot_pos
 
 
 		while self.angle < 2*pi:
-			p_r = ut.Vector2(self.pos.x + self.max_dist*cos(self.angle), self.pos.y + self.max_dist*sin(self.angle))
+			p_r = (self.pos[0] + self.max_dist*cos(self.angle), self.pos[1] + self.max_dist*sin(self.angle))
 
 			# intersection = self.move_on_line(p_r, map, window)
 
 			# From the lidar position to the max range position
-			ids1 = map.subdiv_coord_to_ids(self.pos.to_tuple())
-			ids2 = map.subdiv_coord_to_ids(p_r.to_tuple())
-			ids1_float = map.subdiv_coord_to_ids_float(self.pos.to_tuple())
-			ids2_float = map.subdiv_coord_to_ids_float(p_r.to_tuple())
+			ids1 = map.subdiv_coord_to_ids(self.pos)
+			ids2 = map.subdiv_coord_to_ids(p_r)
+			ids1_float = map.subdiv_coord_to_ids_float(self.pos)
+			ids2_float = map.subdiv_coord_to_ids_float(p_r)
 
 			ids_line = ut.move_on_line(ids1, ids2, ids1_float, ids2_float)
 			for ids in ids_line:
@@ -92,8 +93,8 @@ class LIDAR:
 			for robot in robots:
 				if robot.id != robot_id:
 					line = ut.compute_line(self.pos, p_r)
-					if ut.orthogonal_projection(robot.pos.to_tuple(), line) < robot.radius:
-						robot_intersection = ut.orthogonal_point(robot.pos.to_tuple(), self.pos.to_tuple(), p_r.to_tuple(), line)
+					if ut.orthogonal_projection(robot.pos, line) < robot.radius:
+						robot_intersection = ut.orthogonal_point(robot.pos, self.pos, p_r, line)
 						if not ut.point_in_box(robot_intersection, self.pos, p_r):
 							robot_intersection = None
 
@@ -102,14 +103,14 @@ class LIDAR:
 				if intersection is None:
 					intersection = robot_intersection
 				else:
-					d_r = ut.distance_tuple(robot_intersection, self.pos.to_tuple())
-					d_i = ut.distance_tuple(intersection, self.pos.to_tuple())
+					d_r = ut.distance(robot_intersection, self.pos)
+					d_i = ut.distance(intersection, self.pos)
 					if d_r < d_i:
 						intersection = robot_intersection
 
 
 			if intersection is not None:
-				dist, ang = add_uncertainty(ut.distance_tuple(intersection, self.pos.to_tuple()), self.angle, self.sigma)
+				dist, ang = add_uncertainty(ut.distance(intersection, self.pos), self.angle, self.sigma)
 				data.append((dist, ang))
 			else:
 				data.append((2*self.max_dist, self.angle))
@@ -151,11 +152,11 @@ class LIDAR:
 					# Go through all walls in the map subdivision
 					for k in subdiv:
 						wall = map.walls[k]
-						intersection = ut.find_segment_intersection(wall.p1, wall.p2, self.pos, p_r)
+						intersection = ut.compute_segment_inter(wall.p1, wall.p2, self.pos, p_r)
 												
 						if intersection:
 							rect = map.subdiv_ids_to_rect(ids[0], ids[1])
-							if ut.point_in_box_tuple(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
+							if ut.point_in_box(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
 								return intersection
 		return None
 

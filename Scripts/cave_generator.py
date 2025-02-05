@@ -1,5 +1,5 @@
-from util import Vector2
 import numpy as np
+import util as ut
 
 def compute_contours(triangles, points, values, thresh):
 # List of list two points defining lines
@@ -13,33 +13,33 @@ def compute_contours(triangles, points, values, thresh):
 
         # bottom left point is activated
         elif binary == 1:
-            p1 = points[tri[0]].middle_point(points[tri[1]])
-            p2 = points[tri[0]].middle_point(points[tri[2]])
+            p1 = ut.middle_point(points[tri[1]], points[tri[0]])
+            p2 = ut.middle_point(points[tri[2]], points[tri[0]])
         
         # bottom right point is activated
         elif binary == 2:
-            p1 = points[tri[1]].middle_point(points[tri[0]])
-            p2 = points[tri[1]].middle_point(points[tri[2]])
+            p1 = ut.middle_point(points[tri[0]], points[tri[1]])
+            p2 = ut.middle_point(points[tri[2]], points[tri[1]])
         
         # both bottom point are activated  
         elif binary == 3:
-            p1 = points[tri[2]].middle_point(points[tri[0]])
-            p2 = points[tri[2]].middle_point(points[tri[1]])
+            p1 = ut.middle_point(points[tri[0]], points[tri[2]])
+            p2 = ut.middle_point(points[tri[1]], points[tri[2]])
 
         # top point is activated
         elif binary == 4:
-            p1 = points[tri[2]].middle_point(points[tri[0]])
-            p2 = points[tri[2]].middle_point(points[tri[1]])
+            p1 = ut.middle_point(points[tri[0]], points[tri[2]])
+            p2 = ut.middle_point(points[tri[1]], points[tri[2]])
 
         # top and bottom left are activated
         elif binary == 5:
-            p1 = points[tri[1]].middle_point(points[tri[0]])
-            p2 = points[tri[1]].middle_point(points[tri[2]])
+            p1 = ut.middle_point(points[tri[0]], points[tri[1]])
+            p2 = ut.middle_point(points[tri[2]], points[tri[1]])
         
         # # top and bottom right are activated
         elif binary == 6:
-            p1 = points[tri[0]].middle_point(points[tri[1]])
-            p2 = points[tri[0]].middle_point(points[tri[2]])
+            p1 = ut.middle_point(points[tri[1]], points[tri[0]])
+            p2 = ut.middle_point(points[tri[2]], points[tri[0]])
         
         # Filled triangle
         else:
@@ -73,7 +73,7 @@ def create_trigle_grid(map_size, dx = 1, dy = 1) -> list:
     n = int(map_size[1] / (dy * np.sin(np.pi/3)))
 
     values = np.zeros(n*m)
-    points = np.empty(n*m, dtype=Vector2)
+    points = [None]*(n*m)
     triangles = []
 
     value_map = generate_map(n, m)
@@ -81,7 +81,7 @@ def create_trigle_grid(map_size, dx = 1, dy = 1) -> list:
         for j in range(m):
             x = ((i%2 == 0)*j + (i%2 == 1)*(j+1/2))*dx
             y = (i*np.sin(np.pi/3))*dy
-            points[j + i*m] = Vector2(x, y)
+            points[j + i*m] = (x, y)
             values[j + i*m] = value_map[i, j]
             
     # Create bottom top triangle
