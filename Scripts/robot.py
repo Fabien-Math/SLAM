@@ -181,8 +181,14 @@ class BeaconRobot:
 		# Compute position of point given the lidar data
 		points = [(self.pos_calc.x + dist*cos(ang), self.pos_calc.y + dist*sin(ang)) for dist, ang in lidar_data]
 		collide_points = [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
+		no_collide_points = [point for point in points if distance(self.pos_calc, point) > self.lidar.max_dist*1.5]
 
-		self.live_grid_map.update(points, self.lidar.max_dist, window)
+		# for p in collide_points:
+		# 	pygame.draw.circle(window, (255, 0, 0), p, 2)
+		# 	pygame.display.update()
+		# pygame.time.delay(10)
+
+		self.live_grid_map.update(collide_points, no_collide_points, self.lidar.max_dist, window)
 		# self.map += [point for point in points if distance(self.pos_calc, point) < self.lidar.max_dist*1.5]
 		if len(collide_points):
 			pos_lidar = self.correct_pos_with_lidar(collide_points, window)
@@ -258,7 +264,7 @@ class BeaconRobot:
 	
 	### ROBOT COLLISION
 
-	def compute_robot_collision(self, map:Map, window):
+	def compute_robot_collision(self, map:Map, robots, window):
 		"""Compute collision between the robot and walls
 		"""
 		idx, idy = map.subdiv_coord_to_ids(self.pos.to_tuple())
@@ -278,20 +284,26 @@ class BeaconRobot:
 					walls = [map.walls[i] for i in map_subdiv]
 					for wall in walls:
 						if point_in_circle(wall.p1.to_tuple(), self.pos.to_tuple(), self.radius):
-							self.crashed_in_wall = True
+							self.crashed = True
 							return
 						if point_in_circle(wall.p2.to_tuple(), self.pos.to_tuple(), self.radius):
-							self.crashed_in_wall = True
+							self.crashed = True
 							return
 
 						ortho_point = wall_orthogonal_point(self.pos.to_tuple(), wall, window)
 
 						if point_in_box(ortho_point, wall.p1, wall.p2):
 							if point_in_circle(ortho_point, self.pos.to_tuple(), self.radius):
-								self.crashed_in_wall = True
+								self.crashed = True
 								return
+							
+		for robot in robots:
+			if robot.id != self.id:
+				if point_in_circle(robot.pos.to_tuple(), self.pos.to_tuple(), self.radius + robot.radius):
+					self.crashed = True
+					return
 
-		self.crashed_in_wall = False
+		self.crashed = False
 
 
 	### DISPLAY

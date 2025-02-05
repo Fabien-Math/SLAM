@@ -26,7 +26,7 @@ class Controller:
 		# List of local waypoint to acheive waypoint
 		self.local_waypoints = []
 		# Radius from the wp to validate its visit
-		self.local_waypoint_radius = 10
+		self.local_waypoint_radius = 5
 		self.local_waypoint = None
 		self.local_waypoint_reached = True
 
@@ -61,15 +61,18 @@ class Controller:
 			if ut.point_in_circle(self.robot.pos_calc.to_tuple(), self.local_waypoint, self.local_waypoint_radius):
 				self.local_waypoint_reached = True
 
-			# # If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
-			# if not is_safe_waypoint(self.local_waypoint, 2 * self.robot.radius, self.robot.live_grid_map):
-			# 	self.local_waypoint_reached = True
-			# 	self.local_waypoints = []
-
-			# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
-			if need_line_split(self.robot.live_grid_map, self.robot.pos.to_tuple(), self.local_waypoint, 2 * self.robot.radius):
+			# If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
+			if not is_safe_waypoint(self.local_waypoint, 2 * self.robot.radius, self.robot.live_grid_map):
+				print(self.robot.id, "Local waypoint too close to a wall")
 				self.local_waypoint_reached = True
 				self.local_waypoints = []
+				self.local_waypoint = None
+
+			# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
+			elif need_line_split(self.robot.live_grid_map, self.robot.pos.to_tuple(), self.local_waypoint, 2 * self.robot.radius, window):
+				self.local_waypoint_reached = True
+				self.local_waypoints = []
+				self.local_waypoint = None
 				
 
 		### MANAGE WAYPOINT
@@ -160,6 +163,8 @@ class Controller:
 		# If no local waypoint to go
 		if self.local_waypoint is None:
 			print("No local waypoint !")
+			self.robot.move(dt, 0, 0)
+			self.robot.rotate(dt, 0, 0)
 			return
 		
 		# Correct angle to point to the local waypoint
@@ -286,7 +291,7 @@ def find_new_waypoint(robot, window):
 
 	return None
 
-def need_line_split(live_grid_map, p1, p2, safe_range):
+def need_line_split(live_grid_map, p1, p2, safe_range, window):
 	"""Determines if the straight line between two points (p1 and p2) is obstructed by obstacles 
 	or too close to them within a specified safety range.
 
@@ -316,8 +321,13 @@ def need_line_split(live_grid_map, p1, p2, safe_range):
 	
 	map_line_ids = live_grid_map.points_in_safe_range_to_ids(p1, p2, safe_range)
 	for ids in map_line_ids:
+		# pygame.draw.circle(window, (0, 0, 255), live_grid_map.ids_to_center(ids[0], ids[1]), 2)
+		# pygame.display.update()
 		if live_grid_map.map[ids[1], ids[0]] > 99:
+			# pygame.time.delay(100)
+			# print("Line split needed")
 			return True	
+	# pygame.time.delay(100)
 	return False
 
 def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign = 0,	window = None):
@@ -413,7 +423,7 @@ def split_line(live_grid_map, map_size, p1, p2, line, safe_range, imposed_sign =
 	
 	return None
 
-def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window = None):
+def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window):
 	"""Determines the next safe local waypoint for a robot to navigate towards a target waypoint, 
 	considering obstacles and a specified safety distance.
 
@@ -447,16 +457,21 @@ def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window = 
 	safe_local_waypoint = waypoint_pos
 	while True and cpt < 100:
 		cpt += 1
-		if need_line_split(map, robot_pos, safe_local_waypoint, safe_range):
+		if need_line_split(map, robot_pos, safe_local_waypoint, safe_range, window) or not is_safe_waypoint(safe_local_waypoint, safe_range, map):
 			line = ut.compute_line_tuple(robot_pos, safe_local_waypoint)
 			mdp = split_line(map, map_size, robot_pos, safe_local_waypoint, line, safe_range, 0)
 			if mdp:
+				# pygame.draw.circle(window, (0, 255, 0), mdp, 2)
+				# pygame.display.update()
+				# pygame.time.delay(10)
 				safe_local_waypoint = mdp
 			else:
 				print(f"No path available with this safe range : {safe_range}")
 				return 1
 					
 		else:
+			if is_safe_waypoint(safe_local_waypoint, safe_range, map):
+				print("Safe local waypoint found")
 			return safe_local_waypoint
 			
 	return
@@ -464,7 +479,7 @@ def find_next_local_waypoint(map, robot_pos, waypoint_pos, safe_range, window = 
 
 
 ### NEED TO BE CHANGE
-def find_global_path(robot, waypoint_pos, safe_range, window = None):
+def find_global_path(robot, waypoint_pos, safe_range, window):
 	robot_pos = robot.pos.to_tuple()
 	map = robot.live_grid_map
 	valid_sub_wp = [robot_pos, waypoint_pos]
@@ -482,7 +497,7 @@ def find_global_path(robot, waypoint_pos, safe_range, window = None):
 			p1 = valid_sub_wp[i]
 			p2 = valid_sub_wp[i+1]
 			line = ut.compute_line_tuple(p1, p2)
-			if need_line_split(map, p1, p2, safe_range):
+			if need_line_split(map, p1, p2, safe_range, window):
 				mdp = split_line(map, map_size, p1, p2, line, safe_range)
 				if mdp:
 					if mdp != p2:

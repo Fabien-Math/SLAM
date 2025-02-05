@@ -17,11 +17,11 @@ class World:
 		self.robots: list[BeaconRobot] = []
 		self.crashed_robot: list = []
 
-		for i in range(2):
-			beacon = BeaconRobot(i, (500+10*i, 300+20*i), 50, 1000, 100, 25, 150)
+		for i in range(5):
+			beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 100, 25, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
-			beacon.equip_lidar(fov=360, freq=2, res=3.5, prec=(0.05, 0.02), max_dist=100)
+			beacon.equip_lidar(fov=360, freq=10, res=3.5, prec=(0.05, 0.02), max_dist=100)
 			beacon.equip_accmeter(precision=(0.0005, 0.00002), time=self.time)
 			beacon.equip_controller(mode=1)
 			beacon.equip_communicator(self)
@@ -31,7 +31,7 @@ class World:
 		self.linked_robot = []
 		
 		# MAP INITIALIZATION
-		self.map_element_size:float = 40
+		self.map_element_size:float = 100
 		# self.map_element_size = 40		# Demo case
 		# self.map_element_size = 70		# (Thin Wall Problem)
 		# self.map_element_size = 100		# (Empty explored loop SOLVED)
@@ -43,6 +43,7 @@ class World:
 					  		self.map_element_size, int(np.sin(np.pi/3) * self.map_element_size))
 		
 		self.map_explored = False
+		self.end_simulation = False
 		
 		
 		# COMMUNICATION INITIALIZATION
@@ -56,6 +57,9 @@ class World:
 		self.linked_comm_robots()
 		self.dispatch_message()
 
+		if sum(self.crashed_robot) == len(self.robots):
+			self.end_simulation = True
+
 		for i, robot in enumerate(self.robots):			
 			if robot.crashed:
 				continue
@@ -63,7 +67,7 @@ class World:
 			### SIMULATION
 			robot.compute_pos_calc(self.time)
 			robot.scan_environment(self.time, self.map, robot.id, self.robots, self.window)
-			robot.compute_robot_collision(self.map, self.window)
+			robot.compute_robot_collision(self.map, self.robots, self.window)
 			robot.live_grid_map.update_robot_path()
 			robot.communicator.update_communicator()
 
@@ -75,7 +79,7 @@ class World:
 			
 			if robot.crashed:
 				print(f"\n\n\n###   ROBOT {robot.id} CRASHED !!!   ###\n")
-				self.crashed_robot[i].crashed = True
+				self.crashed_robot[i] = True
 
 	def dispatch_message(self):
 		for robot in self.robots:

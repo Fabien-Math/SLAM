@@ -1,6 +1,5 @@
-from util import * #Vector2, sign, distance, find_intersection, point_in_box, compute_line, find_circle_intersection, find_id_min, get_angle_tuple_deg
+import util as ut
 from math import cos, sin, pi, sqrt
-import random
 import pygame
 import numpy as np
 
@@ -39,7 +38,7 @@ class LIDAR:
 		# Last time the lidar scan the environment
 		self.last_scan_time = -100
 		# Position of the LIDAR
-		self.pos = Vector2(0, 0)
+		self.pos = ut.Vector2(0, 0)
 		# Lidar data
 		self.data = None
 
@@ -51,6 +50,8 @@ class LIDAR:
 		Args:
 			t (float): Current simulation time
 			map (Map): Simulation map
+			robot_id (int): Robot id
+			robots (list[BeaconRobot]): List of robots
 			window (surface): Display surface
 
 		Returns:
@@ -70,7 +71,7 @@ class LIDAR:
 
 
 		while self.angle < 2*pi:
-			p_r = Vector2(self.pos.x + self.max_dist*cos(self.angle), self.pos.y + self.max_dist*sin(self.angle))
+			p_r = ut.Vector2(self.pos.x + self.max_dist*cos(self.angle), self.pos.y + self.max_dist*sin(self.angle))
 
 			# intersection = self.move_on_line(p_r, map, window)
 
@@ -80,7 +81,7 @@ class LIDAR:
 			ids1_float = map.subdiv_coord_to_ids_float(self.pos.to_tuple())
 			ids2_float = map.subdiv_coord_to_ids_float(p_r.to_tuple())
 
-			ids_line = move_on_line(ids1, ids2, ids1_float, ids2_float)
+			ids_line = ut.move_on_line(ids1, ids2, ids1_float, ids2_float)
 			for ids in ids_line:
 				intersection = self.check_wall_collision(map, ids, p_r, window)
 
@@ -90,19 +91,25 @@ class LIDAR:
 			robot_intersection = None
 			for robot in robots:
 				if robot.id != robot_id:
-					line = compute_line(self.pos, p_r)
-					if orthogonal_projection(robot.pos.to_tuple(), line) < robot.radius:
-						robot_intersection = orthogonal_point(robot.pos.to_tuple(), self.pos.to_tuple(), p_r.to_tuple(), line)
+					line = ut.compute_line(self.pos, p_r)
+					if ut.orthogonal_projection(robot.pos.to_tuple(), line) < robot.radius:
+						robot_intersection = ut.orthogonal_point(robot.pos.to_tuple(), self.pos.to_tuple(), p_r.to_tuple(), line)
+						if not ut.point_in_box(robot_intersection, self.pos, p_r):
+							robot_intersection = None
 
-			if robot_intersection is not None and intersection is not None:
-				d_r = distance_tuple(robot_intersection, self.pos.to_tuple())
-				d_i = distance_tuple(intersection, self.pos.to_tuple())
-				if d_r < d_i:
-					print("Robot intercepted !!")
+
+			if robot_intersection is not None:
+				if intersection is None:
 					intersection = robot_intersection
+				else:
+					d_r = ut.distance_tuple(robot_intersection, self.pos.to_tuple())
+					d_i = ut.distance_tuple(intersection, self.pos.to_tuple())
+					if d_r < d_i:
+						intersection = robot_intersection
+
 
 			if intersection is not None:
-				dist, ang = add_uncertainty(distance_tuple(intersection, self.pos.to_tuple()), self.angle, self.sigma)
+				dist, ang = add_uncertainty(ut.distance_tuple(intersection, self.pos.to_tuple()), self.angle, self.sigma)
 				data.append((dist, ang))
 			else:
 				data.append((2*self.max_dist, self.angle))
@@ -144,11 +151,11 @@ class LIDAR:
 					# Go through all walls in the map subdivision
 					for k in subdiv:
 						wall = map.walls[k]
-						intersection = find_segment_intersection(wall.p1, wall.p2, self.pos, p_r)
+						intersection = ut.find_segment_intersection(wall.p1, wall.p2, self.pos, p_r)
 												
 						if intersection:
 							rect = map.subdiv_ids_to_rect(ids[0], ids[1])
-							if point_in_box_tuple(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
+							if ut.point_in_box_tuple(intersection, (rect[0], rect[1]), (rect[2], rect[3])):
 								return intersection
 		return None
 
@@ -157,7 +164,7 @@ class LIDAR:
 def add_uncertainty(distance, angle, sigma):
 	mean = np.array([distance, angle])
 	covariance = np.diag(sigma ** 2)
-	dist, ang = normal_distribution(mean, covariance)
+	dist, ang = ut.normal_distribution(mean, covariance)
 	dist = max(dist, 0)
 	ang = max(ang, 0)
 	return dist, ang

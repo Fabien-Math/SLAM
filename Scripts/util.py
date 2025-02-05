@@ -636,24 +636,5 @@ def normal_distribution(mean, covariance):
 
 
 
-### DISPLAY
-
-def write_text(text, window, pos):
-	"""Write the FPS on the top-right of the window
-
-	Args:
-		dt (float): Time between two frame
-		window (surface): Window on which writting
-		window_size (tuple): Size of the window
-	"""
-	font = pygame.font.Font('freesansbold.ttf', 16)
-	text = font.render(text, True, (255, 255, 255))
-
-	textRect = text.get_rect()
-
-	textRect.center = pos
-	window.blit(text, textRect)
-	pygame.display.update()
-
 
 

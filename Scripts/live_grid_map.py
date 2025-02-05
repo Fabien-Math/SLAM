@@ -17,6 +17,7 @@ class Live_grid_map():
 		self.list_size = list_size
 		self.size = size
 		self.map = np.zeros((self.list_size, self.list_size))
+		self.occurance_map = np.zeros((self.list_size, self.list_size))
 		self.saved_map = None
 	
 	def vec_to_ids(self, vector2):
@@ -72,31 +73,31 @@ class Live_grid_map():
 			self.map[idy, idx] = 19
 	
 	
-	def update(self, points, max_lidar_distance, window):
+	def update(self, collide_points, no_collide_points, max_lidar_distance, window):
 		"""Update the live grid of the robot
 
 		Args:
 			points (list): List of points to be added, if None, update only robot pos
 		"""
 		
-		if points is None:
+		if collide_points is None or no_collide_points is None:
 			return
 		
 		new_cpt = 0
-
+		
 		# Add lidar points pos
-		for point in points:
-			idx, idy = self.coord_to_ids(point)
-			# If ids are in the range of the live map
-			if distance(self.robot.pos_calc, point) <= 1.5*max_lidar_distance:
-				if 0 < idx < self.list_size and 0 < idy < self.list_size:
-					self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - distance(self.robot.pos_calc, point)/max_lidar_distance)))
+		for point in no_collide_points:
+			p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
+			new_cpt += self.fill_subdivision(p1, intercept=False, window=window)
+		
+		for point in collide_points:
+			new_cpt += self.fill_subdivision(point, intercept=True, window=window)
 
-				p1 = (point[0], point[1])
-				new_cpt += self.fill_subdivision(p1, window)
-			else:
-				p1 = ((self.robot.pos_calc.x + point[0])/2, (self.robot.pos_calc.y + point[1])/2)
-				new_cpt += self.fill_subdivision(p1, window)
+			# If ids are in the range of the live map
+			idx, idy = self.coord_to_ids(point)
+			if 0 < idx < self.list_size and 0 < idy < self.list_size:
+				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - distance(self.robot.pos_calc, point)/max_lidar_distance)))
+				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 1, 100)
 
 		
 	def points_in_safe_range_to_ids(self, p1, p2, safe_range):
@@ -161,7 +162,7 @@ class Live_grid_map():
 		return inside_points
 			
 
-	def fill_subdivision(self, p1, window):
+	def fill_subdivision(self, p1, intercept, window):
 		# Initialisation of subdivision list
 		robot_pos = self.robot.pos_calc.to_tuple()
 		line = compute_line_tuple(p1, robot_pos)
@@ -177,17 +178,29 @@ class Live_grid_map():
 			rect = self.ids_to_rect(*ids)
 			is_in_rect = compute_segment_rect_intersection_tuple(line, p1, robot_pos, rect)
 
+			if self.coord_to_ids(p1) == ids:
+				break
+
 			# If the second point is in the box
 			if is_in_rect:
 				# If the distance between the robot and the rect wall is lower than the distance between the robot and the obstacle
-				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 1 * self.size:
-					if self.map[i, j] == 0:
-						if self.map[i, j] == 19:
-							continue
-						# Add known square cpt (allow to compute the discovery score)
-						new_cpt += 1
-						self.map[i, j] = 20
+				if not intercept:
+					if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 2 * self.size:
+						self.occurance_map[i, j] = max(0, self.occurance_map[i, j]-1)
+				if distance_tuple(robot_pos, is_in_rect) < distance_tuple(robot_pos, p1) - 1.42 * self.size:
+					if self.occurance_map[i, j] > 25:
 						continue
+					else:
+						if self.occurance_map[i, j] == 0:
+							self.map[i, j] = 20
+							continue
+						if self.map[i, j] == 0:
+							if self.map[i, j] == 19:
+								continue
+							# Add known square cpt (allow to compute the discovery score)
+							new_cpt += 1
+							self.map[i, j] = 20
+							continue
 
 		return new_cpt
 
@@ -229,6 +242,33 @@ class Live_grid_map():
 				else:
 					# gray_scale = min(255, max(0, 255 * (1 - value)))
 					color = (value, value//2, value)
+
+				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
+				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
+				# pygame.draw.circle(window, (255, 255, 0), self.pos.to_tuple(), 2)
+				# pygame.display.update()				
+
+
+				rect = pygame.Rect(top_left_x, top_left_y, self.size, self.size)
+				pygame.draw.rect(window, color, rect)
+
+	def draw_occurance(self, window):
+		"""Draw the live grid map, the color change according to the value of confidence, 1 means it is sure that a wall is there
+		and drawn as a black square and 0 the opposite
+
+		Args:
+			window (surface): Surface on which to draw
+		"""
+		for idy in range(self.list_size):
+			for idx in range(self.list_size):
+				value = self.occurance_map[idy, idx]
+				if value == 0:
+					continue
+				else:
+					# gray_scale = min(255, max(0, 255 * (1 - value)))
+					color = (value//2, 255, value)
+
+					print(value)
 
 				top_left_x, top_left_y, _, _ = self.ids_to_rect(idx, idy)
 				# pygame.draw.circle(window, (255, 0, 0), (top_left_x, top_left_y), 2)
