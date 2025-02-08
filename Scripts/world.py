@@ -17,11 +17,11 @@ class World:
 		self.robots: list[BeaconRobot] = []
 		self.crashed_robot: list = []
 
-		for i in range(5):
-			beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 100, 25, 150)
+		for i in range(1):
+			beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 100, 100, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
-			beacon.equip_lidar(fov=360, freq=10, res=3.5, prec=(0.05, 0.02), max_dist=100)
+			beacon.equip_lidar(fov=360, freq=5, res=7, prec=(0.05, 0.02), max_dist=100)
 			beacon.equip_accmeter(precision=(0.0005, 0.00002), time=self.time)
 			beacon.equip_controller(mode=1)
 			beacon.equip_communicator(self)
@@ -31,7 +31,7 @@ class World:
 		self.linked_robot = []
 		
 		# MAP INITIALIZATION
-		self.map_element_size:float = 100
+		self.map_element_size:float = 70
 		# self.map_element_size = 40		# Demo case
 		# self.map_element_size = 70		# (Thin Wall Problem)
 		# self.map_element_size = 100		# (Empty explored loop SOLVED)

@@ -14,7 +14,7 @@ class Live_grid_map():
 	def __init__(self, robot, list_size, size):
 		self.robot:BeaconRobot = robot
 
-		self.centre = robot.pos
+		self.centre = (600, 350)
 		self.list_size = list_size
 		self.size = size
 		self.map = np.zeros((self.list_size, self.list_size))
@@ -93,7 +93,7 @@ class Live_grid_map():
 			idx, idy = self.coord_to_ids(point)
 			if 0 < idx < self.list_size and 0 < idy < self.list_size:
 				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - ut.distance(self.robot.pos_calc, point)/max_lidar_distance)))
-				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 1, 100)
+				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 2, 200)
 
 		
 	def points_in_safe_range_to_ids(self, p1, p2, safe_range):
@@ -177,6 +177,12 @@ class Live_grid_map():
 			if self.coord_to_ids(p1) == ids:
 				break
 
+			if self.map[i, j] == 19:
+				continue
+			if self.occurance_map[i, j] > 10:
+				self.map[i, j] = 200
+				continue
+
 			# If the second point is in the box
 			if is_in_rect:
 				# If the distance between the robot and the rect wall is lower than the distance between the robot and the obstacle
@@ -184,19 +190,14 @@ class Live_grid_map():
 					if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 2 * self.size:
 						self.occurance_map[i, j] = max(0, self.occurance_map[i, j]-1)
 				if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 1.42 * self.size:
-					if self.occurance_map[i, j] > 25:
+					if self.occurance_map[i, j] == 0:
+						self.map[i, j] = 20
 						continue
-					else:
-						if self.occurance_map[i, j] == 0:
-							self.map[i, j] = 20
-							continue
-						if self.map[i, j] == 0:
-							if self.map[i, j] == 19:
-								continue
-							# Add known square cpt (allow to compute the discovery score)
-							new_cpt += 1
-							self.map[i, j] = 20
-							continue
+					if self.map[i, j] == 0:
+						# Add known square cpt (allow to compute the discovery score)
+						new_cpt += 1
+						self.map[i, j] = 20
+						continue
 
 		return new_cpt
 

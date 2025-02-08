@@ -41,8 +41,6 @@ class Window:
 		# Draw communication links
 		self.draw_links(world)
 
-		for robot in robots:
-			robot.draw(window)
 		
 		for robot in robots:
 			if robot.controller.mode:
@@ -52,10 +50,13 @@ class Window:
 					pygame.draw.circle(window, (255, 0, 0), robot.controller.local_waypoint, robot.controller.local_waypoint_radius)
 
 			# # Draw the robot
-			# if robot.id == 1:
-			# 	robot.live_grid_map.draw(window)
-			# 	robot.live_grid_map.draw_occurance(window)
+			if robot.id == 0:
+				robot.live_grid_map.draw(window)
+				# robot.live_grid_map.draw_occurance(window)
 		
+		for robot in robots:
+			robot.draw(window)
+
 		# Draw simulation time
 		self.write_time(world.time)
 
@@ -106,3 +107,13 @@ def write_text(text, window, pos):
 	textRect.center = pos
 	window.blit(text, textRect)
 	pygame.display.update()
+
+
+
+def draw_point(window, position, delay, color=(255, 0, 255), size=5):
+	pygame.draw.circle(window, color, position, size)
+	pygame.display.update()
+	pygame.time.delay(delay)
+
+def delay(t:int):
+	pygame.time.delay(t)

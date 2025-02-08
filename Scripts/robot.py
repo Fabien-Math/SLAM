@@ -36,7 +36,7 @@ class BeaconRobot:
 		self.max_forward_speed = max_forward_speed
 		self.max_backward_speed = max_backward_speed
 		self.rot_speed = 0
-		self.rot_speed_calc = 0
+		self.rot_speed_calc = 0					# deg.s-1
 		self.max_rot_speed = max_rot_speed
 
 		# Robot attribute
@@ -46,7 +46,7 @@ class BeaconRobot:
 
 		# Robot map
 		self.map = []
-		self.live_grid_map = Live_grid_map(self, 101, 15)
+		self.live_grid_map = Live_grid_map(self, 201, 10)
 
 		# Sensors
 		self.lidar = None
