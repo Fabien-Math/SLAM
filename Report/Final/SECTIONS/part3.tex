@@ -3,18 +3,105 @@
 
 \begin{document}
 
+
+\subsection{Introducing a new method for dynamic pathfinding}
+
+In this section, we will introduce a new method for real-time dynamic pathfinding. This method is based on the inflation of the path normally to the shortest path to a point, i.e. a line. The line is splitted if not free from obstacle with a givent safe range. 
+
+
+
 \subsection{Finding the shorthest path distance}
 To find the shortest path, I like to take inspiration from nature by simulating a wave propagating through a medium. This way, the shortest path naturally emerges as the one the wave follows.  
 
+\vspace{1em}
+
 The wave equation describes how information spreads at a certain speed, but challenges arise—how to model refraction, how to ensure the wave propagates at a constant speed. To tackle this, I used a cellular automaton once again. Made for propagating information, they are an interesting tool for this approach.\cite{tapia_2016}
+
+\vspace{1em}
 
 Differently from the part \figtonum, I will use cellular automata as a computational tool for simulating phenomenon. Application were found in various domain from physics to biology. Lattice Gaz Cellular Automata (LGCA) for instance are used to simulate gaz fluid flows, it is the precursor of the lattice Boltzman Method (LBM)\cite{chen_1998}
 
-Base on the work of \textit{Calvo Tavia} and \textit{al}, the implementation process is given by :
+\vspace{1em}
 
-\textcolor{red}{\textbf{DESCRIBE THE PROCESS}}
+Base on the work of \textit{Calvo Tavia} and \textit{al.}\cite{tapia_2016}, the process is describe below:
+
+\vspace{1em}
+
+Given a lattice $\Lambda = \{(i,j) \in \mathbb{N}^{2} \,:\, 1 \leq i, j \leq L\}$ with $L$ the size of the lattice, we define the following sets:
+\vspace{1em}
+
+\begin{itemize}
+	\item $A_t = \{ (i, j) \in \Lambda \,:\, a_t(i, j) > 0\}$: the set of activated cells at time $t$
+	\item $\mathcal{B}$: the set of obstacles
+	\item $\Gamma \subset \Lambda$: the set of secondary wave sources
+	\item $E_t$: the set of empty spaces
+	\item $\mathcal{M}_{ij} = \{ (k, l) \in \Lambda \,:\, \|(k - i, l - j)\|_{\infty} = 1\}$: the Moore neighborhood of a cell $(i, j)$
+\end{itemize}
+
+\vspace{1em}
+
+Each cell of the lattice carries 2 variables:
+\begin{itemize}
+	\item $a_t (i, j)$: the state of the cell $(i, j)$ at time $t$
+	\item $z_t (i, j)$: the distance vector of the wave from the source to the cell $(i, j)$ at time $t$, defined as:
+	$z_t (i, j) = \begin{pmatrix}
+		\text{Total number of steps taken to arrive at cell } (i, j) \\
+		\text{Number of diagonal steps among them}
+	\end{pmatrix}$
+\end{itemize}
 
 
-\textcolor{red}{\textbf{MAKE A LINK WITH WAVE EQUATIONS AND HUYGENS PRINCIPLE}}
+\vspace{1em}
+
+
+To update $z_t$, we introduce the following variable that track the distance of the wave from the source to the cell $(i, j)$ at time $t$: 
+$$r_{t_{ij}} (k, l) = \begin{cases}
+	(0, 0) & \text{if } (i, j) \in {E}_{t} \text{ or } (k, l) \notin A_t\\
+	z(k, l) + (1, \mathbbm{1}_{D_{ij}}(k, l)) & \text{otherwise}
+\end{cases}$$
+
+where $\mathbbm{1}_{D_{ij}}$ the diagonal function indicator, i.e. 1 if $(k, l)$ is a diagonal neighbor of $(i, j)$ and $0$ otherwise.
+
+$$D_{ij} = {(k, l) \in \Lambda \,:\, |k - i||l - j| = 1} \subset M_{ij}$$
+
+Note that $\| r_{t_{ij}} \|_2$ is the distance mesurement from the wave source to the cell $(i, j)$.
+
+\vspace{1em}
+Moreover, we define the set of cells in the Moore neighborhood that could be a source of activation for the cell $(i, j)$ at time $t$ as:
+$$ W_t = \{(k, l) \in M_{ij} \,:\, t < a_t (k, l) + \| r_{t_{ij}} \|_2 \leq t+1\}$$
+
+\vspace{1em}
+Finally, we define the pair $(k, l)$ where the distance $\| r_{t_{ij}} \|_2$ is minimal if the set of potential source of activation for the cell $(i, j)$ at time $t$ is not empty, i.e. $W_t \neq \emptyset$.:
+$$(i_t^{*}, j_t^{*}) = 
+\begin{cases}
+	argmin\{\| r_{t_{ij}} (k, l)\|_2 \,:\, (k, l) \in W_{t_{ij}}\} & \text{if }  W_t \neq \emptyset\\
+	(i, j) & \text{otherwise}
+\end{cases}
+$$
+
+
+\vspace{1em}
+After defining all the sets and variables above, the wave propagation is governed by the following rules:
+
+\vspace{1em}
+
+At each iteration of time, we compute the two variables $a_t (i, j)$ and $z(i, j)$ for each cell $(i, j) \in \Lambda$ as follows:
+$$a_t (i, j) = 
+\begin{cases}
+	t +1 & \text{if }  (i, j) \in \Gamma \text{ or } (M_{ij} \cap  A_t) \neq \emptyset\\
+	a_t(i_t^{*}, j_t^{*}) & \text{otherwise}
+\end{cases}
+$$
+
+
+$$z_t (i, j) = 
+\begin{cases}
+	z_t(i_, j) & \text{if } (i, j) \notin E_t \backslash \Gamma \text{ or } W_t = \emptyset\\
+	r_t(i_t^{*}, j_t^{*}) & \text{otherwise}
+\end{cases}
+$$
+
+This implementation does not allow to track the refraction of the waves, these are wrongly reflected by the obstacles. To prevent front breaking in wave propagation near obstacles, the concept of "additional secondary" wave sources is introduced, inspired by Huygens' principle, where selected cells on the obstacle boundary generate secondary waves. An algorithm determines these sources based on geometric conditions, ensuring correct wave propagation by maintaining the expected wavefront shape even when interacting with obstacles. This simple algorithm is describe in the work of \textit{Calvo Tavia} and \textit{al.}\cite{tapia_2016}. We will not go into the details of the algorithm here.
+
 
 \end{document}

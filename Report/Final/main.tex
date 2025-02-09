@@ -1,6 +1,8 @@
 \LoadClass[a4paper,12pt]{article}
 \documentclass{article}
 
+\usepackage[english]{babel}
+
 \input{ANNEXES/import.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -23,22 +25,6 @@
 %%%%%%%%%%%%%%%%%%%
 %     BOOLEEN     %
 %%%%%%%%%%%%%%%%%%%
-
-% Création des boolean
-\newboolean{abst}
-\newboolean{thx}
-\newboolean{contents}
-\newboolean{introduction}
-\newboolean{pt2}
-\newboolean{pt3}
-\newboolean{pt4}
-\newboolean{pt5}
-\newboolean{conclusion}
-\newboolean{perspectives}
-\newboolean{glossaire}
-\newboolean{biblio}
-\newboolean{annexe}
-
 
 % Renseigner si le Rapport contient un abstract
 \setboolean{abst}{true}
@@ -309,12 +295,12 @@
 %%%%%%%%%%%%%%%%%%%%%%
 %     CONCLUSION     %
 %%%%%%%%%%%%%%%%%%%%%%
-\ifthenelse{\boolean{perspectives}}
+\ifthenelse{\boolean{conclusion}}
 {
 	\addcontentsline{toc}{section}{\protect\numberline{}Conclusion}%
 	\section*{Conclusion}
-	\markboth{Introduction}{Introduction} % Manually update \rightmark for section*
-
+	\markboth{Conclusion}{Conclusion} % Manually update \rightmark for section*
+	
 	\subfile{SECTIONS/Wconclusion}
 
 	\newpage
@@ -325,6 +311,7 @@
 \ifthenelse{\boolean{perspectives}}
 {
 	\section*{Perspectives}
+	\markboth{Perspectives}{Perspectives} % Manually update \rightmark for section*
 	\addcontentsline{toc}{section}{\protect\numberline{}Perspectives}
 	\subfile{SECTIONS/Xperspectives}
 	
