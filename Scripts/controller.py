@@ -34,6 +34,7 @@ class Controller:
 		self.no_safe_path_found_counter = 0
 
 		self.safe_range = self.robot.radius * 2
+		self.emergency_mode = False
 
 		# Last position, check robot deadlock
 		self.last_static_pos = self.robot.pos
@@ -50,7 +51,11 @@ class Controller:
 		if self.waypoint:
 			# Arrived at waypoint
 			if ut.point_in_circle(self.robot.pos_calc, self.waypoint, self.waypoint_radius):
+				if self.emergency_mode:
+					self.emergency_mode = False
 				self.waypoint_reached = True
+				self.local_waypoint_reached = True
+				self.local_waypoints = []
 
 			# If the waypoint is too close to a wall
 			if not is_safe_waypoint(self.waypoint, self.safe_range, self.robot.live_grid_map):
@@ -64,18 +69,19 @@ class Controller:
 				self.local_waypoint_reached = True
 
 			# If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
-			if not is_safe_waypoint(self.local_waypoint, self.safe_range, self.robot.live_grid_map):
-				print("Robot id :",self.robot.id, ", Local waypoint too close to a wall")
-				self.local_waypoint_reached = True
-				self.local_waypoints = []
-				self.local_waypoint = None
+			if not self.emergency_mode:
+				if not is_safe_waypoint(self.local_waypoint, self.safe_range, self.robot.live_grid_map):
+					print("Robot id :",self.robot.id, ", Local waypoint too close to a wall")
+					self.local_waypoint_reached = True
+					self.local_waypoints = []
+					self.local_waypoint = None
 
-			# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
-			elif need_line_split(self.robot.live_grid_map, self.robot.pos, self.local_waypoint, self.safe_range, window):
-				self.local_waypoint_reached = True
-				self.local_waypoints = []
-				self.local_waypoint = None
-				
+				# If the robot need to cross a wall to go to the local waypoint, could be acheive when the wall isn't still discovered
+				elif need_line_split(self.robot.live_grid_map, self.robot.pos, self.local_waypoint, self.safe_range, window):
+					self.local_waypoint_reached = True
+					self.local_waypoints = []
+					self.local_waypoint = None
+					
 
 		### MANAGE WAYPOINT
 		if not len(self.waypoints) and self.waypoint_reached:
@@ -101,7 +107,6 @@ class Controller:
 		
 		### MANAGE LOCAL WAYPOINT
 		if self.waypoint and not len(self.local_waypoints) and self.local_waypoint_reached:
-
 			if self.need_global_path:
 				print("Global path needed")
 				lwps = self.compute_global_path_to_wp(window)
@@ -109,7 +114,7 @@ class Controller:
 				if lwps is None:
 					lwps = self.compute_emergency_path_to_wp(window)
 				for lwp in lwps:
-					disp.draw_point(window, lwp, 100)
+					disp.draw_point(window, lwp, 10)
 				# # Reset the demand
 				self.need_global_path = False
 			else:
@@ -300,6 +305,7 @@ class Controller:
 		return
 	
 	def compute_emergency_path_to_wp(self, window):
+		self.emergency_mode = True
 		live_grid_map = self.robot.live_grid_map
 		safe_tiles = np.where(live_grid_map.map == 19)
 		safe_tiles = list(zip(safe_tiles[0], safe_tiles[1]))
@@ -317,19 +323,34 @@ class Controller:
 		end_id = [i for i, st in enumerate(safe_tiles) if st[1] == end[0] and st[0] == end[1]][0]
 
 		c_table = make_connection_table(safe_tiles)
+		print(c_table)
 
-		visited = [False]*len(c_table)
-		dijkstra_distances = dijkstra(start_id, c_table)
+		# visited = [False]*len(c_table)
+		dijkstra_distances = dijkstra(start_id, c_table, window, tiles_pos)
+		print(dijkstra_distances)
 		connected_path_ids = compute_dijkstra_path(end_id, start_id, dijkstra_distances, c_table)
 		print(connected_path_ids)
 		# connected_path_ids = dfs(start_id, c_table, visited)
 		connected_path = [tiles_pos[i] for i in connected_path_ids]
 
 		for p in connected_path:
-			disp.draw_point(window, p, 10, (255, 0, 0))
+			disp.draw_point(window, p, 1, (255, 0, 0))
 
+		connected_path = connected_path[::-3]
+
+		### PROBLEM IN THIS FUNCTION, P1 MUST BE EQUAL TO P2 AT THE END OF A FOR LOOP
+		emergency_path = [connected_path[0]]
+		for i, p1 in enumerate(connected_path[:-1]):
+			p2 = connected_path[i+1]
+			n = 0
+			while not need_line_split(self.robot.live_grid_map, p1, p2, self.safe_range, window):
+				n += 1
+				if n + i == len(connected_path):
+					break
+				p2 = connected_path[i + n]
+			emergency_path.append(p2)
 			
-		return connected_path[::-3]
+		return emergency_path
 		# return connected_path[:connected_path_ids.index(id_end)]
 		
 	
@@ -487,13 +508,13 @@ def dfs(start_id, ids, visited):
 	return nodes
 
 
-def dijkstra(start_id, c_table):
+def dijkstra(start_id, c_table, window, tiles_pos):
 	distances = [1e9] * len(c_table)
 	distances[start_id] = 0
 
 	visited = [False] * len(c_table)
 	n = 0
-	while 1e9 in distances and n < 1000:
+	while 1e9 in distances and n < 1_000_000:
 		n += 1
 
 		dist_min = 1e9
@@ -502,11 +523,12 @@ def dijkstra(start_id, c_table):
 				dist_min = distances[i]
 				id_dist_min = i
 
+		disp.draw_point(window, tiles_pos[id_dist_min], 1)
 		for neighbor in c_table[id_dist_min]:
 			distances[neighbor] = min(distances[neighbor], distances[id_dist_min] + 1)
 		
 		visited[id_dist_min] = visited
-
+	print(n)
 	return distances
 
 
@@ -539,12 +561,7 @@ def make_connection_table(ids:list):
 
 	for i in range(len(ids)):
 		for j in range(i+1, len(ids)):
-			# Horizontal connections
-			if abs(ids[i][0] - ids[j][0]) < 2 and ids[i][1] == ids[j][1]:
-				connection_table[i].append(j)
-				connection_table[j].append(i)
-			# Vertical connections
-			if abs(ids[i][1] - ids[j][1]) < 2 and ids[i][0] == ids[j][0]:
+			if abs(ids[i][0] - ids[j][0]) < 2 and abs(ids[i][1] - ids[j][1]) < 2:
 				connection_table[i].append(j)
 				connection_table[j].append(i)
 		
