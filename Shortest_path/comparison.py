@@ -29,20 +29,22 @@ map = [
 	 ('rect', (850, 150), (900, 150), (900, 1000), (850, 1000))]
 ]
 
-imap = 5
-obstacles = map[imap]
+imap = 1
+obstacles = map[imap-1]
 
 map_size = (1200, 700)
 source_pos = (100, 350)
 wp_pos = (1100, 350)
 safe_range = 0
 granularity = 5
-scale = 1/5
+scale = 1/2
 
-save_anim_name = "map_" + str(imap) + "_scale_" + scale.__format__(':.2f')
+save_anim_name = "map_" + str(imap) + "_scale_" + f"{int(1 / scale):g}_g5"
+print(save_anim_name)
 
 path_dist = compute_path(source_pos, wp_pos, map_size, obstacles, safe_range)
-print(f"Computed path length : {path_dist:.3f} um")
+if path_dist:
+	print(f"Computed path length : {path_dist:.3f} um")
 
 shortest_path_dist, lattice = compute_and_save_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity, save_anim_name)
 print(f"Shortest computed path length : {shortest_path_dist:.3f} um")

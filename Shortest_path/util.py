@@ -29,7 +29,7 @@ def dot_product(v1:tuple, v2:tuple) -> float:
 
 def normalize_vec(v:tuple) -> tuple:
 	"""Normalize a tuple"""
-	x, y = v
+	x, y = v		
 	dist = sqrt(x*x+y*y)
 	return x/dist, y/dist
 
@@ -44,6 +44,9 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 def orthogonal_point(p:tuple, p1:tuple, p2:tuple, line:tuple) -> tuple:
 	"""Compute the orthogonal point on a line from a point"""
 	vec = (p2[0] - p1[0] , p2[1] - p1[1])
+
+	if vec == (0, 0):
+		return p1
 	a, b, c = line
 
 	dir_vec = normalize_vec(vec)
