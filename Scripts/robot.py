@@ -258,7 +258,9 @@ class BeaconRobot:
 		self.controller = Controller(self, mode)
 
 	def equip_communicator(self, world):
-		self.communicator = Communicator(self, 1000, 1000, 1000, world)
+		emission_rate = 1_000_000 # 1 Mb/s > 125 ko/s
+		reception_rate = 10_000_000 # 10 Mb/s > 1.25 Mo/s
+		self.communicator = Communicator(self, 1000, emission_rate, reception_rate, world)
 		
 	
 	### ROBOT COLLISION

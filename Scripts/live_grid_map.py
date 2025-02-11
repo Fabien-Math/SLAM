@@ -17,8 +17,10 @@ class Live_grid_map():
 		self.centre = (600, 350)
 		self.list_size = list_size
 		self.size = size
-		self.map = np.zeros((self.list_size, self.list_size))
-		self.occurance_map = np.zeros((self.list_size, self.list_size))
+		self.map = np.zeros((self.list_size, self.list_size), dtype=np.int16)
+		self.occurance_map = np.zeros((self.list_size, self.list_size), dtype=np.int16)
+		
+		self.updated_cells = {}
 		self.saved_map = None
 
 	def coord_to_ids(self, point):
@@ -67,6 +69,7 @@ class Live_grid_map():
 		if 0 < idx < self.list_size and 0 < idy < self.list_size:
 			# Set to safe path
 			self.map[idy, idx] = 19
+			self.updated_cells[(idx, idy)] = 1
 	
 	
 	def update(self, collide_points, no_collide_points, max_lidar_distance, window):
@@ -94,6 +97,8 @@ class Live_grid_map():
 			if 0 < idx < self.list_size and 0 < idy < self.list_size:
 				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - ut.distance(self.robot.pos_calc, point)/max_lidar_distance)))
 				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 2, 200)
+				self.updated_cells[(idx, idy)] = 1
+
 
 		
 	def points_in_safe_range_to_ids(self, p1, p2, safe_range):
@@ -181,6 +186,7 @@ class Live_grid_map():
 				continue
 			if self.occurance_map[i, j] > 10:
 				self.map[i, j] = 200
+				self.updated_cells[j, i] = 1
 				continue
 
 			# If the second point is in the box
@@ -189,14 +195,17 @@ class Live_grid_map():
 				if not intercept:
 					if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 2 * self.size:
 						self.occurance_map[i, j] = max(0, self.occurance_map[i, j]-1)
+						self.updated_cells[j, i] = 1
 				if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 1.42 * self.size:
 					if self.occurance_map[i, j] == 0:
 						self.map[i, j] = 20
+						self.updated_cells[j, i] = 1
 						continue
 					if self.map[i, j] == 0:
 						# Add known square cpt (allow to compute the discovery score)
 						new_cpt += 1
 						self.map[i, j] = 20
+						self.updated_cells[j, i] = 1
 						continue
 
 		return new_cpt

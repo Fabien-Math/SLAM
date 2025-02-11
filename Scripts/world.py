@@ -17,7 +17,7 @@ class World:
 		self.robots: list[BeaconRobot] = []
 		self.crashed_robot: list = []
 
-		for i in range(1):
+		for i in range(2):
 			beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 100, 100, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors

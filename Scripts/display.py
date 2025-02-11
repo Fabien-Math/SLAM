@@ -50,7 +50,7 @@ class Window:
 					pygame.draw.circle(window, (255, 0, 0), robot.controller.local_waypoint, robot.controller.local_waypoint_radius)
 
 			# # Draw the robot
-			if robot.id == 0:
+			if robot.id == 1:
 				robot.live_grid_map.draw(window)
 				# robot.live_grid_map.draw_occurance(window)
 		

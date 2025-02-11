@@ -71,7 +71,7 @@ class Controller:
 			# If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
 			if not self.emergency_mode:
 				if not is_safe_waypoint(self.local_waypoint, self.safe_range, self.robot.live_grid_map):
-					print("Robot id :",self.robot.id, ", Local waypoint too close to a wall")
+					# print("Robot id :",self.robot.id, ", Local waypoint too close to a wall")
 					self.local_waypoint_reached = True
 					self.local_waypoints = []
 					self.local_waypoint = None
@@ -323,13 +323,13 @@ class Controller:
 		end_id = [i for i, st in enumerate(safe_tiles) if st[1] == end[0] and st[0] == end[1]][0]
 
 		c_table = make_connection_table(safe_tiles)
-		print(c_table)
+		# print(c_table)
 
 		# visited = [False]*len(c_table)
 		dijkstra_distances = dijkstra(start_id, c_table, window, tiles_pos)
-		print(dijkstra_distances)
+		# print(dijkstra_distances)
 		connected_path_ids = compute_dijkstra_path(end_id, start_id, dijkstra_distances, c_table)
-		print(connected_path_ids)
+		# print(connected_path_ids)
 		# connected_path_ids = dfs(start_id, c_table, visited)
 		connected_path = [tiles_pos[i] for i in connected_path_ids]
 
@@ -339,21 +339,29 @@ class Controller:
 		connected_path = connected_path[::-3]
 
 		### PROBLEM IN THIS FUNCTION, P1 MUST BE EQUAL TO P2 AT THE END OF A FOR LOOP
-		emergency_path = [connected_path[0]]
-		for i, p1 in enumerate(connected_path[:-1]):
-			p2 = connected_path[i+1]
-			n = 0
-			while not need_line_split(self.robot.live_grid_map, p1, p2, self.safe_range, window):
-				n += 1
-				if n + i == len(connected_path):
-					break
-				p2 = connected_path[i + n]
-			emergency_path.append(p2)
+		emergency_path = shorten_path(live_grid_map, connected_path, self.safe_range, window)
 			
 		return emergency_path
 		# return connected_path[:connected_path_ids.index(id_end)]
+
+
+def shorten_path(map, path, safe_range, window):
+	i = 0
+	p1 = path[i]
+	sh_path = [p1]
+	while i < len(path) - 1:
+		for n in range(i+1, len(path)):
+			p2 = path[n]
+			if need_line_split(map, p1, p2, safe_range, window):
+				sh_path.append(path[n-1])
+				break
+		i = n
+		print(i)
 		
-	
+		p1 = path[i-1]
+	sh_path.append(path[-1])
+
+	return sh_path
 
 ###   WAYPOINTS   ###
 def is_safe_waypoint(wp_pos, safe_range, live_grid_map) -> bool:
@@ -528,7 +536,7 @@ def dijkstra(start_id, c_table, window, tiles_pos):
 			distances[neighbor] = min(distances[neighbor], distances[id_dist_min] + 1)
 		
 		visited[id_dist_min] = visited
-	print(n)
+	# print(n)
 	return distances
 
 
