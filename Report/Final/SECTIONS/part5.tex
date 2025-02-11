@@ -3,4 +3,70 @@
 
 \begin{document}
 
+\section{Partie à développer}
+
+\subsection*{Création du monde}
+\begin{itemize}
+    \item Automate cellulaire
+    \item Méthode de square marching appliquée à des triangles
+\end{itemize}
+
+\subsection*{Capteurs utilisés}
+Minimalisme, quels capteurs sont nécessaire et suffisant pour accomplir la mission donnée ?
+\begin{itemize}
+    \item Fonctionnement d'un lidar
+    \item Accéléromètre
+\end{itemize}
+
+\subsection*{Planification de trajectoire}
+\begin{itemize}
+	\item \textbf{Différence avec la plannification de chemin (si existe ?)}
+    \item Définition de la trajectoire optimale
+    \item Description mathématique dans notre cas
+    \item Manière de le résoudre, temps nécessaire, possibilités
+\end{itemize}
+
+\subsection*{Évitement d'obstacles}
+\subsubsection*{Essais}
+\begin{itemize}
+    \item Diagramme de Voronoi
+    \item DFS (Depth-First Search)    
+\end{itemize}
+
+\subsubsection*{Méthode par subdivision successive}
+
+\begin{itemize}
+	\item Isotropic waves generator to validate or reject the method
+		\item Cellular automata
+\end{itemize}
+
+\subsubsection*{Création d'une carte de caractéristique sur un maillage cartésien uniforme}
+\subsubsection*{Planification dynamique de trajectoire}
+
+\subsection*{Contrôle du robot}
+\begin{itemize}
+    \item Cinématique du robot utilisé
+    \item Modèle intégré
+\end{itemize}
+
+\subsection*{Temps de calcul}
+\begin{itemize}
+    \item Liste des optimisations
+    \begin{itemize}
+        \item Subdivision de la carte
+        \item Détection d'obstacles par le Lidar
+        \begin{itemize}
+            \item Fonction \texttt{move\_on\_line} (parallèle avec le \emph{computer graphics})
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+
+\subsubsection*{Non encore implémenté}
+\begin{itemize}
+    \item Sauvegarde dynamique de l'exploration
+\end{itemize}
+
+
+
 \end{document}

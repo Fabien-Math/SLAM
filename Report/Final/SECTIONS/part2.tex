@@ -36,13 +36,13 @@ The beauty of this system lies in the complexity that emerges from such simple r
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{IMAGES/part2/CGOF_1.png}
-        \caption{Iteration 87}
+        \caption{Generation 87}
     \end{subfigure}
     \hfill
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{IMAGES/part2/CGOF_2.png}
-        \caption{Iteration 263}
+        \caption{Generation 263}
     \end{subfigure}
     \caption{Conway's Game of Life}
     \label{fig:CGOF}
@@ -116,16 +116,131 @@ This allows for a vast variety of map configurations. \autoref{fig:three_map_exa
 
 \subsection{Robot implementation}
 
+\subsubsection{Robot model}
+
+As a robot, I used a simple diferential drive robot with two idle-wheels and 2 driven wheels.
+
+A model of the robot can be found on \autoref{fig:robot_model} and \autoref{fig:robot_3Dmodel}.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part2/robot_model.png}
+		\caption{Differential drive robot diagram}
+		\label{fig:robot_model}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part2/robot_3Dmodel.png}
+		\caption{Differential drive robot 3D model}
+		\label{fig:robot_3Dmodel}
+	\end{subfigure}
+	\caption{Robot models}
+\end{figure}
+
+\textbf{Notations:}
+
+\begin{itemize}
+	\item{\makebox[2cm][l]{$X$}} Coordinates vector, 
+	$\begin{pmatrix}
+		x\\
+		y\\
+	\end{pmatrix}$
+	\item{\makebox[2cm][l]{$X_I$}} Initial robot coordinates
+	\item{\makebox[2cm][l]{$X_{WP}$}} Waypoint coordinates
+	\item{\makebox[2cm][l]{$\dot{X}$}} Velocity vector, 
+	$\begin{pmatrix}
+		\dot{x}\\
+		\dot{y}\\
+	\end{pmatrix}$
+	\item{\makebox[2cm][l]{$\omega_L$}} Left wheel rotation speed
+	\item{\makebox[2cm][l]{$\omega_R$}} Right wheel rotation speed
+	\item{\makebox[2cm][l]{$\omega$}} Wheels rotation speed vector, 
+	$\begin{pmatrix}
+		\omega_L\\
+		\omega_R\\
+	\end{pmatrix}$
+	\item{\makebox[2cm][l]{$\theta$}} Heading of the robot
+	\item{\makebox[2cm][l]{$\dot{\theta}$}} Angular speed of the robot
+	\item{\makebox[2cm][l]{$r$}} Wheels radius
+	\item{\makebox[2cm][l]{$d$}} Distance between the two wheels
+	\item{\makebox[2cm][l]{$t$}} Time
+	\item{\makebox[2cm][l]{$T$}} End time
+	\item{\makebox[2cm][l]{$T_{WP}$}} Time at which the robot reached the waypoint
+\end{itemize}
+
+The kinematics of the robot is given by :
+
+We assume that the grip is perfect between the road and the robot wheels, the robot wheels roll without sliding. Under this condition, $V_R$ and $V_L$, the speed of the wheel in the ground reference is given by :
+
+$$\displaystyle V_R = r \times \omega_R \text{     and     } V_L = r \times \omega_L$$
+
+So that, $V$ the velocity of the robot is the sum of both speed divided by two. Decomposition of the velocities in the ground reference $(O, x, y)$, we have :
+
+
+\begin{align}
+	\displaystyle \dot{x} &= \frac{r}{2} \left(\omega_R + \omega_L\right) \cos \theta\\
+	\displaystyle \dot{y} &= \frac{r}{2} \left(\omega_R + \omega_L\right) \sin \theta\\
+\end{align}
+
+
+Moreover, we note $\varphi$ the angular velocity of the robot in the robot reference isolating one wheel.
+
+
+$$\displaystyle \varphi_R = \frac{r}{d} \times \omega_R \text{     and     } \varphi_L =  \frac{r}{d} \times \omega_L$$
+
+In this case, the difference diveded by two of the two gives the angular speed of the robot.
+
+$$\displaystyle \dot{\theta} = \frac{1}{2} \left(\varphi_R - \varphi_L\right)$$
+
+The difference is taken as is to ensure that the angular speed is positive when the angle increases in the anticlockwise direction.
+
+$$\displaystyle \dot{\theta} = \frac{r}{2d} \left(\omega_R - \omega_L\right)$$
+
+
+
 
 \subsubsection{Sensors}
 
-The robot is equiped with 2 sensors by default, an accelerometer that calculates acceleration in x and y axis and the rotation along z
+The robot is equiped with 2 sensors by default, an accelerometer that calculates acceleration in x and y axis and the rotation along z axis. The second sensor is a LiDAR sensor.
+
+\vspace{1em}
+
+A LiDAR stand for Light Detection And Ranging is a sensor that emits laser beams and measures the time it takes for the beams to return after hitting an object. This time-of-flight measurement is used to calculate the distance between the sensor and the object. LiDAR is commonly used in robotics for exploration applications. The operation of a LiDAR sensor is illustrated in \autoref{fig:lidar_operation}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{IMAGES/part2/lidar_operation_scheme.png}
+	\caption{LiDAR operating diagram}
+	\label{fig:lidar_operation}
+\end{figure}
+
+In our case, we work in the air, which is why we chose LiDAR. For underwater exploration applications, sonar is used and works on the same principle. Instead of emitting laser beams, sonar emits sound waves. 
+
+\vspace{0.5em}
+
+For estimating inertial parameters, more advanced sensors such as Doppler Velocity Logs (DVL) can be used. They work by emitting sound waves and calculating the Doppler effect to estimate the position and rotation of the robot.
+
+
+\subsubsection{Mapping}
 
 Simultaneous Localization and Mapping (SLAM) is a key problem in robotics, enabling a robot to determine its position while simultaneously building a map of its environment. Various techniques have been developed to tackle this challenge. For instance, EKF-SLAM uses a Kalman filter to estimate both the localization and the map but faces scalability limitations in large environments. FastSLAM, which relies on a particle filter, enhances scalability by handling world features through multiple hypotheses.  
 
+\vspace{1em}
+
 Graph-based approaches, such as Graph-SLAM, are effective for large-scale optimization problems but require complex data management. Visual SLAM (V-SLAM) leverages cameras to estimate localization and construct maps, whereas LiDAR-based SLAM relies on laser sensors for precise depth measurements, making it particularly useful for outdoor environments. Dynamic SLAM variants manage environments with moving objects by excluding them from map updates.\cite{ding_2024}
 
-In this report, I used LiDAR-based SLAM, 
+\vspace{1em}
+
+In this work, I used LiDAR-based SLAM. The robot scans its environment using a LiDAR sensor and builds a map based on the collected data. The map is then used to localize the robot within the environment.
+
+\vspace{1em}
+
+The localization process involves determining the collision points where the LiDAR beams intersect with walls. At each collision point, a circle is drawn with a radius equal to the measured LiDAR distance. The robot's position is then estimated by calculating the intersection of multiple such circles.
+
+
 
 
 \end{document}

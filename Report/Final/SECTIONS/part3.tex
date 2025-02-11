@@ -3,6 +3,84 @@
 
 \begin{document}
 
+\subsection{Global path theory}
+In this section, we consider the theoretical path that the robot should follow in a space with obstacles, without taking into account the feasibility constraints imposed by the robot's physical limitations. This theoretical path is derived based on the shortest distance to the target while avoiding obstacles.
+
+Soit $\Omega \in \mathbb{R}^{2}$, soit $\mathbf{X}(t)$ les coordonées du robot à l'instant $t$ dans cet espace.
+
+
+Soit $ V(t)$ le champ de vision du robot à l'instant $t$
+
+Soit $\mathbf{M}(t, \theta)$ le premier point d'intersection entre un segment et les murs, 
+
+\begin{equation*}
+    \displaystyle
+    \mathbf{M}(t, \theta) = \mathbf{X}(t) + R(t, \theta) 
+    \begin{pmatrix}
+        \cos \theta & 0\\
+        0 & \sin \theta\\
+    \end{pmatrix} 
+    \mathbf{X}(t)
+\end{equation*}
+
+On note $\mathbf{M}_{max} (t, \theta)$ le point tel que $R(t, \theta) = R_{max}$
+
+Ici,
+\begin{equation*}
+    \displaystyle
+    R(t, \theta) = \min (\text{\rmfamily distance}( \, \mathbf{X}(t), \, L(\theta) \cap W \,))
+\end{equation*}
+
+\begin{equation*}
+    \displaystyle
+    L(\theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
+\end{equation*}
+
+\begin{equation*}
+    \displaystyle
+    W = \left\{ \, \text{\rmfamily Segment} (\Omega)\, \right\}
+\end{equation*}
+
+On défini le champ de vision du robot tel que:
+
+
+\begin{equation}
+    \displaystyle
+    V(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \theta) \,|\, l \in [0, 1], \theta \in [0, 2 \pi[ \, \right\}
+\end{equation}
+
+Autrement dis, $V(t)$ est l'ensemble des points de $\Omega$ présents dans un disque de rayon $R_{max}$ et situé entre le robot et la plus proche intersection à un mur 
+
+On construit maintenant la fonctionnelle que l'on cherchera plus tard à optimiser, celle-ci est relative au déplacement du robot.
+
+
+On défini $\mathit{KM}$ (\textit{Known Map}) l'espace de la map connu par le robot et $\mathit{EM}$ (\textit{Explorable Map}) la partie de $\Omega$ explorable par le robot.
+\begin{equation}
+    \displaystyle
+    J(\mathbf{X}(t)) = \int_{0}^{T} | \mathbf{\dot{X}}(t) | dt
+\end{equation}
+
+$J$ est une fonctionnelle fonction de la position initiale du robot, elle donne la longeur du chamin parcourue par le robot avant que $t = T$.
+
+$T$ étant l'instant à partir du quel la map est explorée au maximum des capacités du robot, c'est à dire : $KM = EM$.
+
+Pour savoir si $KM = EM$, on calcul les contours du domaine connu, si tous les contours sont fermés, alors $KM \subset EM$, si de plus les mesures de $KM$ et de $EM$, à savoir leur surface, sont égales alors, on peut raisonnablement dire que $KM = EM$.
+
+
+Pour plus de simplicité lors de l'étude de la fonctionnelle, on la modifie légerement.
+\begin{equation}
+    \displaystyle
+    J(\mathbf{X}(t)) = \frac{1}{2} \int_{0}^{T} \mathbf{\dot{X}}(t)^{2} dt
+\end{equation}
+
+\subsection{Local path theory}
+
+In this section, we focus on determining the optimal commands for navigating to a local waypoint obstacle-free while adhering to the robot's constraints.
+
+
+
+
+
 
 \subsection{Introducing a new method for dynamic pathfinding}
 
