@@ -77,9 +77,19 @@ Pour plus de simplicité lors de l'étude de la fonctionnelle, on la modifie lé
 
 In this section, we focus on determining the optimal commands for navigating to a local waypoint obstacle-free while adhering to the robot's constraints.
 
+Here, we focus on the energy of the robot to compute the optimal command, If we consider the robot to move using dc motors, the power used by the robot is proportional to the voltage for the rotation speed and the current for the torque applied to the wheel. We consider too that the floor is completely flat and the torque is constant so that the current is always the same. The energy is only related to the wheel speed then we define the Energy spent for moving as :
 
+as a reminder, $\omega_L$ and $\omega_R$ are the speed of the left and right wheel.
 
+$$
+\displaystyle E(T) = \int_{0}^{T} \| \omega(t) \| \, dt
+$$
 
+with $\displaystyle \| \omega (t) \| = \sqrt{\omega_L^{2}(t) + \omega_R^{2}(t)}$ and  $\omega_{L, R} \,:\, \mathbb{R}_+ \longrightarrow [-\omega_{max}, \omega_{max}]$ 
+
+Two constraint remains, we want $X(0) = X_R$ and $X(T) = X_{WP}$
+
+In the part \figtonum, we calculated $\dot{X} = F(\omega)$.
 
 
 \subsection{Introducing a new method for dynamic pathfinding}

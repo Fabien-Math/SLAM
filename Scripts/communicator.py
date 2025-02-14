@@ -1,9 +1,9 @@
 import struct
 
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-# 	from world import World
-# 	from robot import BeaconRobot
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+	from world import World
+	from robot import BeaconRobot
 
 
 class Communicator:
@@ -12,6 +12,10 @@ class Communicator:
 		self.robot: BeaconRobot = robot
 		self.id: int = robot.id
 		self.comm_range: float = comm_range
+
+		self.master = False
+		self.connection_lost_timer = [0]*15
+		self.connection_lost_timer_limit = 2
 		
 		self.bit_rate_emission: int = emission_rate
 		self.available_emit_bit: int = 0
@@ -27,7 +31,8 @@ class Communicator:
 
 		self.sender_buffer: str = []
 		self.sender_history: dict = {str(i): [] for i in range(15) if i != self.id}
-		self.receiver_buffer: str = {str(i): '' for i in range(15) if i != self.id}
+		self.receiver_buffer: dict = {str(i): '' for i in range(15) if i != self.id}
+		self.decode_fail_counter: list = []
 		self.receiver_history: list = []
 
 		self.conv_history_file = "Scripts/conv_history.txt"
@@ -39,148 +44,156 @@ class Communicator:
 				f.write(f"{self.id:04b}" + ' - Connected !\n')
 
 
-		self.robot_connection_set: list = [] 
+		self.robot_connection_set: list = [i for i in range(4) if i != self.id] 
+
 
 
 	def update_communicator(self):
 		self.time = self.world.time
 		if self.last_hello_message + self.hello_message_freq < self.time:
-			self.robot_connection_set = []
 			self.send_message('all', [])
 			self.last_hello_message = self.time
 		self.diffuse_signal()
-		self.scan_signal()
+		self.decode_signal()
+		for r_id in self.robot_connection_set:
+			self.connection_lost_timer[r_id] += self.world.dt
+			if self.connection_lost_timer[r_id] > self.connection_lost_timer_limit:
+				self.robot_connection_set.remove(r_id)
+		self.check_master()
 
 
-	def encode_message_id(self, message, receiver):
-		message_id = message['mID']
-		print("Encode message id : ", message_id)
-		if message_id[4:] == '0000':
-			return ""
+	def check_master(self):
+		if len(self.robot_connection_set):
+			if self.id > min(self.robot_connection_set):
+				self.master = False
+			else:
+				self.master = True
+		else:
+			self.master = True
 
-		match message_id:
-			case "00000000":
-				return ""
-			case "00000001":
-				return ""
-			case "00010000":	# Ask for robot connection set
-				return ""
-			case "00010001":	# Encode robot connection set
-				bm = f"{len(self.robot_connection_set):04b}"
-				for r_id in self.robot_connection_set:
-					bm += f"{r_id:04b}"
-				return bm
-			case "00100000":	# Ask for next wp
-				return ""
-			case "00100001":	# Encode next wp
-				bm = ""
-				if self.robot.controller.waypoint:
-					bm += encode_float(self.robot.controller.waypoint[0])
-					bm += encode_float(self.robot.controller.waypoint[1])
-				else:
-					bm += '1'*32
-				return bm
-			case "00100010":	# Encode robot info
-				pos_x = encode_float(self.robot.pos_calc.x)
-				pos_y = encode_float(self.robot.pos_calc.y)
-				vel = encode_float(self.robot.speed_calc)
-				ang = encode_float(self.robot.rot_calc)
-				ang_vel = encode_float(self.robot.rot_speed_calc)
-				bat = f"{self.robot.battery:08b}"
-				return pos_x + pos_y + vel + ang + ang_vel + bat 
-			case "00100011":	# Encode next waypoint to reach as an order
-				...
-			case "00110000":	# Ask for live grid sync
-				return ""
-			case "00110001":	# Encode live grid update
-				updated_live_grid_map = self.robot.live_grid_map.updated_cells
-				print("Encode updated live grid map")
-				print(updated_live_grid_map)
-				live_grid_map = self.robot.live_grid_map.map
-				bm = encode_int32(len(updated_live_grid_map.keys())*3)
-				for key in updated_live_grid_map:
-					bm += f"{key[0]:08b}"
-					bm += f"{key[1]:08b}"
-					bm += f"{live_grid_map[key[1], key[0]]:08b}"
-				self.robot.live_grid_map.updated_cells = {}
-				return bm
-			case "01010101":
-				message_length = len(message["message"])
-				return encode_int32(message_length) + message["message"]
-			case _:
-				print(f"WARNING : Message id not recognized {message_id}")
-	
-	def decode_message_id(self, message_id:str, binary_message:str, index:int, sender:int) -> int:
-		print('Decode message id', message_id, message_id == '00110001')
+
+	def diffuse_signal(self):
+		self.available_emit_bit += self.bit_rate_emission * self.world.dt
+
+		if self.available_emit_bit < 1:
+			return
 		
-		match message_id:
-			case "00000000":	# Repeat the last message
-				self.sender_buffer += self.sender_history[str(sender)][-1]
-			case "00000001":	# Last message received correctly
-				with open(self.conv_history_file, 'a') as f:
-					last_message = self.sender_history[str(sender)].pop()
-					f.write(last_message + '\n')
-				return "ACK", index
-			case "00010000":	# Send robot connection set
-				self.send_message([sender], [{"type": "mID", "mID" : "00010001"}])
-			case "00010001":	# Decode robot connection set
-				if len(binary_message[index:index+4]) != 4:
-					return None, None
-
-				list_length = int(binary_message[index:index+4], 2)
-				m = []
-				if len(binary_message[index + 4: index + (list_length+1)*4]) != list_length*4:
-					return None, None
-
-				for i in range(list_length):
-					robot_id = int(binary_message[index + (i+1)*4:index + (i+2)*4], 2)
-					if robot_id not in self.robot_connection_set and self.id != robot_id:
-						self.robot_connection_set.append(robot_id)
-					m.append(robot_id)
-				return m, index + 4 * (list_length + 1)
+		nb_message_sent = 0
+		for k, (receivers, message) in enumerate(self.sender_buffer):
+			if self.available_emit_bit < 1:
+				break
+		
+			nb_bits_to_send = min(len(message), int(self.available_emit_bit))
+			message_to_diffuse = message[:nb_bits_to_send]
+			if receivers == 'all':
+				for i in range(15):
+					if i != self.id:
+						self.sender_history[str(i)].append(message_to_diffuse)
+			else:
+				for r in receivers:
+					self.sender_history[str(r)].append(message_to_diffuse)
 			
-			case "00100000":	# Send next wp
-				self.send_message([sender], [{"type": "mID", "mID": "00100001"}])
-				self.send_message([sender], [{"type": "mID", "mID": "00100010"}])
-			case "00100010":	# Decode robot info
-				if len(binary_message[index:index+168]) != 168:
-					return None, None
-				return decode_robot_info(binary_message[index:index+168]), index + 168
-			case "00100011":	# Decode next waypoint to reach as an order
-				x = decode_float32(binary_message[index:index+32])
-				y = decode_float32(binary_message[index+32:index+64])
-				return ("NWP", (x, y)), index + 64
-			case "00110000":	# Send live grid update because asked
-				print("Send live grid update")
-				self.send_message([sender], [{"type": "mID", "mID": "00110001"}])
-			case "00110001":	# Decode live grid update
-				print("Decode live grid update")
-				list_size = decode_int32(binary_message[index:index+32])
-				updated_live_grid_map = decode_int8_list(binary_message[index+32:index+32+list_size*8], list_size)
-				return ("LGM_UPDATE", updated_live_grid_map), index + 32 + list_size*8
-			case "01010101":
-				message_size = decode_int32(binary_message[index:index+32])
-				check_message, message = self.decode_message_binary(binary_message[index+32:index+32+message_size])
-				if check_message:
-					self.handle_message(message)
-				return message, index + 32 + message_size
-			case _:
-				print(f"WARNING : Message id not recognized {message_id}")
-				return None, None
+			self.world.message_buffer[str(self.id)] += message_to_diffuse
+
+			self.available_emit_bit -= min(len(message), int(self.available_emit_bit))
+
+			if nb_bits_to_send == len(message):
+				nb_message_sent += 1
+			else:
+				self.sender_buffer[k][1] = message[nb_bits_to_send:]
 		
-		return None, index
+		self.sender_buffer = self.sender_buffer[nb_message_sent:]
+
+	def decode_signal(self):
+		for i in range(15):
+			if self.id == i:
+				continue
+
+			message = self.receiver_buffer[str(i)]
+
+			if len(message) < 20:
+				continue
+			
+			check_message, message_info = self.decode_message_binary(message)
+			if check_message:
+				emitter_id = str(message_info["emitter_id"])
+				if self.id in message_info["receivers"]:
+					self.receiver_history.append(message_info)
+					self.handle_message(message_info, message)
+					self.receiver_buffer[str(i)] = self.receiver_buffer[str(i)][message_info["message_length"]:]
+				else:
+					self.receiver_buffer[emitter_id] = self.receiver_buffer[emitter_id][message_info["message_length"]:]
+			if check_message is None:
+				self.decode_fail_counter[i] += 1
+				print(self.decode_fail_counter)
+
+
+
+	def send_message(self, receivers, message):
+		encoded_message = self.encode_message_binary(receivers, message)
+		self.sender_buffer.append([receivers, encoded_message])
+
+
+	def handle_message(self, message, binary_message):
+		emitter_id = message['emitter_id']
+		self.connection_lost_timer[int(emitter_id)] = 0
+		if emitter_id not in self.robot_connection_set:
+			self.robot_connection_set.append(emitter_id)
+
+		if len(self.robot.live_grid_map.updated_cells.keys()) > 50:
+			if self.master:
+				for r_id in self.robot_connection_set:
+					# print("Master", self.id, 'send LGM to', r_id)
+					self.send_message([r_id], [{"type": "mID", "mID": "00110001"}])
+				self.robot.live_grid_map.updated_cells = {}
+			else:
+				# print("Robot", self.id, 'send LGM to master', min(self.robot_connection_set))
+				self.send_message([min(self.robot_connection_set)], [{"type": "mID", "mID": "00110001"}])
+				self.robot.live_grid_map.updated_cells = {}
+
+
+		if message['message'] != ['ACK']:
+			# print(self.id, '- Handle message : ', message['message'])
+			self.send_message([emitter_id], [{"type": "mID", "mID": "00000001"}])
 		
+		for m in message['message']:
+			if isinstance(m, tuple):
+				if m[0] == "NWP":
+					self.robot.controller.waypoint = m[1]
+					# print(f"Robot {self.id} received new waypoint : {m[1]}")
+				if m[0] == "LGM_UPDATE":
+					# print("Robot", self.id, "received updated live grid map")
+					for i in range(0, len(m[1]), 3):
+						x = m[1][i]
+						y = m[1][i+1]
+						value = m[1][i+2]
+						if self.robot.live_grid_map.map[y, x] != 19:
+							self.robot.live_grid_map.map[y, x] = value
+					# print("Robot", self.id, "received LGM from", emitter_id, 'of length', len(m[1]))
+					# print(message)
+					self.robot.controller.waypoint_reached = True
+					self.robot.controller.local_waypoint_reached = True
+					self.robot.controller.local_waypoints = []
+					if self.master:
+						for r_id in self.robot_connection_set:
+							# print(r_id)
+							if r_id != emitter_id:
+								# print("Robot", self.id, "send live grid update to", r_id, 'from', emitter_id)
+								self.send_message([r_id], [{"type": "mID", "mID": "01010101", "message": binary_message[:message['message_length']]}])
+		pass
+
+
 
 	def encode_message_binary(self, receivers, messages):
 		"""The encoding method uses an Automatic Repeat Query protocol. This means that a verification is send with the message to ensure than the message is well distributed.
-			The format of the encoding will be very simple as follow
-			|----|			4 bits emiter ID
-			|----|			4 optional bits for the number of receiver if different from 1
-			|----...----|	4xreceiver_nb bits for the 4 receiver
-			|----...----|	Message
-			|----|			4 bits for the end of the message
-			|----|			4 bits for the units of the sum
-			|----|			4 bits emiter ID with parity bit encode in the last one, change it if odd.
+			The format of the encoding will be very simple as follow  
+			|----|			4 bits emiter ID  
+			|----|			4 optional bits for the number of receiver if different from 1  
+			|----...----|	4xreceiver_nb bits for the 4 receiver  
+			|----...----|	Message  
+			|----|			4 bits for the end of the message  
+			|----|			4 bits for the units of the sum  
+			|----|			4 bits emiter ID with parity bit encode in the last one, change it if odd.  
 		"""
 				
 		# Add Emitter ID (4 bits)
@@ -242,6 +255,64 @@ class Communicator:
 		binary_message += f"{final_emitter_id:04b}"
 		return binary_message
 
+
+	def encode_message_id(self, message, receiver):
+		message_id = message['mID']
+		# print("Encode message id : ", message_id)
+		if message_id[4:] == '0000':
+			return ""
+
+		match message_id:
+			case "00000000":
+				return ""
+			case "00000001":
+				return ""
+			case "00010000":	# Ask for robot connection set
+				return ""
+			case "00010001":	# Encode robot connection set
+				bm = f"{len(self.robot_connection_set):04b}"
+				for r_id in self.robot_connection_set:
+					bm += f"{r_id:04b}"
+				return bm
+			case "00100000":	# Ask for next wp
+				return ""
+			case "00100001":	# Encode next wp
+				bm = ""
+				if self.robot.controller.waypoint:
+					bm += encode_float(self.robot.controller.waypoint[0])
+					bm += encode_float(self.robot.controller.waypoint[1])
+				else:
+					bm += '1'*32
+				return bm
+			case "00100010":	# Encode robot info
+				pos_x = encode_float(self.robot.pos_calc.x)
+				pos_y = encode_float(self.robot.pos_calc.y)
+				vel = encode_float(self.robot.speed_calc)
+				ang = encode_float(self.robot.rot_calc)
+				ang_vel = encode_float(self.robot.rot_speed_calc)
+				bat = f"{self.robot.battery:08b}"
+				return pos_x + pos_y + vel + ang + ang_vel + bat 
+			case "00100011":	# Encode next waypoint to reach as an order
+				...
+			case "00110000":	# Ask for live grid sync
+				return ""
+			case "00110001":	# Encode live grid update
+				updated_live_grid_map = self.robot.live_grid_map.updated_cells
+				# print("Encode updated live grid map")
+				# print(updated_live_grid_map)
+				live_grid_map = self.robot.live_grid_map.map
+				bm = encode_int32(len(updated_live_grid_map.keys())*3)
+				for key in updated_live_grid_map:
+					bm += f"{key[0]:08b}"
+					bm += f"{key[1]:08b}"
+					bm += f"{live_grid_map[key[1], key[0]]:08b}"
+				return bm
+			case "01010101":
+				message_length = len(message["message"])
+				return encode_int32(message_length) + message["message"]
+			case _:
+				print(f"WARNING : Message id not recognized {message_id}")
+	
 
 	def decode_message_binary(self, binary_message):
 		"""
@@ -338,9 +409,9 @@ class Communicator:
 						return False, None
 					mID = binary_message[index:index+8]
 					index += 8
-					m, index = self.decode_message_id(mID, binary_message, index, emitter_id)
+					m, index = self.decode_message_id(mID, binary_message, index, emitter_id, receivers)
 					if index is None:
-						return False, None
+						return None, None
 					if m:
 						message.append(m)
 				case 0b1000:	# Robot info
@@ -351,6 +422,7 @@ class Communicator:
 					message.append(rinfo)
 				case _:
 					print(f"Unknown type indicator: {type_indicator}, {bin(type_indicator)}")
+					return None, None
 		
 		if len(binary_message[index:index+8]) != 8:
 			return False, None
@@ -367,13 +439,15 @@ class Communicator:
 
 		# Sum check
 		if sum_units != sum_units_check:
-			raise ValueError("Sum check failed.")
+			print("Sum check failed.")
+			return None, None
 
 		# Parity check
 		parity_bit = binary_message[:index-4].count('1') % 2
 		is_parity_valid = ((emitter_id ^ emitter_id_with_parity) & 1) == parity_bit
 		if not is_parity_valid:
-			raise ValueError("Parity check failed.")
+			print("Parity check failed.")
+			return None, None
 		
 		
 		return True, {
@@ -385,93 +459,79 @@ class Communicator:
 			"parity_valid": is_parity_valid
 		}
 			
-
-
-	def diffuse_signal(self):
-		self.available_emit_bit += self.bit_rate_emission * self.world.dt
-
-		if self.available_emit_bit < 1:
-			return
+	def decode_message_id(self, message_id:str, binary_message:str, index:int, sender:int, receivers:list) -> int:
+		# print(self.id, '- Decode message id', message_id)
 		
-		nb_message_sent = 0
-		for k, (receivers, message) in enumerate(self.sender_buffer):
-			if self.available_emit_bit < 1:
-				break
-		
-			nb_bits_to_send = min(len(message), int(self.available_emit_bit))
-			message_to_diffuse = message[:nb_bits_to_send]
+		match message_id:
+			case "00000000":	# Repeat the last message
+				self.sender_buffer.append([[sender], self.sender_history[str(sender)][-1]])
+			case "00000001":	# Last message received correctly
+				if not len(self.sender_history[str(sender)]):
+					return None, index
+				with open(self.conv_history_file, 'a') as f:
+					# print(self.id, self.sender_history, sender)
+					last_message = self.sender_history[str(sender)].pop()
+					f.write(f"{self.id:04b} " + last_message + '\n')
+				return "ACK", index
+			case "00010000":	# Send robot connection set
+				self.send_message([sender], [{"type": "mID", "mID" : "00010001"}])
+			case "00010001":	# Decode robot connection set
+				if len(binary_message[index:index+4]) != 4:
+					return None, None
+
+				list_length = int(binary_message[index:index+4], 2)
+				m = []
+				if len(binary_message[index + 4: index + (list_length+1)*4]) != list_length*4:
+					return None, None
+
+				for i in range(list_length):
+					robot_id = int(binary_message[index + (i+1)*4:index + (i+2)*4], 2)
+					if robot_id not in self.robot_connection_set and self.id != robot_id:
+						self.robot_connection_set.append(robot_id)
+					m.append(robot_id)
+				return m, index + 4 * (list_length + 1)
 			
-			if receivers == 'all':
-				for i in range(15):
-					if i != self.id:
-						self.sender_history[str(i)].append(message_to_diffuse)
-			else:
-				for r in receivers:
-					self.sender_history[str(r)].append(message_to_diffuse)
-			
-			self.world.message_buffer[str(self.id)] += message_to_diffuse
-
-			self.available_emit_bit -= min(len(message), int(self.available_emit_bit))
-
-			if nb_bits_to_send == len(message):
-				nb_message_sent += 1
-			else:
-				self.sender_buffer[k][1] = message[nb_bits_to_send:]
+			case "00100000":	# Send next wp
+				self.send_message([sender], [{"type": "mID", "mID": "00100001"}])
+				self.send_message([sender], [{"type": "mID", "mID": "00100010"}])
+			case "00100010":	# Decode robot info
+				if len(binary_message[index:index+168]) != 168:
+					return None, None
+				return decode_robot_info(binary_message[index:index+168]), index + 168
+			case "00100011":	# Decode next waypoint to reach as an order
+				if len(binary_message[index:index+64]) != 64:
+					return None, None
+				x = decode_float32(binary_message[index:index+32])
+				y = decode_float32(binary_message[index+32:index+64])
+				return ("NWP", (x, y)), index + 64
+			case "00110000":	# Send live grid update because asked
+				# print("Send live grid update")
+				# print(self.id, '- Send live grid update to ', sender)
+				self.send_message([sender], [{"type": "mID", "mID": "00110001"}])
+			case "00110001":	# Decode live grid update
+				if len(binary_message[index:index+32]) != 32:
+					return None, None
+				list_size = decode_int32(binary_message[index:index+32])
+				if len(binary_message[index+32:index+32 + list_size*8]) != list_size*8:
+					return None, None
+				updated_live_grid_map = decode_int8_list(binary_message[index+32:index+32+list_size*8], list_size)
+				return ("LGM_UPDATE", updated_live_grid_map), index + 32 + list_size*8
+			case "01010101":
+				if len(binary_message[index:index+32]) != 32:
+					return None, None
+				message_size = decode_int32(binary_message[index:index+32])
+				if len(binary_message[index+32:index+32 + message_size]) != message_size:
+					return None, None
+				check_message, message = self.decode_message_binary(binary_message[index+32:index+32+message_size])
+				if check_message and self.id in receivers:
+					self.handle_message(message, None)
+				return message, index + 32 + message_size
+			case _:
+				print(f"WARNING : Message id not recognized {message_id}")
+				return None, None
 		
-		self.sender_buffer = self.sender_buffer[nb_message_sent:]
-
-	def scan_signal(self):
-		for i in range(15):
-			if self.id == i:
-				continue
-
-			message = self.receiver_buffer[str(i)]
-			if len(message) < 20:
-				return
-			
-			check_message, message_info = self.decode_message_binary(message)
-			if check_message:
-				if self.id in message_info["receivers"]:
-					self.handle_message(message_info)
-					self.receiver_history.append(message_info)
-					self.receiver_buffer[str(i)] = self.receiver_buffer[str(i)][message_info["message_length"]:]
-				else:
-					emitter_id = str(message_info["emitter_id"])
-					self.receiver_buffer[emitter_id] = self.receiver_buffer[emitter_id][message_info["message_length"]:]
-
-
-	def send_message(self, receivers, message):
-		print(self.time, '- Send message message : ', message)
-		encoded_message = self.encode_message_binary(receivers, message)
-		self.sender_buffer.append([receivers, encoded_message])
-
-
-	def handle_message(self, message):
-		emitter_id = message['emitter_id']
-		if emitter_id not in self.robot_connection_set:
-			self.robot_connection_set.append(emitter_id)
-			print(f"Robot {self.id} connected to robot {emitter_id}, asking for live grid map update")
-			self.send_message([emitter_id], [{"type": "mID", "mID": "00110000"}])
-
-		if message['message'] != ['ACK']:
-			self.send_message([emitter_id], [{"type": "mID", "mID": "00000001"}])
+		return None, index
 		
-		for m in message['message']:
-			if isinstance(m, tuple):
-				if m[0] == "NWP":
-					self.robot.controller.waypoint = m[1]
-					print(f"Robot {self.id} received new waypoint : {m[1]}")
-				if m[0] == "LGM_UPDATE":
-					print("Robot", self.id, "received live grid map update")
-					for i in range(0, len(m[1]), 3):
-						x = m[1][i]
-						y = m[1][i+1]
-						value = m[1][i+2]
-						if self.robot.live_grid_map.map[y, x] != 19:
-							self.robot.live_grid_map.map[y, x] = value
-		
-		pass
-
 
 #####   ENCODING TYPES   #####
 

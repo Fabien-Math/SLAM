@@ -158,6 +158,7 @@ A model of the robot can be found on \autoref{fig:robot_model} and \autoref{fig:
 	\item{\makebox[2cm][l]{$\omega_L$}} Left wheel rotation speed
 	\item{\makebox[2cm][l]{$\omega_R$}} Right wheel rotation speed
 	\item{\makebox[2cm][l]{$\omega$}} Wheels rotation speed vector, 
+	\item{\makebox[2cm][l]{$\omega_{max}$}} Maximal wheels rotation speed, 
 	$\begin{pmatrix}
 		\omega_L\\
 		\omega_R\\
@@ -180,10 +181,10 @@ $$\displaystyle V_R = r \times \omega_R \text{     and     } V_L = r \times \ome
 So that, $V$ the velocity of the robot is the sum of both speed divided by two. Decomposition of the velocities in the ground reference $(O, x, y)$, we have :
 
 
-\begin{align}
+\begin{align*}
 	\displaystyle \dot{x} &= \frac{r}{2} \left(\omega_R + \omega_L\right) \cos \theta\\
-	\displaystyle \dot{y} &= \frac{r}{2} \left(\omega_R + \omega_L\right) \sin \theta\\
-\end{align}
+	\displaystyle \dot{y} &= \frac{r}{2} \left(\omega_R + \omega_L\right) \sin \theta
+\end{align*}
 
 
 Moreover, we note $\varphi$ the angular velocity of the robot in the robot reference isolating one wheel.
@@ -198,8 +199,6 @@ $$\displaystyle \dot{\theta} = \frac{1}{2} \left(\varphi_R - \varphi_L\right)$$
 The difference is taken as is to ensure that the angular speed is positive when the angle increases in the anticlockwise direction.
 
 $$\displaystyle \dot{\theta} = \frac{r}{2d} \left(\omega_R - \omega_L\right)$$
-
-
 
 
 \subsubsection{Sensors}

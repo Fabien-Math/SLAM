@@ -95,9 +95,11 @@ class Live_grid_map():
 			# If ids are in the range of the live map
 			idx, idy = self.coord_to_ids(point)
 			if 0 < idx < self.list_size and 0 < idy < self.list_size:
-				self.map[idy, idx] = max(self.map[idy, idx], 100 + int(100 * (1 - ut.distance(self.robot.pos_calc, point)/max_lidar_distance)))
-				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 2, 200)
-				self.updated_cells[(idx, idy)] = 1
+				new_value = max(self.map[idy, idx], 100 + int(100 * (1 - ut.distance(self.robot.pos_calc, point)/max_lidar_distance)))
+				self.occurance_map[idy, idx] = min(self.occurance_map[idy, idx] + 3, 200)
+				if self.map[idy, idx] != new_value:
+					self.map[idy, idx] = new_value
+					self.updated_cells[(idx, idy)] = 1
 
 
 		
@@ -184,7 +186,7 @@ class Live_grid_map():
 
 			if self.map[i, j] == 19:
 				continue
-			if self.occurance_map[i, j] > 10:
+			if self.occurance_map[i, j] > 10 and self.map[i, j] != 200:
 				self.map[i, j] = 200
 				self.updated_cells[j, i] = 1
 				continue
@@ -194,10 +196,12 @@ class Live_grid_map():
 				# If the distance between the robot and the rect wall is lower than the distance between the robot and the obstacle
 				if not intercept:
 					if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 2 * self.size:
-						self.occurance_map[i, j] = max(0, self.occurance_map[i, j]-1)
-						self.updated_cells[j, i] = 1
+						new_value = max(0, self.occurance_map[i, j]-1)
+						if self.occurance_map[i, j] != new_value:
+							self.occurance_map[i, j] = new_value
+							self.updated_cells[j, i] = 1
 				if ut.distance(robot_pos, is_in_rect) < ut.distance(robot_pos, p1) - 1.42 * self.size:
-					if self.occurance_map[i, j] == 0:
+					if self.occurance_map[i, j] == 0 and self.map[i, j] != 20:
 						self.map[i, j] = 20
 						self.updated_cells[j, i] = 1
 						continue

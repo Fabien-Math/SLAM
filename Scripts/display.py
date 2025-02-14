@@ -15,47 +15,53 @@ class Window:
 		self.time = 0
 		self.desired_fps = 20
 
-	def update(self, world):
+	def update(self, world:World, draw_robots=True, draw_lgm=True, draw_wps=True, draw_links=True, draw_robot_nb = True, draw_map=True):
 		# DRAW THE SCENE
-		if time.time() - self.time > 1/self.desired_fps:
-			self.update_display(world)
-			self.time = time.time()
+		if time.time() - self.time < 1/self.desired_fps:
+			return
+		
+		self.time = time.time()
 
-
-	def update_display(self, world:World):
-		"""Update the display
-
-		Args:
-			world (World): World class
-			dt (float): Display time step
-		"""
 		window = self.window
 		map = world.map
 		robots = world.robots
 		# Erase the display
 		window.fill((150, 150, 150))
 
-		map.draw_map(window)
+		# Draw the map
+		if draw_map:
+			map.draw_map(window)
 		# map.draw_subdiv_points(window)
 
+
+		if draw_lgm:
+			robots[world.active_robot].live_grid_map.draw(window)
+		if draw_wps:
+			for robot in robots:
+				if robot.controller.mode:
+					if robot.controller.waypoint is not None:
+						pygame.draw.circle(window, (255, 0, 255), robot.controller.waypoint, robot.controller.waypoint_radius)
+					if robot.controller.local_waypoint is not None:
+						pygame.draw.circle(window, (255, 0, 0), robot.controller.local_waypoint, robot.controller.local_waypoint_radius)
+
+		if draw_robots:
+			for robot in robots:
+				robot.draw(window)
+		else:
+			robots[world.active_robot].draw(window)
+			
+		if draw_robot_nb:
+			for robot in robots:
+				if robot.communicator.master:
+					write_text(f"{robot.id}", window, (robot.pos[0] + 10, robot.pos[1] + 10), text_flush='centre', color=(255, 100, 100), update=False)
+				else:
+					write_text(f"{robot.id}", window, (robot.pos[0] + 10, robot.pos[1] + 10), text_flush='centre', update=False)
+			
+		write_text(f"Active robot : {world.active_robot}", window, (20, self.window_size[1]-20), text_flush='left', update=False)
+
 		# Draw communication links
-		self.draw_links(world)
-
-		
-		for robot in robots:
-			if robot.controller.mode:
-				if robot.controller.waypoint is not None:
-					pygame.draw.circle(window, (255, 0, 255), robot.controller.waypoint, robot.controller.waypoint_radius)
-				if robot.controller.local_waypoint is not None:
-					pygame.draw.circle(window, (255, 0, 0), robot.controller.local_waypoint, robot.controller.local_waypoint_radius)
-
-			# # Draw the robot
-			if robot.id == 1:
-				robot.live_grid_map.draw(window)
-				# robot.live_grid_map.draw_occurance(window)
-		
-		for robot in robots:
-			robot.draw(window)
+		if draw_links:
+			self.draw_links(world)
 
 		# Draw simulation time
 		self.write_time(world.time)
@@ -92,7 +98,7 @@ class Window:
 
 
 
-def write_text(text, window, pos):
+def write_text(text, window, pos, text_flush='center', color=(255,255,255), update=True):
 	"""Write the FPS on the top-right of the window
 
 	Args:
@@ -100,13 +106,20 @@ def write_text(text, window, pos):
 		pos (tuple): Position of the text on the window
 	"""
 	font = pygame.font.Font('freesansbold.ttf', 16)
-	text = font.render(text, True, (255, 255, 255))
+	text = font.render(text, True, color)
 
 	textRect = text.get_rect()
 
-	textRect.center = pos
+	if text_flush == 'centre':
+		textRect.center = pos
+	if text_flush == 'left':
+		textRect.midleft = pos
+	if text_flush == 'right':
+		textRect.midright = pos
+		
 	window.blit(text, textRect)
-	pygame.display.update()
+	if update:
+		pygame.display.update()
 
 
 

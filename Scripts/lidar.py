@@ -1,9 +1,9 @@
 import util as ut
 from math import cos, sin, pi, sqrt
-import pygame
+import display as disp
 import numpy as np
 
-from map import Wall, Map
+from map import Map
 
 class LIDAR:
 	"""Class to simulate a LIDAR

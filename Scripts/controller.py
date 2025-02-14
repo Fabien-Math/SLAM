@@ -35,7 +35,9 @@ class Controller:
 
 		self.safe_range = self.robot.radius * 2
 		self.emergency_mode = False
+		self.global_path_mode = False
 
+		self.time = 0
 		# Last position, check robot deadlock
 		self.last_static_pos = self.robot.pos
 		# Last time the robot is known to move outside a deadlock
@@ -53,15 +55,18 @@ class Controller:
 			if ut.point_in_circle(self.robot.pos_calc, self.waypoint, self.waypoint_radius):
 				if self.emergency_mode:
 					self.emergency_mode = False
+				if self.global_path_mode:
+					self.global_path_mode = False
 				self.waypoint_reached = True
 				self.local_waypoint_reached = True
 				self.local_waypoints = []
 
 			# If the waypoint is too close to a wall
-			if not is_safe_waypoint(self.waypoint, self.safe_range, self.robot.live_grid_map):
-				self.waypoint_reached = True
-				self.local_waypoint_reached = True
-				self.local_waypoints = []
+			if not self.emergency_mode:
+				if not is_safe_waypoint(self.waypoint, self.safe_range, self.robot.live_grid_map):
+					self.waypoint_reached = True
+					self.local_waypoint_reached = True
+					self.local_waypoints = []
 			
 		if self.local_waypoint:
 			# Arrived at local waypoint
@@ -69,7 +74,6 @@ class Controller:
 				self.local_waypoint_reached = True
 
 			# If the local waypoint is too close to a wall, could be acheive when the wall isn't still discovered
-			if not self.emergency_mode:
 				if not is_safe_waypoint(self.local_waypoint, self.safe_range, self.robot.live_grid_map):
 					# print("Robot id :",self.robot.id, ", Local waypoint too close to a wall")
 					self.local_waypoint_reached = True
@@ -108,19 +112,23 @@ class Controller:
 		### MANAGE LOCAL WAYPOINT
 		if self.waypoint and not len(self.local_waypoints) and self.local_waypoint_reached:
 			if self.need_global_path:
-				print("Global path needed")
-				lwps = self.compute_global_path_to_wp(window)
+				wps = self.compute_emergency_path_to_wp(window)
+				# lwps = self.compute_global_path_to_wp(window)
 
-				if lwps is None:
-					lwps = self.compute_emergency_path_to_wp(window)
-				for lwp in lwps:
-					disp.draw_point(window, lwp, 10)
-				# # Reset the demand
+				if wps:
+					self.local_waypoints = []
+					self.waypoints = wps[1::]
+					self.waypoint = wps[0]
+
+
+				for wp in wps:
+					disp.draw_point(window, wp, 10)
+				# Reset the demand
 				self.need_global_path = False
-			else:
-				# Compute safe next local waypoint
-				lwps = self.compute_next_lwp(window)
 			
+			# Compute safe next local waypoint
+			lwps = self.compute_next_lwp(window)
+
 			# If no path found or going to the point is impossible
 			if lwps is None or lwps[0] == 1:
 				self.waypoint_reached = True
@@ -167,6 +175,7 @@ class Controller:
 		Args:
 			dt (float): Time enlapsed
 		"""
+		self.time += dt
 
 		# Before planning path, check if in a deadlock
 		self.check_if_in_deadlock(dt)
@@ -207,11 +216,14 @@ class Controller:
 		"""
 		live_grid_map = self.robot.live_grid_map
 
+
 		op_bds = live_grid_map.find_frontiers()
-		# If no line, then the map is entierly explored
-		if not len(op_bds):
+
+		if check_map_explored(op_bds):
+			# If no line, then the map is entierly explored
 			print("Goal achieved ! \nNothing more to explore :)")
 			return 1
+		
 
 		pos_op_bds = [live_grid_map.ids_to_center(op[1], op[0]) for op in op_bds]
 
@@ -264,6 +276,7 @@ class Controller:
 		return
 	
 	def compute_global_path_to_wp(self, window):
+		self.global_path_mode = True
 		
 		if self.waypoint is None:
 			return
@@ -295,11 +308,14 @@ class Controller:
 						print(f"No path available with this safe range : {self.safe_range}")
 						return
 				new_valid_sub_wp.append(p2)
+			
+			if len(valid_sub_wp) > 100:
+				return
+			valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], self.safe_range, window)
 					
 			if not line_splited:
-				return new_valid_sub_wp[1::]
+				return valid_sub_wp[1::]
 			
-			valid_sub_wp = new_valid_sub_wp[:]
 		
 		print(f"Global analysis, no path found with this safe range : {self.safe_range}")
 		return
@@ -333,8 +349,11 @@ class Controller:
 		# connected_path_ids = dfs(start_id, c_table, visited)
 		connected_path = [tiles_pos[i] for i in connected_path_ids]
 
-		for p in connected_path:
-			disp.draw_point(window, p, 1, (255, 0, 0))
+		# for p in connected_path:
+		# 	disp.draw_point(window, p, 1, (255, 0, 0))
+
+		if not len(connected_path):
+			return [self.last_static_pos]
 
 		connected_path = connected_path[::-3]
 
@@ -356,7 +375,7 @@ def shorten_path(map, path, safe_range, window):
 				sh_path.append(path[n-1])
 				break
 		i = n
-		print(i)
+		# print(i)
 		
 		p1 = path[i-1]
 	sh_path.append(path[-1])
@@ -522,7 +541,7 @@ def dijkstra(start_id, c_table, window, tiles_pos):
 
 	visited = [False] * len(c_table)
 	n = 0
-	while 1e9 in distances and n < 1_000_000:
+	while 1e9 in distances and n < 2 * len(c_table):
 		n += 1
 
 		dist_min = 1e9
@@ -531,12 +550,11 @@ def dijkstra(start_id, c_table, window, tiles_pos):
 				dist_min = distances[i]
 				id_dist_min = i
 
-		disp.draw_point(window, tiles_pos[id_dist_min], 1)
+		# disp.draw_point(window, tiles_pos[id_dist_min], 1)
 		for neighbor in c_table[id_dist_min]:
 			distances[neighbor] = min(distances[neighbor], distances[id_dist_min] + 1)
 		
 		visited[id_dist_min] = visited
-	# print(n)
 	return distances
 
 
@@ -605,3 +623,34 @@ def compute_wp_cost(robot, wp_pos, window):
 	cost = dist_cost + ang_cost + ang_speed_cost + speed_cost
 
 	return cost
+
+
+def check_map_explored(frontiers):
+	# Connections tables of all frontiers pixels
+	connection_table = make_connection_table(frontiers)
+	# Connected lines of indices of frontiers pixels
+	c_lines_ids = connect_lines_ids(connection_table, frontiers)
+
+	for line in c_lines_ids:
+		if len(line) > 5:
+			return False
+	
+	return True
+
+
+def connect_lines_ids(connection_table:list, ids:list):
+	"""Take a list of 2D indices (could represent pixels) and connect them into separate list representing connected lines
+
+	Args:
+		ids (list): List of list of indices index (pixel) for each line
+	"""	
+	
+	# Keep track of visited nodes
+	visited = [False] * len(ids)
+
+	c_ids = []
+	for i in range(len(ids)):
+		if not visited[i]:
+			c_ids.append(dfs(i, connection_table, visited))
+	
+	return c_ids
