@@ -2,10 +2,6 @@ from my_methode import compute_path
 from shortest_path_ca import compute_shortest_path, compute_and_save_shortest_path, display_grid, plt
 
 ### WORLD INITIALISATION
-robot_pos = (100, 350)
-last_static_pos = robot_pos
-waypoint_pos = (1100, 350)
-
 map = [
 	[('circle', (600, 350), 200)],
 
@@ -26,18 +22,28 @@ map = [
 	 ('rect', (850, 150), (900, 150), (900, 550), (850, 550))],
 	 
 	[('rect', (300, 150), (900, 150), (900, 200), (300, 200)),
-	 ('rect', (850, 150), (900, 150), (900, 1000), (850, 1000))]
+	 ('rect', (850, 150), (900, 150), (900, 1000), (850, 1000))],
+
+	[('rect', (850, 0), (900, 0), (900, 200), (850, 200)),
+	 ('rect', (0, 300), (900, 300), (900, 350), (0, 350)),
+	 ('rect', (350, 350), (400, 350), (400, 600), (350, 600)),
+	 ('rect', (600, 500), (1200, 500), (1200, 550), (600, 550))]
 ]
 
-imap = 1
+imap = 8
 obstacles = map[imap-1]
 
 map_size = (1200, 700)
-source_pos = (100, 350)
-wp_pos = (1100, 350)
+if imap == 8:
+	source_pos = (100, 100)
+	wp_pos = (100, 450)
+else:
+	source_pos = (100, 350)
+	wp_pos = (1100, 350)
+
 safe_range = 0
 granularity = 5
-scale = 1/2
+scale = 1/5
 
 save_anim_name = "map_" + str(imap) + "_scale_" + f"{int(1 / scale):g}_g5"
 print(save_anim_name)
@@ -46,8 +52,9 @@ path_dist = compute_path(source_pos, wp_pos, map_size, obstacles, safe_range)
 if path_dist:
 	print(f"Computed path length : {path_dist:.3f} um")
 
-shortest_path_dist, lattice = compute_and_save_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity, save_anim_name)
+# shortest_path_dist, lattice = compute_and_save_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity, save_anim_name)
+shortest_path_dist, lattice = compute_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity)
 print(f"Shortest computed path length : {shortest_path_dist:.3f} um")
-
 # display_grid(lattice, scale, wp_pos, shortest_path_dist, obstacles)
+
 # plt.show()

@@ -24,6 +24,8 @@ def need_line_split(map, p1, p2, line, safe_range):
 	return False
 			
 def is_safe_point(map, p, safe_range):
+	if not ut.point_in_box(p, (0, 0), (1200, 700)):
+		return False
 	for c in map:
 		match c[0]:
 			case 'line':
@@ -48,7 +50,6 @@ def is_safe_point(map, p, safe_range):
 					return False
 				
 				lines = [(c[4], c[1]), (c[1], c[2]), (c[2], c[3]), (c[3], c[4])]
-				
 				for p1, p2 in lines:
 					line = ut.compute_line(p1, p2)
 					dist = ut.orthogonal_projection(p, line)
@@ -148,7 +149,6 @@ def find_global_path(map, map_size, robot_pos, waypoint_pos, safe_range):
 			p1 = valid_sub_wp[i]
 			p2 = valid_sub_wp[i+1]
 
-
 			line = ut.compute_line(p1, p2)
 			if need_line_split(map, p1, p2, line, safe_range):
 				line_splited = True
@@ -162,6 +162,7 @@ def find_global_path(map, map_size, robot_pos, waypoint_pos, safe_range):
 				
 		valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], safe_range)
 		# valid_sub_wp = new_valid_sub_wp[:]
+		print(valid_sub_wp)
 
 		if not line_splited:
 			return valid_sub_wp

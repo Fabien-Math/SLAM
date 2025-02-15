@@ -94,9 +94,71 @@ In the part \figtonum, we calculated $\dot{X} = F(\omega)$.
 
 \subsection{Introducing a new method for dynamic pathfinding}
 
-In this section, we will introduce a new method for real-time dynamic pathfinding. This method is based on the inflation of the path normally to the shortest path to a point, i.e. a line. The line is splitted if not free from obstacle with a givent safe range. 
+In this section, we introduce a new method for real-time dynamic pathfinding. This method involves inflating the path perpendicular to the shortest path to a point, i.e., a line. The line is split if it is not free from obstacles within a given safe range.
+
+The principle is simple: draw a straight line between the robot and the waypoint (\autoref{fig:draw_line}). If the path is not free of obstacles within the defined safe range (\autoref{fig:check_line}), split the path in the middle and shoot points perpendicular to the line (\autoref{fig:shoot_line}). When a shot point is free from obstacles, validate the point and check if the two resulting lines are free from obstacles (\autoref{fig:validate_point}). If not, repeat the steps described above on the new lines (\autoref{fig:repeat_method}). Once all points are safe, simplify the path using a straightforward algorithm. The process can be visualized on \autoref{fig:method_visu}.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode1.png}
+		\caption{Draw a straight line}
+		\label{fig:draw_line}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode2.png}
+		\caption{Check if the path is free}
+		\label{fig:check_line}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode3.png}
+		\caption{Shoot points perpendicular}
+		\label{fig:shoot_line}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode4.png}
+		\caption{Validate the point}
+		\label{fig:validate_point}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode5.png}
+		\caption{Repeat the method}
+		\label{fig:repeat_method}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/methode6.png}
+		\caption{Simplify the path}
+		\label{fig:idk}
+	\end{subfigure}
+	\caption{Visualization of the dynamic pathfinding method}
+	\label{fig:method_visu}
+\end{figure}
 
 
+
+\textbf{Path simplification}
+
+The goal of this algorithm is to ensure that the path is the shortest possible by simplifying it. The algorithm iterates through all the points in the path. For each point, it checks if the path to the next point is obstacle-free. If it is, the algorithm continues to the next point. If the path is not free, the algorithm keeps the last valid point and starts the process again from there. This way, the path is simplified by removing unnecessary intermediate points while ensuring it remains obstacle-free. The method can be visualized on the \autoref{fig:path_simp}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{IMAGES/part3/shorten_path.png}
+	\caption{Path simplification process}
+	\label{fig:path_simp}
+\end{figure}
+
+To ensure this algorithm works and to measure its performance, I conducted a small benchmark. While the benchmark can be theoretically calculated, I also explored a numerical method for computing the shortest path to handle various scenarios. The benchmark will serve as a performance estimator for the numerical method.
 
 \subsection{Finding the shorthest path distance}
 To find the shortest path, I like to take inspiration from nature by simulating a wave propagating through a medium. This way, the shortest path naturally emerges as the one the wave follows.  
@@ -111,7 +173,7 @@ Differently from the part \figtonum, I will use cellular automata as a computati
 
 \vspace{1em}
 
-Base on the work of \textit{Calvo Tavia} and \textit{al.}\cite{tapia_2016}, the process is describe below:
+Based on the work of \textit{Calvo Tavia} and \textit{al.}\cite{tapia_2016}, the process is describe below:
 
 \vspace{1em}
 
@@ -192,4 +254,157 @@ $$
 This implementation does not allow to track the refraction of the waves, these are wrongly reflected by the obstacles. To prevent front breaking in wave propagation near obstacles, the concept of "additional secondary" wave sources is introduced, inspired by Huygens' principle, where selected cells on the obstacle boundary generate secondary waves. An algorithm determines these sources based on geometric conditions, ensuring correct wave propagation by maintaining the expected wavefront shape even when interacting with obstacles. This simple algorithm is describe in the work of \textit{Calvo Tavia} and \textit{al.}\cite{tapia_2016}. We will not go into the details of the algorithm here.
 
 
+\subsection{Analysis of the new methode}
+
+Now I have an numerical method for computing the shortest path length, we can focus on performance of the algorithm introduced. Despite this algorithm is simple and fast, making it suitable for implementation on a large number of small chips, they have some limitations that can be critical for certain cases. A small benchmark was conducted with the following results.
+
+
+8 maps were instroduced in this benchmark, they are shown in the \autoref{fig:benchmark_maps}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map1.png}
+		\caption*{Map 1}
+		\label{fig:map1}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map2.png}
+		\caption*{Map 2}
+		\label{fig:map2}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map3.png}
+		\caption*{Map 3}
+		\label{fig:map3}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map4.png}
+		\caption*{Map 4}
+		\label{fig:map4}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map5.png}
+		\caption*{Map 5}
+		\label{fig:map5}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map6.png}
+		\caption*{Map 6}
+		\label{fig:map6}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map7.png}
+		\caption*{Map 7}
+		\label{fig:map7}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map8.png}
+		\caption*{Map 8}
+		\label{fig:map8}
+	\end{subfigure}
+	\caption{Benchmark maps}
+	\label{fig:benchmark_maps}
+\end{figure}
+
+\textbf{Results}
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap1.png}
+		\caption*{Result for map 1}
+		\label{fig:rmap1}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap2.png}
+		\caption*{Result for map 2}
+		\label{fig:rmap2}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap3.png}
+		\caption*{Result for map 3}
+		\label{fig:rmap3}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap4.png}
+		\caption*{Result for map 4}
+		\label{fig:rmap4}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap5.png}
+		\caption*{Result for map 5}
+		\label{fig:rmap5}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap6.png}
+		\caption*{Result for map 6}
+		\label{fig:rmap6}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap7.png}
+		\caption*{Result for map 7}
+		\label{fig:rmap7}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.24\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/rmap8.png}
+		\caption*{Result for map 8}
+		\label{fig:rmap8}
+	\end{subfigure}
+	\caption{Results on the benchmark maps}
+	\label{fig:results_benchmark_maps}
+\end{figure}
+
+
+\textbf{Lenght of the path found in metric unit (mu)}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{c c c c}
+		\hline
+		Map & Theoretically & Method & Cellular Automata \\
+		\hline
+		Map 1 &  & 1084 &  \\
+		Map 2 &  & 1125 & 1122 \\
+		Map 3 &  & 1125 & 1122 \\
+		Map 4 &  & 1088 & 1086 \\
+		Map 5 &  & 1531 & 1522 \\
+		Map 6 &  & - & 1168 \\
+		Map 7 &  & - & 1168 \\
+		Map 8 &  & - &  \\
+		\hline
+	\end{tabular}
+	\caption{Benchmark results for the new method}
+	\label{tab:benchmark_results}
+\end{table}
+
 \end{document}
+

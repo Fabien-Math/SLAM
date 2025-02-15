@@ -16,12 +16,23 @@ def draw_robot(window, robot_pos):
 		Args:
 			window (surface): Surface on which to draw
 		"""
-		color = (255, 0, 100)
-		pygame.draw.circle(window, color, robot_pos, 10)
+		color = (218, 232, 252)
+		border_color = (108, 142, 191)
+		# Calculate the vertices of an equilateral triangle
+		xm = np.cos(2 * np.pi / 3)
+		points = [
+			(robot_pos[0] + 20, robot_pos[1]),
+			(robot_pos[0] + 20 * xm, robot_pos[1] + 20 * np.sin(2 * np.pi / 3)),
+			(robot_pos[0] + 20 * xm, robot_pos[1] + 20 * np.sin(4 * np.pi / 3))
+		]
+		pygame.draw.polygon(window, color, points)
+		pygame.draw.polygon(window, border_color, points, 3)
 
 def draw_waypoint(window, waypoint_pos):
-		color = (0, 255, 100)
-		pygame.draw.circle(window, color, waypoint_pos, 10)
+		color = (225, 213, 231)
+		border_color = (150, 115, 166)
+		pygame.draw.circle(window, color, waypoint_pos, 20)
+		pygame.draw.circle(window, border_color, waypoint_pos, 20, 3)
 
 def draw_local_waypoint(window, local_waypoint_pos):
 		color = (100, 255, 0)
@@ -29,15 +40,19 @@ def draw_local_waypoint(window, local_waypoint_pos):
 
 
 def draw_map(window, map):
+	color = (245, 245, 245)
+	border_color = (102, 102, 102)
 	for c in map:
 		match c[0]:
 			case 'line':
-				pygame.draw.line(window, (0, 0, 0), c[1], c[2], 2)
+				pygame.draw.line(window, color, c[1], c[2], 3)
 			case 'circle':
-				pygame.draw.circle(window, (0, 0, 0), c[1], c[2])
+				pygame.draw.circle(window, color, c[1], c[2])
+				pygame.draw.circle(window, border_color, c[1], c[2], 3)
 			case 'rect':
 				rect = (c[1][0], c[1][1], abs(c[1][0] - c[3][0]), abs(c[1][1] - c[3][1]))
-				pygame.draw.rect(window, (0, 0, 0), rect)
+				pygame.draw.rect(window, color, rect)
+				pygame.draw.rect(window, border_color, rect, 3)
 
 
 def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints):
@@ -48,25 +63,26 @@ def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, sa
 	"""
 	
 	# Erase the display
-	window.fill((150, 150, 150))
+	# window.fill((150, 150, 150))
+	window.fill((255, 255, 255))
 
 	# Draw the map
 	draw_map(window, map)
 	# Draw the robot
-	draw_robot(window, robot_pos)
 	# Draw the local waypoints
 	# draw_local_waypoint(window, safe_local_waypoint)
-	pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoint, 2)
+	# pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoint, 2)
 
 	if safe_local_waypoints:
 		pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoints[0], 2)
 		for i in range(len(safe_local_waypoints) - 1):
 			draw_local_waypoint(window, safe_local_waypoints[i])
-			pygame.draw.line(window, (10, 10, 10), safe_local_waypoints[i], safe_local_waypoints[i+1], 2)
+			pygame.draw.line(window, (10, 10, 10), safe_local_waypoints[i], safe_local_waypoints[i+1], 3)
 	# Draw the waypoint
 	draw_waypoint(window, waypoint_pos)
-	pygame.draw.line(window, (10, 10, 10), safe_local_waypoint, waypoint_pos, 2)
+	# pygame.draw.line(window, (10, 10, 10), safe_local_waypoint, waypoint_pos, 2)
 
+	draw_robot(window, robot_pos)
 
 	# Update scene display
 	pygame.display.update()
@@ -93,6 +109,8 @@ def need_line_split(map, p1, p2, line, safe_range, window):
 	return False
 			
 def is_safe_point(map, p, safe_range):
+	if not ut.point_in_box(p, (0, 0), (1200, 700)):
+		return False
 	for c in map:
 		match c[0]:
 			case 'line':
@@ -152,7 +170,7 @@ def split_line(map, map_size, p1, p2, line, safe_range, window, imposed_sign = 0
 			mdp_1 = None
 
 	cpt = 0
-	while True and cpt < 100:
+	while True and cpt < 1000:
 		cpt += 1
 		if mdp_1:
 			mdp_1 = (mdp_1[0] + max(5, 0.25 * safe_range) * ortho_vec[0], mdp_1[1] + max(5, 0.25 * safe_range) * ortho_vec[1])
@@ -224,18 +242,22 @@ def find_global_path(map, map_size, robot_pos, waypoint_pos, safe_range, window)
 				line_splited = True
 				# mdp = find_next_local_waypoint(map, map_size, p1, p2, safe_range, window)
 				mdp = split_line(map, map_size, p1, p2, line, safe_range, window)
+
 				if mdp:
 					new_valid_sub_wp.append(mdp)
 				else:
 					print(f"No path available with this safe range : {safe_range}")
 					return
 			new_valid_sub_wp.append(p2)
-				
+		
+
 		valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], safe_range, window)
+		# for map 1 and 3
 		# valid_sub_wp = new_valid_sub_wp[:]
-		# update_display(window, map, valid_sub_wp[0], valid_sub_wp[-1], valid_sub_wp[1], valid_sub_wp)
+		update_display(window, map, valid_sub_wp[0], valid_sub_wp[-1], valid_sub_wp[1], valid_sub_wp)
 
 		if not line_splited:
+			valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], safe_range, window)
 			return valid_sub_wp
 	
 	return
@@ -252,7 +274,6 @@ def shorten_path(map, path, safe_range, window):
 				break
 		i = n
 		
-
 		p1 = path[i-1]
 	sh_path.append(path[-1])
 
@@ -282,13 +303,17 @@ def main():
 	window = pygame.display.set_mode(window_size)
 	window.fill((150, 150, 150))
 	# Set the title of the window
-	pygame.display.set_caption("Test evitement")
+	pygame.display.set_caption("Results - Map 8")
 
 
 	### WORLD INITIALISATION
 	robot_pos = (100, 350)
 	last_static_pos = robot_pos
 	waypoint_pos = (1100, 350)
+
+	robot_pos = (100, 100)
+	last_static_pos = robot_pos
+	waypoint_pos = (100, 450)
 
 	# MAP 1
 	map1 = [('circle', (600, 350), 200)]
@@ -297,9 +322,9 @@ def main():
 	map2 = [('rect', (400, 150), (800, 150), (800, 550), (400, 550))]
 
 	# MAP 3
-	map3 = [('circle', (650, 350), 100),
-		   ('circle', (550, 200), 100),
-		   ('circle', (550, 500), 100)]
+	map3 = [('circle', (550, 200), 100),
+		   ('circle', (550, 500), 100),
+		   ('circle', (650, 350), 100)]
 	
 	# MAP 4
 	map4 = [('rect', (550, 0), (650, 0), (650, 550), (550, 550)),
@@ -318,8 +343,13 @@ def main():
 	map7 = [('rect', (300, 150), (900, 150), (900, 200), (300, 200)),
 			('rect', (850, 150), (900, 150), (900, 1000), (850, 1000))]
 
+	# MAP 8
+	map8 = [('rect', (850, 0), (900, 0), (900, 200), (850, 200)),
+	 		('rect', (0, 300), (900, 300), (900, 350), (0, 350)),
+	 		('rect', (350, 350), (400, 350), (400, 600), (350, 600)),
+			('rect', (600, 500), (1200, 500), (1200, 550), (600, 550))]
 
-	map = map7
+	map = map8
 
 
 	# State of the simulation
@@ -357,8 +387,8 @@ def main():
 				textRect = text.get_rect()
 		
 				textRect.center = (window_size[0]*0.9, 10)
-				window.blit(text, textRect)
-				draw_map(window, map)
+				# window.blit(text, textRect)
+				# draw_map(window, map)
 				pygame.display.update()
 
 				text_shown = True
@@ -382,13 +412,14 @@ def main():
 		print(f"Global path enlapse time : {end_time_cpt-start_time_cpt:.3e}s")
 		print(f"Global path FPS : {1/(end_time_cpt-start_time_cpt):.1f} FPS")
 
-		total_path_length = np.sum([ut.distance(safe_local_waypoints[i], safe_local_waypoints[i+1]) for i in range(len(safe_local_waypoints[1::]))])
-		print(total_path_length)
+		if safe_local_waypoints is not None:
+			total_path_length = np.sum([ut.distance(safe_local_waypoints[i], safe_local_waypoints[i+1]) for i in range(len(safe_local_waypoints[1::]))])
+			print(total_path_length)
 
 
 		# DRAW THE SCENE
 		# update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, None)
-		update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints)
+		# update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints)
 		text_shown = False
 		next_it = False
 

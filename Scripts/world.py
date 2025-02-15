@@ -19,7 +19,7 @@ class World:
 
 		self.crashed_robot: list = []
 
-		for i in range(1):
+		for i in range(6):
 			# beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 50, 50, 150)
 			beacon = BeaconRobot(i, (200+50*i, 350), 50, 1000, 50, 50, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
@@ -41,7 +41,7 @@ class World:
 		self.map_size:tuple = (1100, 600)
 		self.map_offset = (50, 50)
 		# Number of subdivisions in the map, used to list the lines
-		self.map_subdiv_number = (25, 25)
+		self.map_subdiv_number = (30, 30)
 		self.map: Map = Map(self.map_size, self.map_offset, self.map_subdiv_number, 
 					  		self.map_element_size, int(np.sin(np.pi/3) * self.map_element_size))
 		

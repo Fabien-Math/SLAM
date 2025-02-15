@@ -14,6 +14,7 @@ class Communicator:
 		self.comm_range: float = comm_range
 
 		self.master = False
+		self.master_id = 0
 		self.connection_lost_timer = [0]*15
 		self.connection_lost_timer_limit = 2
 		
@@ -34,6 +35,7 @@ class Communicator:
 		self.receiver_buffer: dict = {str(i): '' for i in range(15) if i != self.id}
 		self.decode_fail_counter: list = []
 		self.receiver_history: list = []
+		self.robots_info: dict = {str(i): {} for i in range(15) if i != self.id}
 
 		self.conv_history_file = "Scripts/conv_history.txt"
 		if self.id == 0:
@@ -51,7 +53,7 @@ class Communicator:
 	def update_communicator(self):
 		self.time = self.world.time
 		if self.last_hello_message + self.hello_message_freq < self.time:
-			self.send_message('all', [])
+			self.send_message('all', [{'type':'robot_info'}])
 			self.last_hello_message = self.time
 		self.diffuse_signal()
 		self.decode_signal()
@@ -64,12 +66,11 @@ class Communicator:
 
 	def check_master(self):
 		if len(self.robot_connection_set):
-			if self.id > min(self.robot_connection_set):
-				self.master = False
-			else:
-				self.master = True
+			self.master_id = min(self.robot_connection_set)
+			self.master = self.master_id == self.id
 		else:
 			self.master = True
+
 
 
 	def diffuse_signal(self):
@@ -133,6 +134,15 @@ class Communicator:
 		encoded_message = self.encode_message_binary(receivers, message)
 		self.sender_buffer.append([receivers, encoded_message])
 
+	def communicate_new_location(self):
+		if not len(self.robot_connection_set):
+			return 'SAPERE AUDE'
+		
+		if self.master:
+			return 'SAPERE AUDE'
+		
+		self.send_message([self.master_id], {"type": 'mID', 'mID': "00100000"})
+
 
 	def handle_message(self, message, binary_message):
 		emitter_id = message['emitter_id']
@@ -158,6 +168,8 @@ class Communicator:
 		
 		for m in message['message']:
 			if isinstance(m, tuple):
+				if m[0] == "RIF":
+					self.robots_info[str(emitter_id)] = m[1]
 				if m[0] == "NWP":
 					self.robot.controller.waypoint = m[1]
 					# print(f"Robot {self.id} received new waypoint : {m[1]}")
@@ -180,7 +192,9 @@ class Communicator:
 							if r_id != emitter_id:
 								# print("Robot", self.id, "send live grid update to", r_id, 'from', emitter_id)
 								self.send_message([r_id], [{"type": "mID", "mID": "01010101", "message": binary_message[:message['message_length']]}])
-		pass
+					else:
+						# Send the informations for choosing the new waypoint
+						...
 
 
 
@@ -327,6 +341,7 @@ class Communicator:
 		if len(binary_message) < 20:
 			return False, None
 		
+		index = 0
 		emitter_id = int(binary_message[0:4], 2)
 		receiver_nb = int(binary_message[4:8], 2)
 
@@ -418,8 +433,9 @@ class Communicator:
 					if len(binary_message[index:index+168]) != 168:
 						return False, None
 					rb = binary_message[index:index+168]
-					rinfo, index = decode_robot_info(rb)
+					rinfo = decode_robot_info(rb)
 					message.append(rinfo)
+					index += 168
 				case _:
 					print(f"Unknown type indicator: {type_indicator}, {bin(type_indicator)}")
 					return None, None
@@ -536,7 +552,7 @@ class Communicator:
 #####   ENCODING TYPES   #####
 
 def encode_float(f:float) -> str:
-	float_bytes = struct.pack('>f', float)
+	float_bytes = struct.pack('>f', f)
 	return ''.join(f"{byte:08b}" for byte in float_bytes)
 
 def encode_int32(i:int) -> str:
@@ -559,8 +575,8 @@ def encode_int8_list(il:list) -> str:
 	return bm
 
 def encode_robot_info(robot) -> str:
-	pos_x = encode_float(robot.pos_calc.x)
-	pos_y = encode_float(robot.pos_calc.y)
+	pos_x = encode_float(robot.pos_calc[0])
+	pos_y = encode_float(robot.pos_calc[1])
 	vel = encode_float(robot.speed_calc)
 	ang = encode_float(robot.rot_calc)
 	ang_vel = encode_float(robot.rot_speed_calc)
@@ -597,6 +613,6 @@ def decode_robot_info(rb:str) -> str:
 	vel = decode_float32(rb[32*2:32*3])
 	ang = decode_float32(rb[32*3:32*4])
 	ang_vel = decode_float32(rb[32*4:32*5])
-	bat = decode_float32(rb[32*5:32*5 + 8])
+	bat = int(rb[32*5:32*5 + 8], 2)
 	robot_info = {"pos": (pos_x, pos_y), "vel": vel, "ang": ang, "ang_vel": ang_vel, "bat": bat}
-	return robot_info
+	return ("RIF", robot_info)

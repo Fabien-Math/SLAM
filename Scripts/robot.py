@@ -41,12 +41,17 @@ class BeaconRobot:
 
 		# Robot attribute
 		self.radius = 10
-		self.color = (0, 200, 255)
+		colors = [
+			(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255),
+			(255, 0, 255), (192, 192, 192), (128, 128, 128), (128, 0, 0), (128, 128, 0),
+			(0, 128, 0), (128, 0, 128), (0, 128, 128), (0, 0, 128), (255, 165, 0)
+		]
+		self.color = colors[self.id]
 		self.crashed = False
 
 		# Robot map
 		self.map = []
-		self.live_grid_map = Live_grid_map(self, 201, 10)
+		self.live_grid_map = Live_grid_map(self, 201, self.radius)
 
 		# Sensors
 		self.lidar = None
@@ -318,9 +323,9 @@ class BeaconRobot:
 		"""
 		pygame.draw.circle(window, self.color, (self.pos[0], self.pos[1]), self.radius)
 		pygame.draw.line(window, (255,255,255), (self.pos[0], self.pos[1]), (self.pos[0] + self.radius * cos(self.rot * pi / 180), self.pos[1]  + self.radius * sin(self.rot * pi / 180)), 2)
-		pygame.draw.circle(window, (100,100,100), (self.pos_calc[0], self.pos_calc[1]), 0.8*self.radius)
+		pygame.draw.circle(window, (100,100,100), (self.pos_calc[0], self.pos_calc[1]), 0.7*self.radius)
 		pygame.draw.line(window, (255,255,255), (self.pos_calc[0], self.pos_calc[1]), (self.pos_calc[0] + self.radius * cos(self.rot_calc * pi / 180), self.pos_calc[1]  + self.radius * sin(self.rot_calc * pi / 180)), 2)
-		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar[0], self.pos_calc_lidar[1]), 0.5*self.radius)
+		pygame.draw.circle(window, (200,100,100), (self.pos_calc_lidar[0], self.pos_calc_lidar[1]), 0.4*self.radius)
 	
 
 	def draw_dot_map(self, window):
