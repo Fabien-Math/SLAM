@@ -6,78 +6,87 @@
 \subsection{Global path theory}
 In this section, we consider the theoretical path that the robot should follow in a space with obstacles, without taking into account the feasibility constraints imposed by the robot's physical limitations. This theoretical path is derived based on the shortest distance to the target while avoiding obstacles.
 
-Soit $\Omega \in \mathbb{R}^{2}$, soit $\mathbf{X}(t)$ les coordonées du robot à l'instant $t$ dans cet espace.
+\vspace{1em}
 
+Let $\Omega \in \mathbb{R}^{2}$, and let $\mathbf{X}(t)$ be the coordinates of the robot at time $t$ in this space.
+\vspace{0.5em}
+Let $FV(t)$ be the field of vision of the robot at time $t$.
+\vspace{0.5em}
 
-Soit $ V(t)$ le champ de vision du robot à l'instant $t$
-
-Soit $\mathbf{M}(t, \theta)$ le premier point d'intersection entre un segment et les murs, 
-
-\begin{equation*}
-    \displaystyle
-    \mathbf{M}(t, \theta) = \mathbf{X}(t) + R(t, \theta) 
-    \begin{pmatrix}
-        \cos \theta & 0\\
-        0 & \sin \theta\\
-    \end{pmatrix} 
-    \mathbf{X}(t)
-\end{equation*}
-
-On note $\mathbf{M}_{max} (t, \theta)$ le point tel que $R(t, \theta) = R_{max}$
-
-Ici,
-\begin{equation*}
-    \displaystyle
-    R(t, \theta) = \min (\text{\rmfamily distance}( \, \mathbf{X}(t), \, L(\theta) \cap W \,))
-\end{equation*}
+Let $\mathbf{M}(t, \theta)$ be the first intersection point between a segment and the walls,
+\vspace{0.5em}
 
 \begin{equation*}
-    \displaystyle
-    L(\theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
+	\displaystyle
+	\mathbf{M}(t, \theta) = \mathbf{X}(t) + R(t, \theta) 
+	\begin{pmatrix}
+		\cos \theta & 0\\
+		0 & \sin \theta\\
+	\end{pmatrix} 
+	\mathbf{X}(t)
+\end{equation*}
+
+We denote $\mathbf{M}_{max} (t, \theta)$ as the point such that $R(t, \theta) = R_{max}$.
+\vspace{0.5em}
+
+Here,
+\begin{equation*}
+	\displaystyle
+	R(t, \theta) = \min (\text{\rmfamily distance}( \, \mathbf{X}(t), \, L(\theta) \cap W \,))
 \end{equation*}
 
 \begin{equation*}
-    \displaystyle
-    W = \left\{ \, \text{\rmfamily Segment} (\Omega)\, \right\}
+	\displaystyle
+	L(\theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
 \end{equation*}
 
-On défini le champ de vision du robot tel que:
+\begin{equation*}
+	\displaystyle
+	W = \left\{ \, \text{\rmfamily Segment} (\Omega)\, \right\}
+\end{equation*}
 
+We define the field of vision of the robot as:
 
 \begin{equation}
-    \displaystyle
-    V(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \theta) \,|\, l \in [0, 1], \theta \in [0, 2 \pi[ \, \right\}
+	\displaystyle
+	FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \theta) \,|\, l \in [0, 1], \theta \in [0, 2 \pi[ \, \right\}
 \end{equation}
 
-Autrement dis, $V(t)$ est l'ensemble des points de $\Omega$ présents dans un disque de rayon $R_{max}$ et situé entre le robot et la plus proche intersection à un mur 
+In other words, $FV(t)$ is the set of points in $\Omega$ present in a disk of radius $R_{max}$ and located between the robot and the nearest intersection with a wall.
+\vspace{0.5em}
 
-On construit maintenant la fonctionnelle que l'on cherchera plus tard à optimiser, celle-ci est relative au déplacement du robot.
+We now construct the functional that we will later seek to optimize, which is related to the movement of the robot.
+\vspace{0.5em}
 
-
-On défini $\mathit{KM}$ (\textit{Known Map}) l'espace de la map connu par le robot et $\mathit{EM}$ (\textit{Explorable Map}) la partie de $\Omega$ explorable par le robot.
+We define $\mathit{KM}$ (\textit{Known Map}) as the space of the map known by the robot and $\mathit{EM}$ (\textit{Explorable Map}) as the part of $\Omega$ explorable by the robot.
 \begin{equation}
-    \displaystyle
-    J(\mathbf{X}(t)) = \int_{0}^{T} | \mathbf{\dot{X}}(t) | dt
+	\displaystyle
+	J(\mathbf{X}(t)) = \int_{0}^{T} | \mathbf{\dot{X}}(t) | dt
 \end{equation}
+\vspace{0.5em}
 
-$J$ est une fonctionnelle fonction de la position initiale du robot, elle donne la longeur du chamin parcourue par le robot avant que $t = T$.
+$J$ is a functional function of the initial position of the robot, giving the length of the path traveled by the robot before $t = T$.
+\vspace{0.5em}
 
-$T$ étant l'instant à partir du quel la map est explorée au maximum des capacités du robot, c'est à dire : $KM = EM$.
+$T$ is the time at which the map is explored to the maximum capacity of the robot, i.e., $KM = EM$.
+\vspace{0.5em}
 
-Pour savoir si $KM = EM$, on calcul les contours du domaine connu, si tous les contours sont fermés, alors $KM \subset EM$, si de plus les mesures de $KM$ et de $EM$, à savoir leur surface, sont égales alors, on peut raisonnablement dire que $KM = EM$.
+To determine if $KM = EM$, we calculate the contours of the known domain. If all contours are closed, then $KM \subset EM$. Additionally, if the measures of $KM$ and $EM$, namely their areas, are equal, then we can reasonably say that $KM = EM$.
+\vspace{0.5em}
 
-
-Pour plus de simplicité lors de l'étude de la fonctionnelle, on la modifie légerement.
+For simplicity in studying the functional, we slightly modify it.
 \begin{equation}
-    \displaystyle
-    J(\mathbf{X}(t)) = \frac{1}{2} \int_{0}^{T} \mathbf{\dot{X}}(t)^{2} dt
+	\displaystyle
+	J(\mathbf{X}(t)) = \frac{1}{2} \int_{0}^{T} \mathbf{\dot{X}}(t)^{2} dt
 \end{equation}
 
 \subsection{Local path theory}
 
-In this section, we focus on determining the optimal commands for navigating to a local waypoint obstacle-free while adhering to the robot's constraints.
+\subsubsection{First approach: mathematical approach}
 
-Here, we focus on the energy of the robot to compute the optimal command, If we consider the robot to move using dc motors, the power used by the robot is proportional to the voltage for the rotation speed and the current for the torque applied to the wheel. We consider too that the floor is completely flat and the torque is constant so that the current is always the same. The energy is only related to the wheel speed then we define the Energy spent for moving as :
+In this section, we focus on determining the optimal commands for navigating to a local waypoint obstacle-free while adhering to the robot's constraints. 
+
+Optimal in this context means using the least amount of energy to move from point A to point B. Considering the robot moves using DC motors, the power consumption is proportional to the voltage for rotation speed and the current for the torque applied to the wheel. Assuming the floor is completely flat and the torque is constant, the current remains the same. Therefore, the energy consumption is only related to the wheel speed. We define the energy spent for moving as:
 
 as a reminder, $\omega_L$ and $\omega_R$ are the speed of the left and right wheel.
 
@@ -91,10 +100,22 @@ Two constraint remains, we want $X(0) = X_R$ and $X(T) = X_{WP}$
 
 In the part \figtonum, we calculated $\dot{X} = F(\omega)$.
 
+Note:
+If the current were not constant, we would need to account for the terrain characteristics and define the energy consumption as the product of voltage and current. In that case, $E(T)$ would become $\tilde{E}(T) = \int_{0}^{T} \| U(t) I(t) \| dt$, where $U(t)$ and $I(t)$ are functions dependent on the map characteristics. This would significantly complicate the problem. 
+
+
+\subsubsection{Second approach: empirical approach}
+
+This second approach consists of determining the set of all possible maximal paths achieved by the robot in a certain amount of time. Reversing the problem should give us the optimal commands to reach the waypoint.
+In the first attempt, I focus on finding the maximal path using stochastic methods. Subsequently, I compute all possible combinations of paths with a given number of different commands.
+
+
 
 \subsection{Introducing a new method for dynamic pathfinding}
 
 In this section, we introduce a new method for real-time dynamic pathfinding. This method involves inflating the path perpendicular to the shortest path to a point, i.e., a line. The line is split if it is not free from obstacles within a given safe range.
+
+For our study, it is crucial that this algorithm runs in real-time to avoid any obstacles. Since the goal is to explore a map using multiple robots, we must ensure that the path computation time for each robot is minimal so that they can avoid each other.  
 
 The principle is simple: draw a straight line between the robot and the waypoint (\autoref{fig:draw_line}). If the path is not free of obstacles within the defined safe range (\autoref{fig:check_line}), split the path in the middle and shoot points perpendicular to the line (\autoref{fig:shoot_line}). When a shot point is free from obstacles, validate the point and check if the two resulting lines are free from obstacles (\autoref{fig:validate_point}). If not, repeat the steps described above on the new lines (\autoref{fig:repeat_method}). Once all points are safe, simplify the path using a straightforward algorithm. The process can be visualized on \autoref{fig:method_visu}.
 
@@ -103,7 +124,7 @@ The principle is simple: draw a straight line between the robot and the waypoint
 	\begin{subfigure}[b]{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{IMAGES/part3/methode1.png}
-		\caption{Draw a straight line}
+		\caption{Draw a straight line with safe range}
 		\label{fig:draw_line}
 	\end{subfigure}
 	\hfill
@@ -138,7 +159,7 @@ The principle is simple: draw a straight line between the robot and the waypoint
 	\begin{subfigure}[b]{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{IMAGES/part3/methode6.png}
-		\caption{Simplify the path}
+		\caption{Connect points}
 		\label{fig:idk}
 	\end{subfigure}
 	\caption{Visualization of the dynamic pathfinding method}
@@ -259,7 +280,7 @@ This implementation does not allow to track the refraction of the waves, these a
 Now I have an numerical method for computing the shortest path length, we can focus on performance of the algorithm introduced. Despite this algorithm is simple and fast, making it suitable for implementation on a large number of small chips, they have some limitations that can be critical for certain cases. A small benchmark was conducted with the following results.
 
 
-8 maps were instroduced in this benchmark, they are shown in the \autoref{fig:benchmark_maps}
+Eight maps were introduced in this benchmark, as shown in \autoref{fig:benchmark_maps}. The maps are 1200 by 700 metric units, with the robot starting at the triangle located at coordinates (100, 350) and the target point at (1100, 350).
 
 \begin{figure}[H]
 	\centering
@@ -384,27 +405,74 @@ Now I have an numerical method for computing the shortest path length, we can fo
 	\label{fig:results_benchmark_maps}
 \end{figure}
 
+On maps 6 and 7, the robot is blocked by the angles of the walls. On map 8, although it appears that the robot finds a path, the lines within the wall indicate otherwise. The method is blocked by the wall just before reaching the waypoint. This outcome can be anticipated by examining the shape of the walls near the waypoint. \autoref{fig:fail_explain} illustrates why the new method fails in the situations presented by maps 6, 7, and 8. The numbers represent the iteration at which each point is created, with red numbers indicating the iteration when the method is certain to fail due to the geometry and the way the method is implemented. While this is not tragic, it is important to note that my goal is to explore a cave, and the robot is likely to occur only once and not repeatedly when a part of the map is fully explored. For these cases, I implemented another path planning algorithm introduced in the next secion. 
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/explain_map7.png}
+		\caption{Failure on map 7}
+		\label{fig:failure_map7}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/explain_map8.png}
+		\caption{Failure on map 8}
+		\label{fig:failure_map8}
+	\end{subfigure}
+	\caption{Failure explanation for introduced method}
+	\label{fig:fail_explain}
+\end{figure}
+
+
+The calculation with the cellular automata is done with the following parameters, the size of the cells are 2 by 2 metric unit (mu) giving a uncertanty of $\pm 2$ mu. The granularity is set to 5 for all cases without circular shape and 20 otherwise.
+\tobedone
 
 \textbf{Lenght of the path found in metric unit (mu)}
 \begin{table}[H]
 	\centering
-	\begin{tabular}{c c c c}
+	\begin{tabular}{c c c c c c}
 		\hline
-		Map & Theoretically & Method & Cellular Automata \\
+		Map & Theoretically & Method & Relative difference ($\%$) & Cellular Automata ($\pm 2$ mu) & Error ($\%$)\\
 		\hline
-		Map 1 &  & 1084 &  \\
-		Map 2 &  & 1125 & 1122 \\
-		Map 3 &  & 1125 & 1122 \\
-		Map 4 &  & 1088 & 1086 \\
-		Map 5 &  & 1531 & 1522 \\
-		Map 6 &  & - & 1168 \\
-		Map 7 &  & - & 1168 \\
-		Map 8 &  & - &  \\
+		Map 1 & 1081 & 1084 & 0.3 &  & \\
+		Map 2 & 1121 & 1125 & 0.4 & 1122 & 0.1\\
+		Map 3 & 1122 & 1125 & 0.4 & 1122 & 0\\
+		Map 4 & 1084 & 1088 & 0.4 & 1086 & 0.2\\
+		Map 5 & 1521 & 1531 & 0.7 & 1522 & 0.1\\
+		Map 6 & 1166 & - &  & 1168 & 0.2\\
+		Map 7 & 1166 & - &  & 1168 & 0.2\\
+		Map 8 & 1776 & - &  &  & \\
 		\hline
 	\end{tabular}
 	\caption{Benchmark results for the new method}
 	\label{tab:benchmark_results}
 \end{table}
 
+The \autoref{tab:benchmark_results} gives us the relative difference between the method introduced and the theoretical value for the shortest path. As we can see the path when found is always under $1\%$ longer than the shortest one, moreover, we can imagine less to $1\%$ if the compute precisly the point on the border, due to the iterative process, the point can be place up to a distance of zero to the step we move the point to check if it is safe.
+
+Moreover, the lattice approach for finding the shortest algorith is very good in this benchmark, within the range of uncertancy, the algorith always found the shortest path distance.
+
+
+\subsection{Dijkstra's algorithm}
+
+The second algorithm for path planning uses Dijkstra's method. The goal is to navigate to the nearest point of the map where a robot already passed to the waypoint. The waypoints are located on the frontiers of the robot's explored area, calculated using lidar data. This ensures that the path from the nearest location to the waypoint is a straight line free from obstacles. 
+
+Dijkstra's algorithm is an algorithm to find the shortest path from a source to a final node in a weighted graph.\cite{dijkstra_1959}. It works by iteratively selecting the node with the smallest tentative distance, updating the distances to its neighbors, and marking it as visited. This process continues until all nodes have been visited or the shortest path to the target node is determined.\cite{dijkstra_anim_wiki_2025}
+
+
+To ensure the path to the nearest point exists, the robot will move only on cells previously traversed by a robot. This path will be shortened by the algorithm described earlier.
+
+
+
+
+\textcolor{red}{\textbf{DIFFERENCE IN TRAJECTORY}}
+
+
+In the simulator, I implemented this method differently: only the first point relative to the robot is kept, and this point is computed at each time step. The difference in trajectory can be seen in \autoref{diff_traj}.
+
+\figtonum
 \end{document}
 

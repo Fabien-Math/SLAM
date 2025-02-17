@@ -19,7 +19,7 @@ class World:
 
 		self.crashed_robot: list = []
 
-		for i in range(6):
+		for i in range(3):
 			# beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 50, 50, 150)
 			beacon = BeaconRobot(i, (200+50*i, 350), 50, 1000, 50, 50, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)

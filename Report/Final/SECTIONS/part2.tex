@@ -237,7 +237,64 @@ In this work, I used LiDAR-based SLAM. The robot scans its environment using a L
 
 \vspace{1em}
 
-The localization process involves determining the collision points where the LiDAR beams intersect with walls. At each collision point, a circle is drawn with a radius equal to the measured LiDAR distance. The robot's position is then estimated by calculating the intersection of multiple such circles.
+The localization process involves determining the collision points where the LiDAR beams intersect with walls. At each collision point, a circle is drawn with a radius equal to the measured LiDAR distance. The robot's position is then estimated by calculating the intersection of multiple such circles. 
+The method is visualized in \autoref{fig:lidar_loca}. Here, the central red dot represents the intersection of the circles, the red beams are the LiDAR beams, and the green dotted line indicates the maximum range of the LiDAR.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{IMAGES/part2/lidar_correct_pos.png}
+	\caption{Correct robot position using LiDAR data diagram}
+	\label{fig:lidar_loca}
+\end{figure}
+
+
+For mapping, I use a feature map, referred to as the live grid map in this section. Each cell in the map can have one over multiple states. When the LiDAR detects a collision, the corresponding cell in the map is assigned an integer value between 100 and 200. The closer the value is to 200, the more certain it is that the cell represents a wall. When the robot passes through a cell, its value is set to 19. If the cell is free, its value is set to 20. A value of 0 indicates that the state of the cell is unknown.
+
+\vspace{1em}
+
+Since the robot operates alongside other robots, the map must account for the presence of multiple dynamic objects. To achieve this, a twin of the live grid map is created, which tracks the number of times a LiDAR beam collides with an object in each cell. Each time the LiDAR detects a collision, 3 is added to the cell in the occurrence map. Conversely, each time the LiDAR beam passes through a cell without detecting a collision, the occurrence value of that cell is decreased by 1. Any cell with an occurrence value above 0 is considered to be occupied by a wall. The higher the occurrence value, the more likely the cell is occupied.
+
+\vspace{1em}
+
+The asymmetry between adding and subtracting values in the occurrence map makes the map more reliable. If the values were symmetric (i.e., adding 1 for a collision and subtracting 1 for no collision), the live grid map would be less secure and more sensitive to changes. For example, in \autoref{fig:lidar_occurence_map}, if the values were symmetric, the green cell would be considered free of obstacles. However, with the current method, the green cell would have a value of $3-1-1=1$, indicating that it is occupied.
+
+\vspace{1em}
+
+This way, if the occurrence value is high, we can be certain that there is a non-moving obstacle in that area. If the occurrence value is low, the cell is less likely to be occupied.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.4\linewidth]{IMAGES/part2/lidar_occurance_map.png}
+	\caption{Importance of asymetry in adding and subtracting in the occurence map}
+	\label{fig:lidar_occurence_map}
+\end{figure}
+
+\autoref{fig:map_updates} illustrates the map updates over time with three robots. The purple squares represent occupied cells in the live grid map (dark purple = 100, light purple = 200). Green areas indicate free spaces, gray areas are unknown, black lines outline the map, and the small red dots represent the robots:
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part2/lgm_t1.png}
+		\caption{Map update at time $t_1$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part2/lgm_t2.png}
+		\caption{Map update at time $t_2$}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part2/lgm_t3.png}
+		\caption{Map update at time $t_3$}
+	\end{subfigure}
+	\caption{Map updates over time}
+	\label{fig:map_updates}
+\end{figure}
+
+
 
 
 

@@ -21,6 +21,7 @@ def main():
 	draw_lks = True
 	draw_rts = True
 	pause = False
+	nextit = False
 
 	# State of the simulation
 	running = True
@@ -50,13 +51,16 @@ def main():
 					draw_rts = not draw_rts
 				if event.key == K_SPACE:
 					pause = not pause
+				if event.key == K_RETURN:
+					nextit = True
 
-		if not pause:
+		if not pause or nextit:
 			main_world.update()
 		main_window.update(main_world, draw_rts, draw_lgm, draw_wps, draw_lks, draw_rnb, draw_map)
 
 		if main_world.map_explored or main_world.end_simulation:
 			running = False
+		nextit = False
 	
 	main_window.destroy()
 
