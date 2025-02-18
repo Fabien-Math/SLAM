@@ -35,8 +35,8 @@ def draw_waypoint(window, waypoint_pos):
 		pygame.draw.circle(window, border_color, waypoint_pos, 20, 3)
 
 def draw_local_waypoint(window, local_waypoint_pos):
-		color = (100, 255, 0)
-		pygame.draw.circle(window, color, local_waypoint_pos, 10)
+		color = (200, 0, 255)
+		pygame.draw.circle(window, color, local_waypoint_pos, 8)
 
 
 def draw_map(window, map):
@@ -55,7 +55,7 @@ def draw_map(window, map):
 				pygame.draw.rect(window, border_color, rect, 3)
 
 
-def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints):
+def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints, points):
 	"""Update the display
 
 	Args:
@@ -74,27 +74,39 @@ def update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, sa
 	# pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoint, 2)
 
 	if safe_local_waypoints:
-		pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoints[0], 2)
+		pygame.draw.line(window, (10, 10, 10), robot_pos, safe_local_waypoints[0], 1)
 		for i in range(len(safe_local_waypoints) - 1):
 			draw_local_waypoint(window, safe_local_waypoints[i])
-			pygame.draw.line(window, (10, 10, 10), safe_local_waypoints[i], safe_local_waypoints[i+1], 3)
+			pygame.draw.line(window, (10, 10, 10), safe_local_waypoints[i], safe_local_waypoints[i+1], 1)
+	
+
+	if len(points):
+			pygame.draw.line(window, (10, 10, 10), robot_pos, points[0], 1)
+			for i in range(len(points) - 1):
+				pygame.draw.circle(window, (0, 255, 200), points[i], 5)
+				pygame.draw.line(window, (10, 10, 10), points[i], points[i+1], 1)
+
 	# Draw the waypoint
 	draw_waypoint(window, waypoint_pos)
 	# pygame.draw.line(window, (10, 10, 10), safe_local_waypoint, waypoint_pos, 2)
 
 	draw_robot(window, robot_pos)
 
+
 	# Update scene display
 	pygame.display.update()
 
 
 def need_line_split(map, p1, p2, line, safe_range, window):
+
 	for c in map:
 		match c[0]:
 			case 'line':
 				if not ut.compute_segment_inter(p1, p2, c[1], c[2]) is False:
 					return True
 			case 'circle':
+				if p1 == p2:
+					return True
 				line = ut.compute_line(p1, p2)
 				ortho_point = ut.orthogonal_point(c[1], p1, p2, line)
 				if ut.distance(c[1], ortho_point) < c[2] + safe_range:
@@ -103,8 +115,31 @@ def need_line_split(map, p1, p2, line, safe_range, window):
 			case 'rect':
 				lines = [(c[4], c[1]), (c[1], c[2]), (c[2], c[3]), (c[3], c[4])]
 				for p3, p4 in lines:
+					# if ut.distance(p1, p3) < 1e-5:
+					# 	return True
+					# if ut.distance(p1, p4) < 1e-5:
+					# 	return True
+					# if ut.distance(p2, p3) < 1e-5:
+					# 	return True
+					# if ut.distance(p2, p4) < 1e-5:
+					# 	return True
 					if not ut.compute_segment_inter(p1, p2, p3, p4) is False:
 						return True
+					# line = ut.compute_line(p3, p4)
+					# d = ut.orthogonal_projection(p1, line)
+					# if d < safe_range:
+					# 	return True
+					# d = ut.orthogonal_projection(p2, line)
+					# if d < safe_range:
+					# 	return True
+					
+					# line = ut.compute_line(p1, p2)
+					# d = ut.orthogonal_projection(p3, line)
+					# if d < safe_range:
+					# 	return True
+					# d = ut.orthogonal_projection(p4, line)
+					# if d < safe_range:
+					# 	return True
 					
 	return False
 			
@@ -254,7 +289,7 @@ def find_global_path(map, map_size, robot_pos, waypoint_pos, safe_range, window)
 		valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], safe_range, window)
 		# for map 1 and 3
 		# valid_sub_wp = new_valid_sub_wp[:]
-		update_display(window, map, valid_sub_wp[0], valid_sub_wp[-1], valid_sub_wp[1], valid_sub_wp)
+		# update_display(window, map, valid_sub_wp[0], valid_sub_wp[-1], valid_sub_wp[1], valid_sub_wp)
 
 		if not line_splited:
 			valid_sub_wp = shorten_path(map, new_valid_sub_wp[:], safe_range, window)
@@ -303,7 +338,7 @@ def main():
 	window = pygame.display.set_mode(window_size)
 	window.fill((150, 150, 150))
 	# Set the title of the window
-	pygame.display.set_caption("Results - Map 8")
+	pygame.display.set_caption("Path difference - Map 2")
 
 
 	### WORLD INITIALISATION
@@ -311,9 +346,9 @@ def main():
 	last_static_pos = robot_pos
 	waypoint_pos = (1100, 350)
 
-	robot_pos = (100, 100)
-	last_static_pos = robot_pos
-	waypoint_pos = (100, 450)
+	# robot_pos = (100, 100)
+	# last_static_pos = robot_pos
+	# waypoint_pos = (100, 450)
 
 	# MAP 1
 	map1 = [('circle', (600, 350), 200)]
@@ -349,7 +384,7 @@ def main():
 	 		('rect', (350, 350), (400, 350), (400, 600), (350, 600)),
 			('rect', (600, 500), (1200, 500), (1200, 550), (600, 550))]
 
-	map = map8
+	map = map5
 
 
 	# State of the simulation
@@ -360,7 +395,7 @@ def main():
 	# Simulation variables 
 	safe_local_waypoint = waypoint_pos
 	total_dist = 0
-	safe_range = 0
+	safe_range = 20
 	static_pos_counter = 0
 	look_for_path_through_known_map = False
 
@@ -397,6 +432,16 @@ def main():
 
 
 		### SIMULATION
+		points = []
+		next_point = robot_pos
+		while ut.distance(next_point, waypoint_pos) > 1e-5:
+			next_point = find_next_local_waypoint(map, window_size, next_point, waypoint_pos, 0, window)
+			points.append(next_point)
+
+		if points:
+			total_path_length = np.sum([ut.distance(points[i], points[i+1]) for i in range(len(points[1::]))])
+			print(total_path_length + ut.distance(robot_pos, points[0]))	
+
 		i += 1
 
 		if ut.point_in_circle(robot_pos, waypoint_pos, 10):
@@ -419,7 +464,7 @@ def main():
 
 		# DRAW THE SCENE
 		# update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, None)
-		# update_display(window, map, robot_pos, waypoint_pos, safe_local_waypoint, safe_local_waypoints)
+		update_display(window, map, robot_pos, waypoint_pos, None, safe_local_waypoints, points)
 		text_shown = False
 		next_it = False
 

@@ -3,12 +3,24 @@
 
 \begin{document}
 
-Definition d'un robot,
-Spécification du type étudier dans ce rapport,
-les défis de la plannification de trajectoire,
-l'évitement d'obstacle (petit point sur l'optimisation de trajectoire en milieu ouvert pour de la recherche de victime par exemple)
-Les contraintes extérieures et celle du robot lui même.\\
+The motivation behind this work lies in the pursuit of the unknown and a deeper understanding of our planet. Underground cavities remain among the least explored places on Earth due to their inaccessibility. The challenges inherent in such exploration are numerous, ranging from communication difficulties to trajectory planning in confined spaces, which are often steeply inclined and require advanced robotic design for navigation. Whether in the depths of the oceans or beneath the Earth's surface, these hidden environments remain largely unexplored. The potential discovery of unknown biological entities, as well as ancient geological formations untouched by human activity, adds further significance to this research. Indeed, caves are among the last places on Earth that have remained largely free from human influence and pollution.
 
-L'un des ouvrages de référence utilisés dans ce travail est le livre de S. M. LaValle, \textit{Planning Algorithms} \cite{Lavalle_2006}, que je remercie particulièrement pour son engagement à rendre ses travaux accessibles au public ({\scriptsize \url{https://lavalle.pl/}}).
+\vspace{1em}
+
+This work focuses on developing exploration algorithms for multi-robot cave navigation. The robots used in this study are two-wheeled, differentially driven systems. A key challenge is ensuring full autonomy, meaning the robots must operate without external control while effectively communicating with each other.
+
+\vspace{0.5em}
+
+To support this development, we will first explore the theoretical aspects of trajectory optimization in robotics. Given the challenges of navigating complex and uneven terrain, robust and efficient algorithms are essential. However, to simplify the initial approach, the robots will be tested on a flat and smooth surface.
+
+\vspace{0.5em}
+
+At the core of this project, I will propose an algorithm that enables communication between robots without relying on an external master or centralized synchronization. This approach aims to enhance coordination and decision-making in a fully decentralized manner, making the system more adaptable to real-world exploration scenarios.
+
+\vspace{0.5em}
+
+A crucial component of this project is the development of a Python-based simulator. This simulator will allow real-time testing of inter-robot communication and algorithm performance, providing a valuable platform for exploring innovative and interdisciplinary techniques.
+
+\vspace{1em}
 
 \end{document}

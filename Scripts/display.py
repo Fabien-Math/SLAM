@@ -98,14 +98,14 @@ class Window:
 
 
 
-def write_text(text, window, pos, text_flush='center', color=(255,255,255), update=True):
+def write_text(text, window, pos, text_flush='center', text_size=16, color=(255,255,255), update=True):
 	"""Write the FPS on the top-right of the window
 
 	Args:
 		window (surface): Window on which writting
 		pos (tuple): Position of the text on the window
 	"""
-	font = pygame.font.Font('freesansbold.ttf', 16)
+	font = pygame.font.Font('freesansbold.ttf', text_size)
 	text = font.render(text, True, color)
 
 	textRect = text.get_rect()

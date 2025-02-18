@@ -2,6 +2,7 @@ from math import pi, sin, cos, atan2, ceil
 import util as ut
 import numpy as np
 import display as disp
+from time import perf_counter
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ class Controller:
 		self.global_path_mode = False
 
 		self.time = 0
+		self.times = []
 		# Last position, check robot deadlock
 		self.last_static_pos = self.robot.pos
 		# Last time the robot is known to move outside a deadlock
@@ -120,14 +122,15 @@ class Controller:
 					self.waypoints = wps[1::]
 					self.waypoint = wps[0]
 
-
-				for wp in wps:
-					disp.draw_point(window, wp, 10)
 				# Reset the demand
 				self.need_global_path = False
 			
 			# Compute safe next local waypoint
+			a = perf_counter()
+			# lwps = self.compute_global_path_to_wp(window)
 			lwps = self.compute_next_lwp(window)
+			b = perf_counter()
+			self.times.append(b-a)
 
 			# If no path found or going to the point is impossible
 			if lwps is None or lwps[0] == 1:
@@ -228,6 +231,15 @@ class Controller:
 		pos_op_bds = [live_grid_map.ids_to_center(op[1], op[0]) for op in op_bds]
 
 		costed_wps = [compute_wp_cost(self.robot, wp, window) for wp in pos_op_bds]
+
+		# print(self.time)
+		# if self.time > 56.0:
+		# 	for i, (c, p) in enumerate(sorted(zip(costed_wps, pos_op_bds), key=lambda cost: cost[0])):
+		# 		disp.draw_point(window, p, 10, (255, 0, 100))
+		# 	for i, (c, p) in enumerate(sorted(zip(costed_wps, pos_op_bds), key=lambda cost: cost[0])):
+		# 		if not i%11:
+		# 			disp.write_text(f"{c:.1f}", window, (p[0]+10, p[1]), text_size=24, text_flush='right', update=False)
+		# 	disp.draw_point(window, (-100,0), 10000, (255, 0, 100))
 
 		ordered_wps = [wp for _, wp in sorted(zip(costed_wps, pos_op_bds), key=lambda cost: cost[0])]
 

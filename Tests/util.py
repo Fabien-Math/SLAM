@@ -39,13 +39,14 @@ def orthogonal_projection(p:tuple, line:tuple) -> float:
 	#### "https://fr.wikipedia.org/wiki/Distance_d'un_point_%C3%A0_une_droite"
 	"""
 	a, b, c = line
+	if a + b + c == 0:
+		return 0
 	return abs(a*p[0] + b*p[1] - c)/sqrt(a**2 + b**2)
 
 def orthogonal_point(p:tuple, p1:tuple, p2:tuple, line:tuple) -> tuple:
 	"""Compute the orthogonal point on a line from a point"""
 	vec = (p2[0] - p1[0] , p2[1] - p1[1])
 	a, b, c = line
-
 	dir_vec = normalize_vec(vec)
 
 	yp1 = evaluate_line(line, p[0])

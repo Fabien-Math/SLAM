@@ -19,7 +19,7 @@ class World:
 
 		self.crashed_robot: list = []
 
-		for i in range(3):
+		for i in range(1):
 			# beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 50, 50, 150)
 			beacon = BeaconRobot(i, (200+50*i, 350), 50, 1000, 50, 50, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
@@ -78,6 +78,7 @@ class World:
 
 			if robot.controller.mode == 100:
 				robot.live_grid_map.save_map_to_image()
+				print("Mean time for global path planning", np.mean(robot.controller.times))
 				self.map_explored = True
 			
 			if robot.crashed:

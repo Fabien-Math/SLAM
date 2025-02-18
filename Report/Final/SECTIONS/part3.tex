@@ -462,17 +462,142 @@ The second algorithm for path planning uses Dijkstra's method. The goal is to na
 
 Dijkstra's algorithm is an algorithm to find the shortest path from a source to a final node in a weighted graph.\cite{dijkstra_1959}. It works by iteratively selecting the node with the smallest tentative distance, updating the distances to its neighbors, and marking it as visited. This process continues until all nodes have been visited or the shortest path to the target node is determined.\cite{dijkstra_anim_wiki_2025}
 
-
 To ensure the path to the nearest point exists, the robot will move only on cells previously traversed by a robot. This path will be shortened by the algorithm described earlier.
+If the robot remains in a certain area for too long, indicating a deadlock, the Dijkstra path is computed to guide the robot out. This emergency path is only calculated when the robot is in a deadlock.
+
+\textbf{Perfomances}
+
+On an AMD Ryzen™ 5 3500U, using \textit{Python} and the map in \autoref{fig:real_map_40}, the robot computes the next global path in an average of $1.02 \times 10^{-1}$ seconds, approximately 98 times per second. This performance is suitable for real-time navigation and obstacle avoidance.
+
+In the simulator, to be more computationally friendly, I simplified the method during implementation by computing only the next point. The difference in trajectory can be seen in \autoref{fig:traj_diff_maps}. This approach sacrifices the optimal path for reduced computational time. The difference in path can be significant, as shown in \autoref{fig:traj_diff_map5}. The path with the blue-green dots can illustrate how the robot navigates without prior knowledge of its environment before reaching the target point.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/traj_diff_map1.png}
+		\caption{Trajectory difference on map 1}
+		\label{fig:traj_diff_map1}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/traj_diff_map2.png}
+		\caption{Trajectory difference on map 2}
+		\label{fig:traj_diff_map2}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/traj_diff_map5.png}
+		\caption{Trajectory difference on map 5}
+		\label{fig:traj_diff_map5}
+	\end{subfigure}
+	\caption{Trajectory differences on maps 1, 2, and 5}
+	\label{fig:traj_diff_maps}
+\end{figure}
+
+On the same map and laptop, the local approach for path planning is significantly more efficient in terms of computational time. The average computation time is $8.20 \times 10^{-4}$ seconds, allowing for approximately 1220 executions per second. Despite the method's poor performance in the benchmark, it performs well in the simulator, resulting in better map exploration and improved path quality. The \autoref{fig:map_exploration_comparison} shows the two maps after exploration of only one robot.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map_explored_using_gwp.png}
+		\caption{Map explored using global waypoint path}
+		\label{fig:map_explored_using_gwp}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/map_explored_using_lwp.png}
+		\caption{Map explored using local waypoint path}
+		\label{fig:map_explored_using_lwp}
+	\end{subfigure}
+	\caption{Comparison of map exploration using global and local waypoint paths}
+	\label{fig:map_exploration_comparison}
+\end{figure}
 
 
+\subsection{Performance Analysis Methodology}
+
+To evaluate the performance of the algorithm, we will use the following criteria: range, robustness, and completeness. These criteria are part of a broader methodology that also includes effectiveness and speed.
+
+\subsubsection{Delimited Range of Application}
+The combination of the two algorithms is well-suited for both open spaces and medium-sized cavities. However, the method performs significantly better in open spaces, as suggested by the benchmark results. This approach could be considered for aeronautical applications. It should be noted that in narrow cavities, Dijkstra's algorithm is likely to be executed each time a new direction is chosen.
+
+\subsubsection{Robustness to Failure and Uncertainty}
+Robustness to failure and uncertainty means that the robot must handle all possible cases, such as being in a deadlock and failing to exit it. The second part of the method, Dijkstra's algorithm, ensures that the robot can exit any situation by moving back along its path.
+
+\subsubsection{Completeness}
+Completeness means that the robot must explore all the domain possible to be explored or accomplish all the possible tasks given to it. To study completeness, a vast range of tests must be conducted. At this stage of the study, it is not certain that the algorithm is complete.
+
+\subsection{Global waypoint computing}
+
+Now the local navigation is set, we need to define how to select the next waypoint occording to the map. First of all this is done by computing the frontiers of the know domains using image detection method.
 
 
-\textcolor{red}{\textbf{DIFFERENCE IN TRAJECTORY}}
+To extract the open frontiers of the map, I propose the following method:
+\begin{enumerate}
+	\item Obtain the live grid map of the environment.
+	\item Generate a thresholded version of the map to distinguish wall areas from other regions (unknown and free spaces).
+	\item Identify the contours of the map by appliying an Adaptive Gaussian Treshold.
+	\item Apply a single iteration of dilation on the wall treshold.
+	\item Add the contour map from the dilated wall image to isolate the open frontiers.
+\end{enumerate}
 
+The \autoref{fig:open_frontiers} shows an example of the method described above on the \autoref{fig:map_open_frontiers}
 
-In the simulator, I implemented this method differently: only the first point relative to the robot is kept, and this point is computed at each time step. The difference in trajectory can be seen in \autoref{diff_traj}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{IMAGES/part3/map_open_frontiers.png}
+	\caption{Open frontiers of the map example}
+	\label{fig:map_open_frontiers}
+\end{figure}
 
-\figtonum
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/treshold_image.png}
+		\caption{Thresholded version of the live grid map}
+		\label{fig:subfigure1}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/adaptative_treshold.png}
+		\caption{Adaptative thresholded version of the map}
+		\label{fig:subfigure2}
+	\end{subfigure}
+	\vfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/dilatation_image.png}
+		\caption{Dilatation of the wall thresholded map}
+		\label{fig:subfigure3}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part3/sum_image.png}
+		\caption{Sum of the (b) and (c) images highlighting open frontiers}
+		\label{fig:subfigure4}
+	\end{subfigure}
+	\caption{Steps to extract the open frontiers from the live grid map}
+	\label{fig:open_frontiers}
+\end{figure}
+
+Once all frontiers are computed, an algorithm assigns a weight to each cell, and the robot selects the cell with the minimal weight. \autoref{fig:weighted_frontiers} shows the weights, with only one out of every ten points displayed for clarity.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{IMAGES/part3/weighted_fontiers.png}
+	\caption{Weighted frontiers of the map}
+	\label{fig:weighted_frontiers}
+\end{figure}
+
+The weights are calculated using four parameters of the robot: its position, heading, speed, and angular speed. Each of these parameters is assigned a different weight to prioritize one constraint over the others, such as position, heading, speed, or angular speed.
+
 \end{document}
 

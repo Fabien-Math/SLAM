@@ -3,7 +3,7 @@
 
 \begin{document}
 
-This algorithm aim to coordinate the exploration of unknown area by a robot swarm.
+This algorithm aims to coordinate the exploration of unknown areas by a swarm of robots without a central entity to manage the coordination.
 
 \subsection{Operation}
 
@@ -226,31 +226,12 @@ Connected robot set:
 \texttt{4} bits for set length + \texttt{4} bits per robot id
 
 \subsection{Possible robotics implementation}
-Robots communicates on differents colors channels, for instance, white would be the communication to all other robots.
 
-The overlapping of colors shoudn't change anything as long as each robot color identifiers isn't a linear combination of the others.
+Robots communicate using different color channels. For instance, white could be used for broadcasting messages to all other robots. The overlapping of colors should not affect communication as long as each robot's color identifier is not a linear combination of the others.
 
-We could use SEN10656 4-channel colour sensor for precise detection.
+We could use the SEN10656 4-channel color sensor for precise detection.
 
-The robot would be able to emit on all channels and receive only on one.
-
-
-\subsection{Analysis scheme}
-
-\subsubsection{Delimited range of application}
-Can be for all type of environment
-
-\subsection{Robustness to failure and uncertainty}
-Must handle all possible cases, for instance if a robot is in a dead lock and doesn't succed in exit it
-
-\subsection{Completeness}
-Must explore all the domain or accomplish all the task given to it
-
-\subsection{Effectiveness}
-Must spread the work efficiently
-
-\subsection{Speed}
-Must be a rapid algorithm
+Each robot would be capable of emitting on all channels and receiving on a specific one.
 
 
 

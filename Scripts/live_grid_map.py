@@ -221,10 +221,13 @@ class Live_grid_map():
 		map_image[mask] += 1
 		
 		red_contours = cv2.threshold(map_image, 99, 255, cv2.THRESH_BINARY)[1]  # ensure binary
+		cv2.imwrite("Images/tresh.png", red_contours)
 		all_contours = cv2.adaptiveThreshold(map_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 1)
+		cv2.imwrite("Images/contours.png", all_contours)
 
 		kernel = np.ones((3, 3), np.uint8)
 		img_dilation = cv2.dilate(red_contours, kernel, iterations=1)
+		cv2.imwrite("Images/dilatation.png", img_dilation)
 
 		sum_img = img_dilation + all_contours
 		cv2.imwrite("Images/frontiers.png", sum_img)
