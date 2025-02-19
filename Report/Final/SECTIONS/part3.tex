@@ -4,11 +4,13 @@
 \begin{document}
 
 \subsection{Global path theory}
-In this section, we consider the theoretical path that the robot should follow in a space with obstacles, without taking into account the feasibility constraints imposed by the robot's physical limitations. This theoretical path is derived based on the shortest distance to the target while avoiding obstacles.
+In this section, we introduce the preliminary for mathematical optimization of the path. Several challenging problems arise, which are described at the end of this section.
+
+we consider the theoretical path that the robot should follow in a space with obstacles, without taking into account the feasibility constraints imposed by the robot's physical limitations. This theoretical path is derived based on the shortest distance to the target while avoiding obstacles.
 
 \vspace{1em}
 
-Let $\Omega \in \mathbb{R}^{2}$, and let $\mathbf{X}(t)$ be the coordinates of the robot at time $t$ in this space.
+Let $\Omega \in \mathbb{R}^{2}$ standing as the world, and let $\mathbf{X}(t)$ be the coordinates of the robot at time $t$ in this space.
 \vspace{0.5em}
 Let $FV(t)$ be the field of vision of the robot at time $t$.
 \vspace{0.5em}
@@ -29,15 +31,30 @@ Let $\mathbf{M}(t, \theta)$ be the first intersection point between a segment an
 We denote $\mathbf{M}_{max} (t, \theta)$ as the point such that $R(t, \theta) = R_{max}$.
 \vspace{0.5em}
 
-Here,
+Here, $R$ is the minimale distance between the point and all the intersection points between a segment and the map
 \begin{equation*}
 	\displaystyle
-	R(t, \theta) = \min (\text{\rmfamily distance}( \, \mathbf{X}(t), \, L(\theta) \cap W \,))
+	R(t, \theta) = 
+	\begin{cases*}
+		\min(\text{\rmfamily distance}( \, \mathbf{X}(t), \, P_i(t, \theta) \,)), \forall i \in \{0, \ldots, \text{\rmfamily Card}(P) - 1\} \text{\rmfamily if Card}(P) > 0,\\
+		R_{max}, \text{\rmfamily otherwise}.
+	\end{cases*}
 \end{equation*}
+
+% \begin{equation*}
+% 	\displaystyle
+% 	R(t, \theta) = 
+% 	\begin{cases*}
+% 		\min(\text{\rmfamily distance}( \, \mathbf{X}(t), \, P_i(t, \theta) \,)),& \forall i \in [[0, \text{\rmfamily Card}(P)]] \text{\rmfamily if Card}(P) > 0, \\
+% 		R_{max} \text{\rmfamily otherwise}.
+% 	\end{cases*}
+% \end{equation*}
+
+where $P(t, \theta) = \{L(t, \theta) \cap W\}$ is the set of all intersection point between the segment $L$ and the segment of the map and $Card(P)$ the number of element in this set
 
 \begin{equation*}
 	\displaystyle
-	L(\theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
+	L(t, \theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
 \end{equation*}
 
 \begin{equation*}

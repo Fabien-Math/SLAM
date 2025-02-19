@@ -3,42 +3,88 @@
 
 \begin{document}
 
-L'un des ouvrages de référence utilisés dans ce travail est le livre de S. M. LaValle, \textit{Planning Algorithms} \cite{Lavalle_2006}, que je remercie particulièrement pour son engagement à rendre ses travaux accessibles au public ({\scriptsize \url{https://lavalle.pl/}}).
+One of the key reference works used in this study is S. M. LaValle's book, Planning Algorithms \cite{Lavalle_2006}, for which I am particularly grateful for his commitment to making his work accessible to the public ({\scriptsize \url{https://lavalle.pl/}}).
 
-\subsection{État de l'Art : Exploration Multi-Robot de Cavités}
+\subsection{Multi-Robot Exploration of Cavities}
 
-L'exploration des cavités est essentielle pour la cartographie souterraine, la recherche scientifique et les interventions d'urgence, tout en posant des défis uniques pour la robotique autonome.\cite{nationalgeographic_greenland_caves_2025}
-Leur exploration multi-robot est un domaine de recherche en plein essor dans le domaine de la robotique, avec des applications dans des environnements variés tels que l'exploration spatiale, l'exploration de grottes, les missions de sauvetage dans des environnements urbains sinistrés, ou encore l'extraction minière.\cite{dang_2021,kambesis_2007} Ces environnements, souvent complexes et dynamiques, présentent de nombreux défis pour la planification de mission, notamment des obstacles imprévisibles, des zones inaccessibles pour les robots mobiles, et l'absence de signal GPS. De ce fait, l'exploration multi-robot permet de tirer parti de la coopération entre robots pour surmonter ces difficultés.
+The exploration of cavities is essential for underground mapping, scientific research, and emergency interventions. However, it poses unique challenges for autonomous robotics.\cite{nationalgeographic_greenland_caves_2025, scalea_2019} Multi-robot exploration of such environments is a growing research field with applications in various domains, including space exploration, cave exploration, urban search and rescue missions, and mining operations.\cite{dang_2021,kambesis_2007} These environments are often very complex, presenting significant challenges for mission planning, such as unpredictable obstacles, inaccessible areas for mobile robots, and the absence of GPS signals. Multi-robot cooperation can help overcome these difficulties by leveraging distributed sensing and coordinated decision-making.
 
-\subsubsection{Défis dans l'exploration multi-robot de cavités}
+\subsubsection{Challenges in Multi-Robot Cave Exploration}
 
-L'exploration de cavités avec plusieurs robots implique plusieurs défis techniques. En particulier, la gestion de la coopération entre robots et la gestion de l'information dans des environnements complexes sont deux aspects fondamentaux de ce type de mission. Les défis peuvent être classés en plusieurs catégories : 
+Exploring cavities with multiple robots involves several technical challenges. Two fundamental aspects are managing cooperation between robots and handling information in complex environments. The technical difficulties encountered are numerous.\cite{scalea_2019}
+
+\vspace{1em}
+
+A particularly successful research field of multi-robot exploration has been in extraterrestrial environments. On earth, the DARPA Subterranean Challenge, launched in 2019, tested autonomous robot teams in complex underground environments, highlighting challenges related to mapping, navigation, and search under severe communication constraints. This challenge further increased interest in autonomous supervision approaches for groups of robots operating in tunnels and mines.\cite{otsu_2020} 
+
+\vspace{1em}
+
+Several robotic approaches have been developed to tackle these challenges. Some methods involve hybrid robotic teams consisting of wheeled or legged robots combined with aerial drones.\cite{dang_2020} In other cases, solely using flying drones has proven sufficient for exploring and mapping cavities.\cite{dharmadhikari_2021, zhang_2017, husian_2013, petracek_2021}
+
+\subsubsection{Underwater Cave Exploration}
+
+Underwater cave exploration is another area of active research. Water provides a stable medium, reducing the difficulty of maintaining position compared to aerial exploration. However, underwater exploration remains highly challenging due to complex communication constraints and the difficulty of localizing robots relative to external references. Ongoing research focuses on semantic segmentation for underwater cave exploration to enhance perception and navigation capabilities.\cite{gupta_2025, abdullah_2024}
 
 
-\subsection{État de l'Art des Méthodes de Communication Inter-Robot dans un Environnement de Cavité}
 
-La communication inter-robot (CIR) dans un environnement de cavité est un défi majeur pour les systèmes multi-robots, en raison des conditions particulières que ces environnements présentent, telles que des espaces confinés, des obstacles physiques et des perturbations qui peuvent affecter les signaux de communication. Les méthodes de CIR peuvent être classées en différentes catégories selon la technologie utilisée et la stratégie de communication adoptée. Les approches classiques reposent principalement sur des réseaux sans fil, tels que la communication par radiofréquence (RF), qui est couramment utilisée pour des applications de communication à longue portée mais qui peut souffrir de limitations dans les cavités où les signaux sont atténués par des parois solides. Dans ce contexte, des méthodes de communication ad hoc sont souvent employées, où les robots créent un réseau dynamique de relais pour échanger des informations. Une approche courante est l'utilisation de la \textit{communication par maillage}, dans laquelle chaque robot agit comme un relais, permettant ainsi une couverture étendue et une transmission de données entre robots même lorsque les obstacles interfèrent avec les signaux directs. La \textit{communication acoustique} ou \textit{ultrasonique}, qui repose sur des ondes sonores, est une alternative viable dans les environnements de cavité, où elle peut transmettre des informations de manière robuste, notamment pour des distances plus courtes ou dans des environnements très confinés. De plus, la communication optique (par exemple, la \textit{communication par lumière visible ou infrarouge}) devient de plus en plus populaire dans des applications de haute précision dans des cavités étroites, car elle est peu sensible aux interférences électromagnétiques et permet des transmissions rapides et sécurisées. Une autre stratégie consiste à utiliser des protocoles de communication coopérative, où les robots collaborent pour optimiser le flux d'informations. Des techniques de \textit{routage adaptatif} et de \textit{partitionnement dynamique de réseau} sont souvent utilisées pour gérer les obstacles et les interférences dans les réseaux multi-robots. Enfin, les méthodes de \textit{communication opportuniste}, basées sur des échanges de données ponctuels lorsque la ligne de visée est dégagée, sont particulièrement adaptées aux environnements où la connectivité est intermittente et où les robots doivent s'organiser pour minimiser les interruptions dans le flux de données. L'un des principaux défis reste de maintenir une communication fiable et efficace, notamment en optimisant les stratégies de répartition de la bande passante, d'allocation des ressources et de gestion des interférences dans des espaces très contraints. Des approches récentes cherchent à intégrer des systèmes hybrides combinant ces technologies pour assurer une meilleure résilience face aux conditions environnementales changeantes et aux mouvements des robots. 
+\subsection{Path Planning for a Mechatronic System}
+
+Path planning for a mechatronic system is the foundation of all autonomous mobile systems, whether they involve drones or handling and assembly arms. The principle of path or trajectory planning is to determine a solution —a path or a trajectory— connecting a starting point to a target point.
+
+\vspace{1em}
+
+The distinction between path planning and trajectory planning lies in the fact that a planned path is not necessarily feasible for a robot. Indeed, path planning does not always take into account the physical or kinematic constraints of the mobile robot.
+
+\vspace{1em}
+
+Obstacle avoidance is an essential constraint in both approaches. Obstacles define inaccessible areas, and as we will see later, their nature—mobile or static—largely determines the method to be used to solve the planning problem.\\
+
+\vspace{1em}
+
+Among deterministic methods, there is a wide variety of approaches mainly based on three different strategies: graph-based methods, cellular decomposition methods, and potential field methods \cite{latombe_robot_1991,bhattacharyya_robot_2008}.
+
+\vspace{1em}
+
+Graph-based methods consist of constructing a map of feasible paths by considering the obstacles in the scene. Among these graph-based methods, four different types can be distinguished: visibility graphs \cite{visibility_graph_1979}, Voronoi diagrams \cite{garrido_path_2006}, and the Silhouette method \cite{bhattacharyya_robot_2008}.
+
+\vspace{1em}
+
+Methods associated with cellular decomposition consist of dividing the robot's free space into simple regions, called cells, where it is easy to generate a path between two configurations. A graph representing the adjacency relationships between the cells is then constructed and explored \cite{latombe_robot_1991,zhu_new_1991,kedem_efficient_1990,avnaim_practical_1988}.
+
+\vspace{1em}
+
+Another method relies on a fine subdivision of the space to identify free zones. The potential field method is based on this idea by defining potentials that represent attractive forces directed toward the target coordinates and repulsive forces corresponding, for example, to obstacles. The path is then determined by following the opposite of the gradient of the total computed potential \cite{latombe_robot_1991,koren_potential_1991}.
+
+\vspace{1em}
+
+Alternative approaches were developed in the 1990s and 2000s, particularly stochastic path planning methods such as Random Path Planners (RPP) and Probabilistic Roadmap Planners (PRM). These methods involve randomly sampling the space to create a graph of possible paths (\textit{roadmap}) within this space \cite{amato_1996,hsu_2002,nissoux_1999}.
+
+\vspace{1em}
+
+One of the main advantages of this path planning method is that it does not depend on the structure of the space, the number of obstacles, or their arrangement. Once the \textit{roadmap} is created, it is sufficient to use a graph-based path search method to find the path leading to the target point \cite{gasparetto_2015}.
 
 
-\subsubsection{Planification de chemin, de trajectoire et évitement d'obstacle}
+\subsection{Inter-Robot Communication in Cave Environments}
 
-La planification de chemin pour un système méchatronique constitue le fondement de tous les systèmes mobiles autonomes, qu'il s'agisse de drones ou de bras de manutention et d'assemblage. Le principe de la planification de chemin ou de trajectoire est de déterminer une solution - un chemin ou une trajectoire - reliant un point de départ à un point cible.
+Inter-robot communication (IRC) in cave environments poses challenges due to confined spaces, obstacles, and signal disruptions. IRC methods vary based on technology and communication strategies.
 
-La distinction entre planification de chemin et planification de trajectoire réside dans le fait qu'un chemin planifié n'est pas nécessairement réalisable par un robot. En effet, la planification de chemin ne prend pas toujours en compte la faisabilité physique ou cinématique pour un robot mobile.
+\vspace{1em}
 
-L'évitement d'obstacles est une contrainte essentielle dans ces deux approches. Les obstacles définissent les zones inaccessibles, et comme nous le verrons par la suite, leur nature - mobile ou immobile - détermine en grande partie la méthode à employer pour résoudre le problème de planification.\\
+Traditional approaches rely on wireless networks, such as radio frequency (RF) communication, but suffer from signal attenuation in caves. Ad hoc methods, like mesh networks, allow robots to relay data dynamically, extending coverage despite obstacles \cite{silva_2022}. The Autonomous and Collaborative High-Bandwidth Operations with Radio Droppables (ACHORD) framework enhances multi-robot coordination by adapting to intermittent connectivity \cite{silva_2022}.
 
-Parmis les méthodes déterministe, on trouve une large variete de méthodes principalement basées sur trois approches différentes. Les approches par graphs, celle de décomposition célullaire et enfin les celles utilisant des champs potentiels.\cite{latombe_robot_1991,bhattacharyya_robot_2008}
+\vspace{1em}
 
-La méthodes des graphs consistent à construire une carte des chemins empruntable en partant des obstacles de la scène. Parmis ces méthodes utilisant des graphs, on peut distinguer quatres types differents : Les graph de visibilité\cite{visibility_graph_1979}, les diagrammes de Voronoï \cite{garrido_path_2006} ou encore la méthode des Silhouette\cite{bhattacharyya_robot_2008}.
+Acoustic and ultrasonic communication offer robust short-range alternatives, while optical methods (visible light or infrared) provide interference-resistant, high-precision transmissions \cite{klaesson_2020}. Techniques like real-time signal prediction improve communication-aware exploration \cite{clark_2022}.
 
-Les méthodes associés au decomposition celulaire consistent à diviser l'espace libre du robot en régions simples, appelées cellules, où il est facile de générer un chemin entre deux configurations. Un graphe représentant les relations d'adjacence entre les cellules est ensuite construit et exploré.\cite{latombe_robot_1991,zhu_new_1991,kedem_efficient_1990,avnaim_practical_1988}
+\vspace{1em}
 
-Une autre méthode repose sur une subdivision fine de l'espace afin de repérer les zones libres. La méthode des champs potentiels s'appuie sur cette idée en définissant des potentiels qui traduisent des forces d'attraction, dirigées vers les coordonnées cibles, et de répulsion, correspondant par exemple aux obstacles. Le chemin est ensuite déterminé en suivant l'opposé du gradient du potentiel total ainsi calculé.\cite{latombe_robot_1991,koren_potential_1991}
+Cooperative protocols optimize information flow through adaptive routing and dynamic network partitioning. Opportunistic communication, based on intermittent data exchanges, is particularly useful in environments with connectivity constraints \cite{banfi_2018}. Large-scale cave exploration studies highlight the importance of maintaining reliable links for coordination \cite{petracek_2021}.
 
-Des approches alternatives ont été développées dans les années 1990 et 2000, notamment les méthodes stochastiques de planification de chemin RPP (\textit{Random Path Planners}) et PRM (\textit{Probabilistic Roadmap Planners}). Ces méthodes consistent à échantillonner l'espace de manière aléatoire afin de créer un graphe de chemins possibles (\textit{roadmap}) dans cet espace.\cite{amato_1996,hsu_2002,nissoux_1999}  
+\vspace{1em}
 
-L'un des principaux atouts de cette méthode de planification de chemin est qu'elle ne dépend ni de la structure de l'espace, ni du nombre d'obstacles, ni de leur disposition. Une fois la \textit{roadmap} créée, il suffit d'utiliser une méthode de recherche de chemin dans un graphe pour trouver le chemin menant au point objectif.\cite{gasparetto_2015}
+A major challenge remains optimizing bandwidth, resource management, and interference control. Hybrid systems combining multiple technologies enhance resilience in dynamic environments \cite{klaesson_2020}. The ACHORD framework integrates network design with high-level decision-making to improve subterranean communication \cite{silva_2022}.
+
+
 
 
 \end{document}
