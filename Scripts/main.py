@@ -10,6 +10,7 @@ from world import World
 
 def main():
 	### INITIALISAZE WINDOW
+	# main_window = Window(window_size = (1200, 700), window_title = "Robot simulator")
 	main_window = Window(window_size = (1200, 700), window_title = "Robot simulator")
 	### WORLD INIT
 	main_world = World(main_window.window)

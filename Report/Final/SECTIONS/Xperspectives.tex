@@ -3,14 +3,98 @@
 
 \begin{document}
 
-ROS (Robot Operating System) implementation coupled with Rviz or Gazebo. 
+To further develop this work, I aim to explore another way to acheive optimal path. As seen earlier, global path optimization was not entirely successful. To address this, I simplified the problem and focused on a new approach that frames it as a control problem from both a mathematical and empirical perspective. Both aspects are still under development and must be implemented in the simulator later.
 
-Implementation on robot either to have both simulation and experimentation 
+\subsection*{Local Path Theory}
 
+\subsubsection*{First Approach: Mathematical Optimization}
 
+In this section, we seek to determine the optimal control commands that allow the robot to navigate toward a local waypoint without collisions while adhering to its physical constraints.
 
+\vspace{1em}
 
-Ouverture thèse...
+Here, "optimal" refers to minimizing energy consumption when moving from point A to point B. Since the robot operates with DC motors, power consumption is proportional to voltage (which affects rotation speed) and current (which influences torque). Assuming a flat surface and constant torque, current remains unchanged, meaning energy consumption is primarily determined by wheel speed. The energy expenditure for movement is defined as:
+
+\begin{equation}
+    E(T) = \int_{0}^{T} \| \omega(t) \| \, dt
+\end{equation}
+
+where
+
+\begin{equation}
+    \| \omega (t) \| = \sqrt{\omega_L^{2}(t) + \omega_R^{2}(t)}
+\end{equation}
+
+and
+
+\begin{equation}
+    \omega_{L, R} \,:\, \mathbb{R}_+ \longrightarrow [-\omega_{max}, \omega_{max}]
+\end{equation}
+
+Two constraints must be satisfied: the robot's initial position $X(0)$ must match its current position $X_R$, and its final position $X(T)$ must correspond to the waypoint $X_{WP}$.
+
+\vspace{1em}
+
+In \autoref{sec:robot_model}, we derived the system dynamics as $\dot{X} = F(\omega)$.
+
+\vspace{1em}
+
+The goal is then to optimize $E(T)$.
+
+\vspace{1em}
+
+\paragraph{Note:} If the current were not constant, energy consumption would depend on the terrain characteristics. In this case, energy would be defined as:
+
+\begin{equation}
+    \tilde{E}(T) = \int_{0}^{T} \| U(t) I(t) \| dt
+\end{equation}
+
+where $U(t)$ and $I(t)$ vary based on environmental conditions. This would significantly increase the problem's complexity.
+
+The challenge remains identical to that in global path optimization: How can we ensure that $X(T) = X_{WP}$?
+
+\subsubsection*{Second Approach: Empirical Optimization}
+
+The second approach involves determining the set of all possible maximal paths that the robot can follow within a given time frame. By reversing the problem, we can infer the optimal control commands needed to reach the waypoint efficiently.
+
+Initially, I focus on identifying the maximal paths using stochastic methods, see \autoref{fig:stocha_path}. Then, I compute all feasible path combinations for a given number of distinct control inputs, see \autoref{fig:empir_path}. This approach provides a data-driven way to refine the navigation strategy, complementing the theoretical optimization.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{IMAGES/perspectives/random.png}
+		\caption{Stochastic Path}
+		\label{fig:stocha_path}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{IMAGES/perspectives/empiric.png}
+		\caption{Empirical Path}
+		\label{fig:empir_path}
+	\end{subfigure}
+	\caption{Comparison of Stochastic and Empirical Path Optimization Approaches}
+	\label{fig:path_optimization}
+\end{figure}
+
+Results were better simulating all combinations possible.
+
+\subsection*{ROS Implementation}
+Possible future work includes implementing the simulator within a Robot Operating System (ROS) architecture, integrated with RViz or Gazebo for visualization and testing. ROS is a middleware that provides a flexible framework for developing robotic applications by offering tools, libraries, and conventions to simplify communication between different robotic components. 
+
+\vspace{1em}
+
+By implementing the simulator in ROS, we can enhance modularity, allowing seamless integration of additional sensors, actuators, and real-world robotic hardware. Gazebo, as a high-fidelity physics simulator, would enable realistic testing of the robot's movement and interaction with dynamic environments, while RViz would facilitate real-time visualization of sensor data and path planning.
+
+\vspace{1em}
+
+Moreover, integrating ROS would allow for better compatibility with existing robotic platforms, making it easier to transition from simulation to real-world deployment. Future work could also explore ROS2 for improved performance, scalability, and real-time capabilities, further enhancing multi-robot coordination and communication.
+
+\vspace{1em}
+
+The energy consumption shoulf also be implemented to account for the robot's real-time power usage, considering factors such as motor efficiency, battery limitations, and terrain characteristics.
+
+\subsection*{PhD oppening}
+All these open areas in my work will be essential components of my future research within the framework of my PhD. The main objective will be to design optimal trajectory planning algorithms for the recovery of underwater drone swarms. This work represents the first step into the world of robotics and mathematics research, a field I will continue to explore and develop during my PhD, which is currently in the process of securing funding.
 
 
 \end{document}

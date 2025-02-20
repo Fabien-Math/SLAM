@@ -3,8 +3,14 @@
 
 \begin{document}
 
+In conclusion, this work has successfully proposed and tested novel methods for trajectory planning and communication within drone swarms for cavity exploration. The proposed trajectory planning algorithm, which divides the shortest path to the target into successive segments, has demonstrated its effectiveness in enabling dynamic and rapid adjustments to the robots' paths. Furthermore, the master robot-based coordination approach has proven efficient in minimizing data transfer while effectively managing communication errors through the ARQ method. All these strategies were tested within a Python-based simulator, providing valuable insights into the practical application of these methods in real-world scenarios. The results of this research open up new possibilities for advancing multi-robot systems in complex environments, offering a solid foundation for further developments in this area.
 
-HUGE NOTE ON PERFORMANCES
+\vspace{1em}
 
+Moreover, the current simulation and algorithms were implemented in Python, but performance could be significantly improved by switching to C++. Python, while suitable for prototyping, is slower due to its interpreted nature. Using C++, a compiled language, would enhance computational efficiency, especially for real-time calculations, trajectory planning, and multi-robot coordination, and better handle resource-intensive tasks like path recalculations and communication. Additionally, it is important to note that the communication protocol was not fully implemented in this work, which means that its complete functionality and impact on system performance could not be fully evaluated. 
+
+\vspace{1em}
+
+Finally, while significant progress has been made in trajectory planning, much remains to be done in the mathematical optimization of path planning. Future work will focus on refining the mathematical models to ensure better accuracy, scalability, and optimality of the planned paths. This includes further work on optimizing energy consumption, minimizing travel time, and addressing constraints imposed by the environment or robot capabilities.
 
 \end{document}

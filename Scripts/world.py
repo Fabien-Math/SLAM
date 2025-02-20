@@ -20,8 +20,8 @@ class World:
 		self.crashed_robot: list = []
 
 		for i in range(1):
-			# beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 50, 50, 150)
-			beacon = BeaconRobot(i, (200+50*i, 350), 50, 1000, 50, 50, 150)
+			beacon = BeaconRobot(i, (500+50*i, 300+20*i), 50, 1000, 50, 50, 150)
+			# beacon = BeaconRobot(i, (200+50*i, 350), 50, 1000, 50, 50, 150)
 			# beacon = BeaconRobot((300, 400), 50, 1000, 100, 25, 150)
 			# Equip sensors
 			beacon.equip_lidar(fov=360, freq=5, res=7, prec=(0.05, 0.02), max_dist=100)
@@ -65,7 +65,8 @@ class World:
 
 		for i, robot in enumerate(self.robots):			
 			if robot.crashed:
-				continue
+				# continue
+				pass
 
 			### SIMULATION
 			robot.compute_pos_calc(self.time)

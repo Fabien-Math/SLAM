@@ -180,15 +180,9 @@ Type indicators (up to 15 indicator types, \texttt{0000} being already reserved)
 \textbf{Emitter ID with Parity:} $\smallsmile \smallsmile \smallsmile \smallsmile$\\
 The emitter ID is repeated with a parity bit. The parity ensures the total number of 1s in the message frame up to the emitter ID with parity is correct. If odd, the last bit is flipped. \\
 
+\vspace{1em}
 
-
-\subsection{Dencoding}
-
-
-\subsection{Implementation}
-
-To implement it, we define a table of message with their specification, for each message received, there is a frame of response with some test.
-
+We also define a table of message with their specification, for each message received, there is a frame of response with some test.
 
 Message ID table:
 \begin{table}[H]
@@ -216,23 +210,36 @@ Message ID table:
 	\end{tabular}
 \end{table}
 
-
-Information sent for each message type could be found in the \textcolor{red}{\textbf{Appendix ...}}.
-
 Robot info:
 2 \textit{float32} for position, 1 \textit{float32} for velocity, 1 \textit{float32} for rotation, 1 \textit{float32} for angular velocity, 1 \textit{int8} for energy\\
 
 Connected robot set:
 \texttt{4} bits for set length + \texttt{4} bits per robot id
 
-\subsection{Possible robotics implementation}
 
-Robots communicate using different color channels. For instance, white could be used for broadcasting messages to all other robots. The overlapping of colors should not affect communication as long as each robot's color identifier is not a linear combination of the others.
+\subsection{Performance Analysis Methodology}
 
-We could use the SEN10656 4-channel color sensor for precise detection.
+To evaluate the performance of the algorithm, we will use same criterion basis than those used for the path planning analysis: range, robustness, speed.
 
-Each robot would be capable of emitting on all channels and receiving on a specific one.
+\subsubsection{Delimited Range of Application}
+
+The communication protocol is designed for swarm-based robotic exploration, enabling robots to exchange map data, coordinate movements, and share status updates without relying on external infrastructure. It is applicable in both indoor and outdoor environments, such as disaster response, planetary exploration, and search-and-rescue operations. Communication is initially based on direct visual contact (light-based communication) but can be extended to simulate light travel for improved reliability. The protocol is optimized for scalability, ensuring efficient data exchange in small to medium-sized robotic swarms.
+
+\subsubsection{Robustness to Failure and Uncertainty}
+
+To ensure robustness, the protocol incorporates error detection and recovery mechanisms, such as Automatic Repeat reQuest (ARQ), unit sum check, and parity bit verification to detect corrupted messages and request retransmission. If communication fails, the system automatically retries multiple times before skipping a failed recipient, ensuring overall progression. Additionally, the master role is dynamically reassigned if a group splits or if a master robot fails, maintaining coordination despite potential disruptions. The compact encoding of messages also minimizes bandwidth usage, making the system resilient to network constraints.  
 
 
+\subsubsection{Speed}
+
+An important aspect of the method is its speed and efficiency. The use of compact one-byte encoded cost values ensures that communication remains lightweight, reducing transmission delays. The protocol follows a strict request-response cycle, preventing unnecessary retransmissions and minimizing wait times. Moreover, by enabling parallel communication between different groups, it ensures that multiple robots can process and execute tasks simultaneously, leading to faster exploration and real-time adaptability to environmental changes.
+
+\vspace{2em}
+
+With the path planning method established, effective communication ensures coordination among robots. We have analyzed its range, robustness and speed, showing its role in efficient exploration.  
+
+\vspace{1em}
+
+Next, we focus on the Python-based simulator, which will test and refine both the path planning and communication protocols before real-world deployment.
 
 \end{document}

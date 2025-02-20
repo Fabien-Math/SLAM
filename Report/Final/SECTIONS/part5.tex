@@ -8,12 +8,18 @@
 The simulator is designed to test various algorithms and methods for multi-robot exploration of caves. The robots operate in the air while moving along the floor. To simplify the problem, we approximate the floor as a 2D plane without any surface irregularities.
 
 \subsection{Creation of the map}
+\label{sec:map_creation}
 
-The map consist in succession of straight lines generate by a simple cellular automata. 
+The map consist in succession of straight lines generate by marching square method on a simple cellular automata. 
 
+\subsubsection{Cellular Automata}
 A cellular automaton is a grid of cells, where each cell can exist in different states based on predefined rules. The concept was developed by Stanislaw Ulam and John von Neumann in the 1940s.  
 
+\vspace{1em}
+
 The most famous cellular automaton, which helped popularize its use, was developed by John Conway: \textit{Conway's Game of Life}. This model follows a set of four simple rules, which can be found \href{URL}{here}. The rules are based on the properties of neighboring cells.  
+
+\vspace{1em}
 
 There are two commonly used neighborhood types in cellular automata:  
 \begin{itemize}  
@@ -21,6 +27,7 @@ There are two commonly used neighborhood types in cellular automata:
     \item \textbf{Moore neighborhood}, an extension that includes all eight surrounding cells, both diagonal and direct neighbors.  
 \end{itemize}
 
+\vspace{0.5em}
 
 The beauty of this system lies in the complexity that emerges from such simple rules. Beginning with the configuration shown in \autoref{fig:startconfigcgof}, the system evolves into the states illustrated in \autoref{fig:CGOF} at generations 87 and 263.
 
@@ -50,11 +57,15 @@ The beauty of this system lies in the complexity that emerges from such simple r
 
 Programmers, computer scientists, and mathematicians began cataloging all the \href{https://en.wikipedia.org/wiki/Conway's_Game_of_Life#Examples_of_patterns}{patterns they encountered} and constructed remarkably complex machines.
 
+\vspace{1em}
+
 In our case, the rules are defined as follows:
 \begin{itemize}  
     \item If there are more than 4 activated cells in the Moore neighborhood, the cell activates. 
     \item Otherwise, the cell deactivates. 
 \end{itemize}
+
+\vspace{0.5em}
 
 I implement the method on a Cartesian grid and then transform it into a triangular mesh, as shown in \autoref{fig:triag_transform}. The maps generated after this transformation improved in quality.
 
@@ -65,7 +76,11 @@ I implement the method on a Cartesian grid and then transform it into a triangul
 	\label{fig:triag_transform}
 \end{figure}
 
+\vspace{0.5em}
+
 Using the Marching Squares method, I draw the boundaries between occupied cells (red dots) and unoccupied cells (green dots).
+
+\subsubsection{Marching squares}
 
 Marching Squares is a technique for generating the contours of a two-dimensional grid, which, in our case, is a triangular mesh. As we traverse the domain, the boundaries are drawn accordingly. \autoref{fig:marching_triag} illustrates all possible states of an element composed of three cells.
 
@@ -86,6 +101,8 @@ At the end of both steps—transformation and Marching Squares—we obtain the f
 \end{figure}
 
 In the simulator, maps are generated based on a seed and a random generator. The shape of each map is controlled by three parameters: the step size along the x-axis, the step size along the y-axis, and the overall map size.
+
+\vspace{0.5em}
 
 This allows for a vast variety of map configurations. \autoref{fig:three_map_example} illustrate some examples.
 \begin{figure}[H]
@@ -114,14 +131,16 @@ This allows for a vast variety of map configurations. \autoref{fig:three_map_exa
     \label{fig:three_map_example}
 \end{figure}
 
-\tobedone
-
+The advantage of this technique for generating maps is its adaptability to 3D environments, allowing for the creation of detailed cave maps.
 
 \subsection{Robot implementation}
 
 \subsubsection{Robot model}
+\label{sec:robot_model}
 
 As a robot, I used a simple diferential drive robot with two idle-wheels and 2 driven wheels.
+
+\vspace{0.5em}
 
 A model of the robot can be found on \autoref{fig:robot_model} and \autoref{fig:robot_3Dmodel}.
 
@@ -144,6 +163,8 @@ A model of the robot can be found on \autoref{fig:robot_model} and \autoref{fig:
 \end{figure}
 
 The kinematics of the robot is given by :
+
+\vspace{0.5em}
 
 We assume that the grip is perfect between the road and the robot wheels, the robot wheels roll without sliding. Under this condition, $V_R$ and $V_L$, the speed of the wheel in the ground reference is given by :
 
@@ -170,6 +191,8 @@ $$\displaystyle \dot{\theta} = \frac{1}{2} \left(\varphi_R - \varphi_L\right)$$
 The difference is taken as is to ensure that the angular speed is positive when the angle increases in the anticlockwise direction.
 
 $$\displaystyle \dot{\theta} = \frac{r}{2d} \left(\omega_R - \omega_L\right)$$
+
+This model for the robot isn't yet integrated due to the ongoing optimization of the path, which is discussed in the perspectives section.
 
 
 \subsubsection{Sensors}
@@ -279,6 +302,136 @@ This way, if the occurrence value is high, we can be certain that there is a non
 	\label{fig:map_updates}
 \end{figure}
 
+
+\subsection{Communication implementation}
+
+
+Robots communicate using different color channels to distinguish message types. For example, white could be used for broadcasting messages to all robots. Communication remains unaffected by overlapping colors as long as each robots color identifier is not a linear combination of the others. For precise detection, we could use the SEN10656 4-channel color sensor. Each robot can emit on all channels while receiving on a specific one.
+
+\vspace{1em}
+
+Currently, communication has been implemented up to the waypoint decision-making stage. However, the master robot does not yet issue movement orders to others. Despite this, the transmission of map data and robot status information functions effectively.
+
+\vspace{1em}
+
+Beyond the previously developed method, several improvements have been introduced. For instance, a conversation history has been added, and the transmission and reception rates can be adjusted to simulate different conditions. Every second, each robot sends a status update to all others, ensuring a continuous exchange of information.
+
+\vspace{1em}
+
+These adjustments were crucial for refining communication, making it more adaptable and realistic for various scenarios.
+
+
+\subsection{Final results}
+
+This section presents the final results of this work, evaluating the performance of the proposed multi-robot exploration method. The results reflect the current state of implementation, considering that some adjustments and features are not yet fully realized as initially conceived.
+
+The results of testing the simulator on different maps are summarized in \autoref{tab:exploration_times}.
+
+\textbf{Note:}
+
+During some tests, robots occasionally collided with each other. After investigating the issue, I found that the LIDAR frequency needed to be significantly higher for real-time collision avoidance. Otherwise, a Kalman Filter should be implemented to predict robot movement and adjust their paths accordingly. A Kalman Filter is an optimal recursive estimation algorithm that fuses sensor data with a predictive model to estimate the true state of a system, even in the presence of noise and uncertainties. In this context, it would help predict the future positions of robots based on their past trajectories, allowing them to proactively avoid collisions rather than relying solely on real-time sensor data.
+
+
+Since the final part of the communication protocol has not been implemented, the paths of the robots frequently overlap, resulting in a suboptimal solution. This observation is seen in the \autoref{tab:exploration_times}.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{c c c c}
+		\hline
+		\textbf{Map Size} & \textbf{Number of Robots} & \textbf{Exploration Time} & \textbf{Relative Improvement} \\ \hline
+		30 & 1 & 2'20" & - \\
+		30 & 2 & 1'3" & 55\% \\
+		40 & 1 & 2'35" & - \\
+		40 & 2 & 1'32" & 41\% \\
+		55 & 1 & 2'7" & - \\
+		55 & 2 & 54" & 57\% \\
+		100 & 1 & 3'16" & - \\
+		100 & 3 & 1'28" & 55\% \\
+		100 & 5 & 1'12" & 63\% \\
+	\end{tabular}
+	\caption{Exploration times for different map sizes and number of robots}
+	\label{tab:exploration_times}
+\end{table}
+
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map30.png}
+		\caption{Map 30}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map30_explored_1robot.png}
+		\caption{Map 30 - End of the exploration}
+	\end{subfigure}
+	\caption{Exploration on map 30}
+	\label{fig:explo_30}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map40.png}
+		\caption{Map 40}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map40_explored_1robot.png}
+		\caption{Map 40 - End of the exploration}
+	\end{subfigure}
+	\caption{Exploration on map 40}
+	\label{fig:explo_40}
+	\vfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map40_explored_2robot.png}
+		\caption{Map 40 - End of the exploration with 2 robots}
+	\end{subfigure}
+	\caption{Exploration on map 40}
+	\label{fig:explo_40_2}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map55.png}
+		\caption{Map 55}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map55_explored_2robot.png}
+		\caption{Map 55 - End of the exploration}
+	\end{subfigure}
+	\caption{Exploration on map 55}
+	\label{fig:explo_55}
+\end{figure}
+
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map100.png}
+		\caption{Map 100}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{IMAGES/part5/map100_explored_5robot.png}
+		\caption{Map 100 - End of the exploration}
+	\end{subfigure}
+	\caption{Exploration on map 100}
+	\label{fig:explo_100}
+\end{figure}
 
 
 

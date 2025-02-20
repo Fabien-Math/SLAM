@@ -44,7 +44,7 @@ d = 0.15				# m
 
 
 nt = 6
-tf = None
+tf = 1
 X, Y = compute_range(nt, R, d, tf)
 maskX = X > 0
 X_tronc = X[maskX]
@@ -60,6 +60,8 @@ hull = ConvexHull(points)
 valid_ids = np.append(hull.vertices, hull.vertices[0])
 
 plt.plot(points[valid_ids, 0], points[valid_ids, 1], color="C1")
-
+plt.title("Time-reachable set computing all combinations")
+plt.xlabel("x (mu)")
+plt.ylabel("y (mu)")
 plt.axis("equal")
 plt.show()
