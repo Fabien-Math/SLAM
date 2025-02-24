@@ -51,7 +51,7 @@
 % Renseigner si le document contient un glossaire
 \setboolean{glossaire}{false}
 % Renseigner si le Rapport contient des annexes 
-\setboolean{annexe}{true}
+\setboolean{annexe}{false}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -206,7 +206,7 @@
 %     Résumé     %
 %%%%%%%%%%%%%%%%%%
 \ifthenelse{\boolean{abst}}{
-	\addcontentsline{toc}{section}{\protect\numberline{}Résumé}%
+	\addcontentsline{toc}{section}{\protect\numberline{}Abstract}%
 	\subfile{SECTIONS/1resume}
 
 	\newpage
@@ -216,7 +216,7 @@
 %     Remerciements     %
 %%%%%%%%%%%%%%%%%%%%%%%%%
 \ifthenelse{\boolean{thx}}{
-	\addcontentsline{toc}{section}{\protect\numberline{}Remerciements}%
+	\addcontentsline{toc}{section}{\protect\numberline{}Acknowledgement}%
 	\subfile{SECTIONS/2remerciements}
 
 	\newpage

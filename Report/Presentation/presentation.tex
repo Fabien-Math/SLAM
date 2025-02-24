@@ -1,0 +1,283 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+% Import all packages
+\include{packages}
+
+\newcommand{\titre}{Conception et optimisation d'algorithmes de coordination multi-robot}
+\newcommand{\titrefooter}{Soutenance - Projet de fin d'études}
+\newcommand{\soustitre}{Exploration autonome de réseaux de galerie}
+\newcommand{\auteur}{Fabien MATHÉ}
+\newcommand{\referent}{M. Mehmet ERSOY}
+\newcommand{\institut}{Seatech - MOCA 3A}
+\newcommand{\presentationdate}{27 février 2025}
+
+
+% Thème clair et épuré
+\usetheme{Berlin} % Thème Berlin
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{} % Suppression des symboles de navigation
+
+% Personnalisation du thème
+\include{personalisation}
+
+% Titre de la présentation
+\title[Titre court]{\titre}
+\subtitle{\soustitre}
+\author{\auteur}
+\institute{\institut \newline \titrefooter}
+\date{\presentationdate}
+
+\usefonttheme[onlymath]{serif}
+
+\begin{document}
+
+% Page de titre (Timeline non affichée ici)
+
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\setbeamertemplate{headline}[miniframes theme]
+\customfootline
+
+% Section 1 : Introduction
+\section{Introduction}
+
+\begin{frame}{\textbf{Introduction}}
+	\begin{minipage}{0.6\linewidth}
+		\begin{itemize}
+			\item Fascination pour l'inconnu
+			\vspace{0.2cm}
+			\item Meilleure compréhension de notre planète
+			\vspace{0.2cm}
+			\item Défis inhérents de l'exploration souterraine
+			\begin{itemize}
+				\item Accessibilité
+				\vspace{0.2cm}
+				\item Communication
+				\vspace{0.2cm}
+				\item Navigation
+			\end{itemize}
+			\vspace{0.2cm}
+			\item Intérêt scientifique
+			\begin{itemize}
+				\item Découverte de nouvelles formes de vie
+				\vspace{0.2cm}
+				\item Structures géologiques préservées
+			\end{itemize}
+		\end{itemize}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.35\linewidth}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.8\textwidth]{IMAGES/Grotte_de_la_flûte_de_pan.jpeg}
+			\caption{Grotte de la flûte de pan (Guilin, Chine). Paul Munhoven \href{https://commons.wikimedia.org/w/index.php?curid=27712205}{\copyright}}
+			\label{fig:china_cave}
+		\end{figure}
+	\end{minipage}
+
+\end{frame}
+
+\begin{frame}{\textbf{Introduction}}
+
+	\begin{minipage}{0.6\linewidth}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.8\textwidth]{IMAGES/le-lac-des-grottes-lombrives.jpg}
+			\caption{Lac de la Grotte de Lombrives - Ariège}
+			\label{fig:ariege_cave}
+		\end{figure}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.35\linewidth}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.9\textwidth]{IMAGES/Elizabeth.png}
+			\caption{Elizabeth, le robot serpent. Nico Zevalios and Chaohui Gong}
+			\label{fig:robot_exploration}
+		\end{figure}
+	\end{minipage}
+    
+	\textbf{Objectif :}
+
+	\vspace{0.8em}
+	\begin{itemize}
+		\item Développer des algorithmes de navigation pour des robots autonomes en milieu souterrain.
+		\vspace{0.2cm}
+		\item Assurer une communication autonome entre des robots sans contrôle externe.
+	\end{itemize}
+\end{frame}
+
+% Table des matières
+\begin{frame}{\textbf{Sommaire}}
+    \tableofcontents
+\end{frame}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Plannification de trajectoire}
+
+\begin{frame}{\textbf{Tentative de d'optimisation théorique}}
+	\begin{itemize}
+		\item Objectif : Trouver le plus court chemin liant deux points
+		\vspace{0.2cm}
+		\item Contraintes :
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Découverte dynamique de la carte
+			\vspace{0.2cm}
+			\item Évitement des obstacles
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Simplification :
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Aucune contrainte liée au robot
+			\vspace{0.2cm}
+			\item Espace 2D
+		\end{itemize}
+	\end{itemize}
+	% \begin{textblock*}{3cm}(12cm,3cm) % {block width} (coords)
+	% 	\includegraphics[width=3cm]{IMAGES/path_diagram_ilustration.png}
+	% \end{textblock*}
+	
+\end{frame}
+
+\begin{frame}[t]{\textbf{Définition de l'espace étoilé et de la fonctionnelle à optimiser}}
+	\begin{minipage}[t]{0.6\linewidth}
+		\begin{equation*}
+			\displaystyle
+			FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \alpha) \,|\, l \in [0, 1], \alpha \in [0, 2 \pi[ \, \right\}
+		\end{equation*}
+			
+		\begin{equation*}
+			\mathbf{M}(t, \alpha) = \mathbf{X}(t) + R(t, \alpha) 
+			\begin{pmatrix}
+				\cos \alpha & 0\\
+				0 & \sin \alpha\\
+			\end{pmatrix} 
+			\mathbf{X}(t)
+		\end{equation*}
+
+	Avec $R(t, \alpha)$ la distance minimale entre le robot et le plus proche point d'intersection à un mur, borné par $R_{\max}$.
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.38\linewidth}
+		\begin{figure}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/math_nota.png}
+			\caption{Schéma des notations}
+			\label{fig:math_notation}
+		\end{figure}
+	\end{minipage}
+
+	\textbf{Fonctionnelle :}
+	\begin{equation*}
+		\displaystyle
+		J(\mathbf{X}(0), T) = \int_{0}^{T} \| \mathbf{\dot{X}}(t) \| dt
+	\end{equation*}
+	avec $\mathbf{X}(0) = \mathbf{X}_{Robot}$ et $\mathbf{X}(T) = \mathbf{X}_{WP}$
+	
+\end{frame}
+
+\begin{frame}{\textbf{Problèmes rencontrés}}
+	Question ouverte :
+		Comment garantir $\mathbf{X}(T)=\mathbf{X}_{WP}$ en contraignant $\dot{X}(t)$ ?
+		Comment choisir le temps T ?
+	
+			Tdoit être suffisamment grand pour atteindre la cible.
+			Si le robot s'arrête à $t_1$, alors :
+			$\int_{t_1}^{t} \mathbf{X}(t)^{2} dt = 0$.
+	
+		Comment prendre en compte l'exploration de la carte ?
+
+	Reduction du problème à une première approche simple supposant que la carte est connue.
+
+\end{frame}
+
+\begin{frame}{\textbf{Proposition d'une nouvelle méthode}}
+    Slide 5
+\end{frame}
+
+\begin{frame}{\textbf{Méthode de vérification}}
+    Slide 5
+\end{frame}
+
+\begin{frame}{\textbf{Méthode de vérification}}
+    Slide 5
+\end{frame}
+
+\begin{frame}{\textbf{Résultats et performance}}
+    Slide 5
+\end{frame}
+
+\begin{frame}{\textbf{Résultats et performance}}
+    Slide 5
+\end{frame}
+
+% Section 3 : Résultats
+\section{Communication}
+
+\begin{frame}{\textbf{Résultats}}
+    Slide 5
+\end{frame}
+
+\begin{frame}{\textbf{Résultats}}
+    Slide 6
+\end{frame}
+
+\begin{frame}{\textbf{Résultats}}
+    Slide 7
+\end{frame}
+
+\begin{frame}{\textbf{Résultats}}
+    Slide 8
+\end{frame}
+
+\begin{frame}{\textbf{Résultats}}
+    Slide 9
+\end{frame}
+
+% Section 4 : Discussions
+\section{Simulateur et résultats}
+
+\begin{frame}{\textbf{Discussions}}
+    Slide 10
+\end{frame}
+
+\begin{frame}{\textbf{Discussions}}
+    Slide 11
+\end{frame}
+
+
+% Section 5 : Conclusion
+\section{Conclusion et perspectives}
+\begin{frame}{\textbf{Conclusion}}
+    Slide 12
+	Un simulateur construit:
+		Environ 3500 lignes de code
+		Une dixaine de fonction utiles pour la suite
+\end{frame}
+
+% Section 5 : Conclusion
+\begin{frame}{\textbf{Perspectives}}
+    Slide 12
+\end{frame}
+
+\begin{frame}{\textbf{Perspectives}}
+    Slide 13
+\end{frame}
+
+\begin{frame}{\textbf{Références}}
+    Slide 13
+\end{frame}
+
+\end{document}

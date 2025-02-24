@@ -13,12 +13,13 @@ we consider the theoretical path that the robot should follow in a space with ob
 Let us define the following variables:
 \begin{itemize}
 	\item $\Omega \in \mathbb{R}^{2}$: the world
+	\item $\alpha$: the line angle 
 	\item $\mathbf{X}(t)$: the coordinates of the robot at time $t$ in this space
 	\item $FV(t)$: the field of vision of the robot at time $t$
 	\item $W$: the set of all walls of the map represented by segments, $\displaystyle W = \left\{ \, \text{\rmfamily WallSegment} (\Omega)\, \right\}$
-	\item $R(t, \theta)$: the minimale distance between the robot and all the intersection points between a segment  starting from the robot and the map walls.
+	\item $R(t, \alpha)$: the minimale distance between the robot and all the intersection points between a segment  starting from the robot and the map walls.
 	\item $R_{max}$: the radius of the field of vision
-	\item $\mathbf{M}(t, \theta)$: the first intersection point between a segment and the walls
+	\item $\mathbf{M}(t, \alpha)$: the first intersection point between a segment and the walls
 \end{itemize}
 
 
@@ -36,42 +37,42 @@ The \autoref{fig:math_notation} visualize the notation on a diagram.
 We can define $R$ as: 
 \begin{equation*}
 	\displaystyle
-	R(t, \theta) = 
+	R(t, \alpha) = 
 	\begin{cases*}
-		\min(\text{\rmfamily distance}( \, \mathbf{X}(t), \, P_i(t, \theta) \,)),~~~~~~~ \forall i \in \{0, \ldots, \text{\rmfamily Card}(P) - 1\} ~\text{\rmfamily if Card}(P) > 0,\\
+		\min(\text{\rmfamily distance}( \, \mathbf{X}(t), \, P_i(t, \alpha) \,)),~~~~~~~ \forall i \in \{0, \ldots, \text{\rmfamily Card}(P) - 1\} ~\text{\rmfamily if Card}(P) > 0,\\
 		R_{max}, ~~~~~~~\text{\rmfamily otherwise}.
 	\end{cases*}
 \end{equation*}
 \vspace{0.5em}
 
 
-where $P(t, \theta) = \{L(t, \theta) \cap W\}$ is the set of all intersection point between the segment $L$ and the segment of the map and $Card(P)$ the number of element in this set.
+where $P(t, \alpha) = \{L(t, \alpha) \cap W\}$ is the set of all intersection point between the segment $L$ and the segment of the map and $Card(P)$ the number of element in this set.
 \vspace{0.5em}
 
 $L$ is defined as follows:
 \begin{equation*}
 	\displaystyle
-	L(t, \theta) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \theta) \,|\, l \in [0, 1]\, \right\}
+	L(t, \alpha) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}_{max}(t, \alpha) \,|\, l \in [0, 1]\, \right\}
 \end{equation*}
 
 We then have:
 \begin{equation*}
 	\displaystyle
-	\mathbf{M}(t, \theta) = \mathbf{X}(t) + R(t, \theta) 
+	\mathbf{M}(t, \alpha) = \mathbf{X}(t) + R(t, \alpha) 
 	\begin{pmatrix}
-		\cos \theta & 0\\
-		0 & \sin \theta\\
+		\cos \alpha & 0\\
+		0 & \sin \alpha\\
 	\end{pmatrix} 
 	\mathbf{X}(t)
 \end{equation*}
 
-We denote $\mathbf{M}_{max} (t, \theta)$ as the point such that $R(t, \theta) = R_{max}$.
+We denote $\mathbf{M}_{max} (t, \alpha)$ as the point such that $R(t, \alpha) = R_{max}$.
 \vspace{0.5em}
 
 Furthermore, we define the field of vision of the robot as:
 \begin{equation}
 	\displaystyle
-	FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \theta) \,|\, l \in [0, 1], \theta \in [0, 2 \pi[ \, \right\}
+	FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \alpha) \,|\, l \in [0, 1], \alpha \in [0, 2 \pi[ \, \right\}
 \end{equation}
 
 In other words, $FV(t)$ is the star domain of $\Omega$ with a maximum radius $R_{max}$, within which all frontier points are reachable by a straight line from the robot.
@@ -85,6 +86,7 @@ We now construct the functional to optimize, which is related to the movement of
 	\displaystyle
 	J(\mathbf{X}(t)) = \int_{0}^{T} | \mathbf{\dot{X}}(t) | dt
 \end{equation}
+
 \vspace{0.5em}
 
 $J$ is a functional function of the initial position of the robot, giving the length of the path traveled by the robot before $t = T$.
@@ -257,7 +259,7 @@ To find the shortest path, I like to take inspiration from nature by simulating 
 
 \vspace{1em}
 
-The wave equation describes how information spreads at a certain speed, but challenges arise—how to model refraction, how to ensure the wave propagates at a constant speed. To tackle this, I used a cellular automaton once again. Made for propagating information, they are an interesting tool for this approach.\cite{tapia_2016}
+The wave equation describes how information spreads at a certain speed, but challenges arise—how to model refraction, how to ensure the wave propagates at a constant speed. To tackle this, I used a cellular automaton (CA) once again. Made for propagating information, they are an interesting tool for this approach.\cite{tapia_2016}
 
 \vspace{1em}
 
@@ -507,16 +509,16 @@ The calculation with the cellular automata is done with the following parameters
 	\centering
 	\begin{tabular}{c c c c c c}
 		\hline
-		Map & Theoretically & Method & Relative difference ($\%$) & Cellular Automata ($\pm 2$ mu) & Error ($\%$)\\
+		Map & Theoretically & New Method & Rel. diff. ($\%$) & CA ($\pm 2$ mu) & Rel. Error ($\%$)\\
 		\hline
 		Map 1 & 1081 & 1084 & 0.3 & 1086 & 0.5\\
 		Map 2 & 1121 & 1125 & 0.4 & 1122 & 0.1\\
 		Map 3 & 1122 & 1125 & 0.4 & 1122 & 0\\
 		Map 4 & 1084 & 1088 & 0.4 & 1086 & 0.2\\
 		Map 5 & 1521 & 1531 & 0.7 & 1522 & 0.1\\
-		Map 6 & 1166 & - &  & 1168 & 0.2\\
-		Map 7 & 1166 & - &  & 1168 & 0.2\\
-		Map 8 & 1776 & - &  & 1780 & 0.2\\
+		Map 6 & 1166 & - & - & 1168 & 0.2\\
+		Map 7 & 1166 & - & - & 1168 & 0.2\\
+		Map 8 & 1776 & - & - & 1780 & 0.2\\
 		\hline
 	\end{tabular}
 	\caption{Benchmark results for the new method}
