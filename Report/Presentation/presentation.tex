@@ -126,33 +126,31 @@
 \section{Plannification de trajectoire}
 
 \begin{frame}{\textbf{Tentative de d'optimisation théorique}}
+	\textbf{Objectif}
+	\vspace{0.5em}
+	
+	Trouver le plus court chemin permettant d'explorer une carte inconnue
+	
+	\vspace{0.5em}
 	\begin{itemize}
-		\item Objectif : Trouver le plus court chemin liant deux points
-		\vspace{0.2cm}
 		\item Contraintes :
-		\vspace{0.2cm}
 		\begin{itemize}
-			\item Découverte dynamique de la carte
-			\vspace{0.2cm}
 			\item Évitement des obstacles
 		\end{itemize}
 		\vspace{0.2cm}
 		\item Simplification :
-		\vspace{0.2cm}
 		\begin{itemize}
 			\item Aucune contrainte liée au robot
 			\vspace{0.2cm}
 			\item Espace 2D
 		\end{itemize}
 	\end{itemize}
-	% \begin{textblock*}{3cm}(12cm,3cm) % {block width} (coords)
-	% 	\includegraphics[width=3cm]{IMAGES/path_diagram_ilustration.png}
-	% \end{textblock*}
 	
 \end{frame}
 
-\begin{frame}[t]{\textbf{Définition de l'espace étoilé et de la fonctionnelle à optimiser}}
+\begin{frame}[t]{\textbf{Définition de l'espace étoilé}}
 	\begin{minipage}[t]{0.6\linewidth}
+		On défini :
 		\begin{equation*}
 			\displaystyle
 			FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \alpha) \,|\, l \in [0, 1], \alpha \in [0, 2 \pi[ \, \right\}
@@ -166,8 +164,8 @@
 			\end{pmatrix} 
 			\mathbf{X}(t)
 		\end{equation*}
-
-	Avec $R(t, \alpha)$ la distance minimale entre le robot et le plus proche point d'intersection à un mur, borné par $R_{\max}$.
+	
+		Avec $R(t, \alpha)$ la distance minimale entre le robot et le plus proche point d'intersection à un mur, borné par $R_{\max}$.
 	\end{minipage}
 	\hfill
 	\begin{minipage}[t]{0.38\linewidth}
@@ -178,106 +176,901 @@
 			\label{fig:math_notation}
 		\end{figure}
 	\end{minipage}
+	
+	\begin{itemize}
+		\item $\displaystyle KM = \bigcup_{t=0}^{T} FV(t)$ : La partie de la carte connue par le robot
+		\item $EM$ : La partie de la carte explorable par le robot
+	\end{itemize}
 
+\end{frame}
+
+\begin{frame}{\textbf{Définition de la fonctionnelle et problèmes rencontrés}}
 	\textbf{Fonctionnelle :}
+
 	\begin{equation*}
 		\displaystyle
 		J(\mathbf{X}(0), T) = \int_{0}^{T} \| \mathbf{\dot{X}}(t) \| dt
 	\end{equation*}
-	avec $\mathbf{X}(0) = \mathbf{X}_{Robot}$ et $\mathbf{X}(T) = \mathbf{X}_{WP}$
-	
-\end{frame}
 
-\begin{frame}{\textbf{Problèmes rencontrés}}
-	Question ouverte :
-		Comment garantir $\mathbf{X}(T)=\mathbf{X}_{WP}$ en contraignant $\dot{X}(t)$ ?
-		Comment choisir le temps T ?
+	avec pour contrainte $\mathbf{X}(0) = \mathbf{X}_{Robot}$, $\mathbf{X}(T) = \mathbf{X}_{WP}$, $KM(T) = EM$ et $\mathbf{\dot{X}}$ bornée.
 	
-			Tdoit être suffisamment grand pour atteindre la cible.
-			Si le robot s'arrête à $t_1$, alors :
-			$\int_{t_1}^{t} \mathbf{X}(t)^{2} dt = 0$.
-	
-		Comment prendre en compte l'exploration de la carte ?
-
-	Reduction du problème à une première approche simple supposant que la carte est connue.
-
+	\begin{itemize}
+		\item Comment garantir $\mathbf{X}(T)=\mathbf{X}_{WP}$ en contraignant $\dot{X}(t)$ ?
+		\item Comment choisir le temps T ?
+		\begin{itemize}
+			\item T doit être suffisamment grand pour atteindre la cible.
+			\item Si le robot s'arrête en $X_{WP}$ à $t = t_1$, alors :
+			$$
+			\displaystyle
+			\int_{t_1}^{T} \| \mathbf{\dot{X}}(t) \| dt = 0
+			$$
+		\end{itemize}
+		\item Comment prendre en compte l'exploration de la carte ?
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{\textbf{Proposition d'une nouvelle méthode}}
-    Slide 5
+	\begin{figure}[H]
+		\centering
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode1.png}
+			\caption{Tracer une ligne}
+			\label{fig:draw_line}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode2.png}
+			\caption{Vérifier si le chemin est libre}
+			\label{fig:check_line}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode3.png}
+			\caption{Tirer des points normaux}
+			\label{fig:shoot_line}
+		\end{subfigure}
+		\vfill
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode4.png}
+			\caption{Valider le point}
+			\label{fig:validate_point}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode5.png}
+			\caption{Répéter la méthode}
+			\label{fig:repeat_method}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.3\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/methode6.png}
+			\caption{Connecter les points}
+			\label{fig:idk}
+		\end{subfigure}
+		\caption{Visualisation de la méthode de recherche de chemin dynamique}
+		\label{fig:method_visu}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{\textbf{Proposition d'une nouvelle méthode}}
+    \begin{figure}[H]
+		\centering
+		\includegraphics[width=0.7\textwidth]{IMAGES/shorten_path.png}
+		\caption{Processus de simplification du chemin trouvé}
+		\label{fig:path_simp}
+	\end{figure}
 \end{frame}
 
 \begin{frame}{\textbf{Méthode de vérification}}
-    Slide 5
-\end{frame}
+    Le chemin le plus court est modélisé par la propagation d'une onde à vitesse constante.\cite{tapia_2016}
+	\begin{columns}[t]
+		% Column 1
+		\begin{column}{0.6\textwidth}
+			\begin{itemize}
+				\item Utilisation d'un automate cellulaire (CA)
+				\vspace{0.2cm}
+				\item La structure en réseau définit :
+				\begin{itemize}
+					\item Les cellules activées
+					\vspace{0.1cm}
+					\item Les obstacles
+					\vspace{0.1cm}
+					\item Les sources secondaires d'ondes
+					\vspace{0.1cm}
+					\item Les espaces vides
+				\end{itemize}
+				\item Un vecteur de distance suit la progression de l'onde.
+				\vspace{0.2cm}
+				\item Sources secondaires d'ondes ajoutées pour gérer les obstacles, inspirées du principe de Huygens.
+			\end{itemize}
+		\end{column}
+		% Column 2    
+		\begin{column}{0.4\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=\textwidth]{IMAGES/ca2.png}
+				\label{fig:ca2}
+				\caption{Propagation d'une onde à vitesse constante}
+			\end{figure}
+		\end{column}
+	\end{columns}
 
-\begin{frame}{\textbf{Méthode de vérification}}
-    Slide 5
 \end{frame}
 
 \begin{frame}{\textbf{Résultats et performance}}
-    Slide 5
+    \begin{figure}[H]
+		\centering
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap1.png}
+			\caption*{Résultats carte n°1}
+			\label{fig:rmap1}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap2.png}
+			\caption*{Résultats carte n°2}
+			\label{fig:rmap2}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap3.png}
+			\caption*{Résultats carte n°3}
+			\label{fig:rmap3}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap4.png}
+			\caption*{Résultats carte n°4}
+			\label{fig:rmap4}
+		\end{subfigure}
+		\vfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap5.png}
+			\caption*{Résultats carte n°5}
+			\label{fig:rmap5}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap6.png}
+			\caption*{Résultats carte n°6}
+			\label{fig:rmap6}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap7.png}
+			\caption*{Résultats carte n°7}
+			\label{fig:rmap7}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.24\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/rmap8.png}
+			\caption*{Résultats carte n°8}
+			\label{fig:rmap8}
+		\end{subfigure}
+		\caption{Résultats sur les cartes de test}
+		\label{fig:results_benchmark_maps}
+	\end{figure}
 \end{frame}
 
 \begin{frame}{\textbf{Résultats et performance}}
-    Slide 5
+    \begin{table}[H]
+		\centering
+		\begin{tabular}{c c c c c c}
+			\hline
+			Carte & Théoriquement & Méthode & Rel. diff. ($\%$) & CA ($\pm 2$ mu) & Rel. Error ($\%$)\\
+			\hline
+			Carte 1 & 1081 & 1084 & 0.3 & 1086 & 0.5\\
+			Carte 2 & 1121 & 1125 & 0.4 & 1122 & 0.1\\
+			Carte 3 & 1122 & 1125 & 0.4 & 1122 & 0\\
+			Carte 4 & 1084 & 1088 & 0.4 & 1086 & 0.2\\
+			Carte 5 & 1521 & 1531 & 0.7 & 1522 & 0.1\\
+			Carte 6 & 1166 & - & - & 1168 & 0.2\\
+			Carte 7 & 1166 & - & - & 1168 & 0.2\\
+			Carte 8 & 1776 & - & - & 1780 & 0.2\\
+			\hline
+		\end{tabular}
+		\caption{Comparaisons des résultats}
+		\label{tab:benchmark_results}
+	\end{table}
 \end{frame}
+
+\begin{frame}{\textbf{Algorithme de Dijkstra}}
+	\begin{itemize}
+		\item Détection d'impasse :
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Le robot reste dans un certain périmètre autour de sa position pendant un certain temps.
+		\end{itemize}
+		\vspace{0.2cm}
+		\item En cas d'impasse :
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Redéfinition du point étape :
+			\vspace{0.2cm}
+			\begin{itemize}
+				\item Plus proche point appartenant aux cellules traversées de l'étape.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item Algorithme de Dijkstra :
+			\vspace{0.2cm}
+			\begin{itemize}
+				\item Existence du chemin garanti.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item Simplification du chemin.
+		\end{itemize}
+	\end{itemize}
+
+\end{frame}
+
+\begin{frame}{\textbf{Analyses}}
+	\begin{itemize}
+		\item Portée délimitée d'application
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Adaptée aux espaces ouverts et cavités moyennes.
+			\item En cavités étroites, exécutions fréquentes de Dijkstra.
+			\item Implémentation possible en 2D et 3D.
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Robustesse face aux pannes et à l'incertitude
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Gestion des blocages et sortie de situations difficiles.
+			\item Dijkstra assure un retour en arrière en cas de besoin.
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Complétude
+		\vspace{0.2cm}
+		\begin{itemize}
+			\item Exploration de tout le domaine possible.
+			\item Nécessité de tests approfondis.
+			\item Complétude incertaine à ce stade.
+		\end{itemize}
+	\end{itemize}
+
+\end{frame}
+
 
 % Section 3 : Résultats
 \section{Communication}
 
-\begin{frame}{\textbf{Résultats}}
-    Slide 5
+\begin{frame}{\textbf{Communication}}
+	\textbf{Objectif}
+
+	\vspace{0.5em}
+	
+	Coordonner l'exploration de zones inconnues par un essaim de robots, sans entité centrale pour gérer la coordination.
+	
+	\vspace{0.5em}
+
+	\begin{itemize}
+		\item Contraintes
+		\begin{itemize}
+			\item Environnement confiné
+			\vspace{0.2cm}
+			\item Liaisons souvent coupées
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Simplification
+		\begin{itemize}
+			\item Communication possible si contact visuel
+			\vspace{0.2cm}
+			\item Pas de modélisation d'atténuation
+			\vspace{0.2cm}
+			\item Pas d'erreur de communication
+		\end{itemize}
+	\end{itemize}
+
 \end{frame}
 
-\begin{frame}{\textbf{Résultats}}
-    Slide 6
+\begin{frame}{\textbf{Principe}}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Sélection dynamique du robot maître :
+				\begin{itemize}
+					\item Le robot avec le plus petit ID devient le maître.
+					\item Si le groupe se divise, un maître est créé.
+					\item Si deux groupes se rencontre, les maîtres se synchronisent.
+				\end{itemize}
+				\item Communication hiérarchique forte, le robot maître :
+				\begin{itemize}
+					\item donne des instructions aux robots avec un ID plus élevé.
+					\item partage toutes les informations acquises par tout le groupe.
+				\end{itemize}
+				\item Communication robot-à-robot :
+				\begin{itemize}
+					\item Communication par lumière.
+				\end{itemize}
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.4\textwidth]{IMAGES/color_sensor.png}
+				\caption{Exemple de capteur de couleur, ref AS7341 - 10 cannaux}
+				\label{fig:color_sensor}
+			\end{figure}
+		\end{column}
+	\end{columns}
 \end{frame}
 
-\begin{frame}{\textbf{Résultats}}
-    Slide 7
+\begin{frame}{\textbf{Principe}}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Choix des directions de groupe :
+				\begin{itemize}
+					\item Synchronisation de la carte connue.
+					\vspace{0.2cm}
+					\item Envoie des information du robot esclave vers le maître.
+					\vspace{0.2cm}
+					\item Calcul de la table de coût.
+					\vspace{0.2cm}
+					\item Envoie des directions par le maître en minimisant la combinaison des coût.
+				\end{itemize}
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{c c c c c c}
+					\hline
+					& \textbf{R. 1} & \textbf{R. 2} & \textbf{R. 3} & \textbf{R. 4} & \textbf{R. 5}\\
+					\hline
+					\textbf{WP 1} & \textcolor{blue}{$\mathbf{23}$} & $87$ & $234$ & $56$ & $192$ \\
+					\textbf{WP 2} & $245$ & $76$ & \textcolor{blue}{$\mathbf{11}$} & $68$ & $39$ \\
+					\textbf{WP 3} & $90$ & \textcolor{blue}{$\mathbf{21}$} & $73$ & $\mathbf{50}$ & $164$ \\
+					\textbf{WP 4} & $132$ & $58$ & $49$ & $77$ & \textcolor{blue}{$\mathbf{25}$} \\
+					\textbf{WP 5} & $181$ & $\mathbf{13}$ & $66$ & \textcolor{blue}{$\mathbf{39}$} & $70$ \\ 
+					\hline
+				\end{tabular}
+				\caption{Exemple de table de coût}
+				\label{tab:example_5R5WP}
+			\end{table}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{c c c c c c}
+					\hline
+					& \textbf{R. 1} & \textbf{R. 2} & \textbf{R. 3} & \textbf{R. 4} & \textbf{R. 5}\\
+					\hline
+					\textbf{WP 1} & \textcolor{blue}{$\mathbf{61}$} & $125$ & $93$ & $47$ & \textcolor{blue}{$\mathbf{59}$} \\
+					\textbf{WP 2} & $88$ & \textcolor{blue}{$\mathbf{12}$} & \textcolor{blue}{$\mathbf{53}$} & \textcolor{blue}{$\mathbf{29}$} & $174$ \\ 
+					\hline
+				\end{tabular}
+				\caption{Exemple de table de coût}
+				\label{tab:example_5R2WP}
+			\end{table}
+		\end{column}
+	\end{columns}
 \end{frame}
 
-\begin{frame}{\textbf{Résultats}}
-    Slide 8
+
+\begin{frame}{\textbf{Encodage}}
+	\textbf{Structure d'un message type :}
+	$$
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{ID émetteur}}~~
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Nb de receveur}}~~
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile}_{4 \times \text{Nb de receveur}}~~
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile \dots \smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Message}}
+	~~~ \cdots
+	$$
+	\vspace{0.3em}
+	$$
+	\cdots ~~~
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Indicateur de fin de message}}\;
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{Verif. somme}}~~
+	\underbrace{\smallsmile \smallsmile \smallsmile \smallsmile}_{\text{ID émetteur avec bit de parité}}
+	$$
+
+	\textbf{Resistance aux erreurs par methode ARQ}
 \end{frame}
 
-\begin{frame}{\textbf{Résultats}}
-    Slide 9
+
+\begin{frame}{\textbf{Table des types}}
+    \begin{table}[H]
+		\centering
+		\begin{tabular}{c l l}
+			\hline
+			\textbf{Indicateur de type} & \textbf{Type} & \textbf{Taille des données}\\
+			\hline
+			\texttt{0000} & Fin de message & \texttt{4} bits\\
+			\texttt{0001} & Entier & \texttt{8} bits\\
+			\texttt{0010} & Entier & \texttt{32} bits\\
+			\texttt{0011} & Flottant & \texttt{32} bits\\
+			\texttt{0100} & Chaîne de caractères & \texttt{8} bits pour la longueur + \texttt{8} bits par caractère\\
+			\texttt{0101} & Liste d'entiers 8 bits & \texttt{16} bits pour la longueur + \texttt{8} bits par entier\\
+			\texttt{0110} & Liste de flottants & \texttt{16} bits pour la longueur + \texttt{32} bits par flottant\\
+			\texttt{0111} & ID de type de message & \texttt{8} bits\\
+			\texttt{1000} & Info robot & \texttt{168} bits\\
+			\texttt{1010} & Message binaire & \texttt{16} bits pour la longueur + \texttt{1} bit par bit binaire\\
+			\hline
+		\end{tabular}
+		\caption{Tableau des indicateurs de type}
+	\end{table}
+\end{frame}
+
+\begin{frame}{\textbf{Table des identifiants de message}}
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{c l}
+			\hline
+			\textbf{Message ID} & \textbf{Description} \\
+			\hline
+			\texttt{00000000} & Demander de répéter le dernier message\\
+			\texttt{00000001} & Dernier message reçu correctement\\[5pt]
+
+			\texttt{00010000} & Demander l'ensemble des robots connectés\\
+			\texttt{00010001} & Envoyer l'ensemble des robots connectés\\[5pt]
+
+			\texttt{00100000} & Demander à tous où ils veulent aller\\
+			\texttt{00100001} & Envoyer la position du prochain point de passage avec l'ID de la frontière\\
+			\texttt{00100010} & Envoyer les informations du robot\\
+			\texttt{00100011} & Envoyer la prochaine position à atteindre\\[5pt]
+
+			\texttt{00110000} & Demander la synchronisation de la carte en direct\\
+			\texttt{00110001} & Envoyer la carte en direct mise à jour\\[5pt]
+
+			\texttt{01010101} & Transmettre un message d'un autre robot\\
+			\hline
+		\end{tabular}
+		\caption{Table des identidiants de message}
+	\end{table}
+\end{frame}
+
+\begin{frame}{\textbf{Analyses}}
+	\begin{itemize}
+		\item{Portée délimitée d'application}
+		\begin{itemize}
+			\item Exploration robotique en essaim, scalabilité
+			\item Intérieur/extérieur (secours, exploration planétaire, recherche et sauvetage)
+			\item Communication optique, propagation lumineuse
+		\end{itemize}
+		
+		\vspace{0.2cm}
+		\item{Robustesse face aux pannes et à l'incertitude}
+		\begin{itemize}
+			\item Detection d'erreurs (ARQ, vérification de somme, bit de parité)
+			\item Réaffectation dynamique du rôle de maître
+			\item Encodage compact, bande passante réduite
+		\end{itemize}
+		
+		\vspace{0.2cm}
+		\item{Vitesse}
+		\begin{itemize}
+			\item Encodage optimisé
+			\item Cycle requête-réponse, réduire retransmissions
+			\item Communication parallèle, traitement simultané
+		\end{itemize}
+	\end{itemize}
 \end{frame}
 
 % Section 4 : Discussions
 \section{Simulateur et résultats}
 
-\begin{frame}{\textbf{Discussions}}
-    Slide 10
+\begin{frame}{\textbf{Simulateur}}
+	\textbf{Objectif}
+
+	\vspace{0.5em}
+
+	Implementer et tester les algorithmes proposés pour les améliorer avant un déployement sur robot
+	
+	\vspace{0.5em}
+
+	\begin{itemize}
+		\item Contraintes
+		\begin{itemize}
+			\item Simulateur en temps réel
+			\vspace{0.2cm}
+			\item Contrainte cinématique du robot prise en considération
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Simplification
+		\begin{itemize}
+			\item Les robots opèrent dans les airs et se déplaçant sur le sol
+			\vspace{0.2cm}
+			\item Le sol est approximé à un plan 2D
+			\vspace{0.2cm}
+			\item Aucune irrégularité de surface n'est prise en compte
+		\end{itemize}
+	\end{itemize}
 \end{frame}
 
-\begin{frame}{\textbf{Discussions}}
-    Slide 11
+\begin{frame}{\textbf{Génération de la carte}}
+	\begin{columns}[t]
+		\begin{column}{0.33\textwidth}
+
+			\vspace{1em}
+			Génération des obstacles par automate cellulaire sur grille cartesienne
+			\vspace{1em}
+			
+			\textbf{Règles :}
+
+			\vspace{1em}
+
+			Si 4 cellules sont actives dans le voisinage de Moore alors la cellule s'active sinon elle se déactive
+		\end{column}
+
+		\begin{column}{0.33\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.9\textwidth]{IMAGES/grid_transform_map_generation.png}
+				\caption{Transformation de la grille}
+				\label{fig:map_generation_step3}
+			\end{figure}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.9\textwidth]{IMAGES/marching_square_triangle.png}
+				\caption{Méthode de Marching Square appliquée aux triangles}
+				\label{fig:map_generation_step1}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.33\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.8\textwidth]{IMAGES/map_generation_example.png}
+				\caption{Exemple de carte générée}
+				\label{fig:map_generation_step2}
+			\end{figure}
+		\end{column}
+	\end{columns}
 \end{frame}
 
+\begin{frame}{\textbf{Exemple de cartes générées}}
+    \begin{figure}[H]
+		\centering
+		\begin{subfigure}{0.32\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/map_dx100.png}
+			\caption{$\delta x = 100$ mu}
+			\label{fig:real_map_100}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}{0.32\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/map_dx40.png}
+			\caption{$\delta x = 40$ mu}
+			\label{fig:real_map_40}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}{0.32\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{IMAGES/map_dx10.png}
+			\caption{$\delta x = 10$ mu}
+			\label{fig:real_map_10}
+		\end{subfigure}
+		\caption{Exemple de cartes générées}
+		\label{fig:three_map_example}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{\textbf{Implémentation des capteurs}}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Centrale inertielle
+				\vspace{0.2cm}
+				\item LiDAR
+				\begin{itemize}
+					\item Émission
+					\item Réflexion
+					\item Réception
+					\item Calcul du temps de vol $\rightarrow$ distance.
+				\end{itemize}
+				\vspace{0.2cm}
+				\item Optimisation
+				\begin{itemize}
+					\item Segmentation de l'espace
+					\item Algorithme de Bresenham modifié
+				\end{itemize}
+				\item Simulation des erreurs par loi normale
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.6\textwidth]{IMAGES/lidar_operation_scheme.png}
+				\caption{Fonctionnement d'un LiDAR}
+				\label{fig:lidar_ope}
+			\end{figure}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.6\textwidth]{IMAGES/draw_line.png}
+				\caption{Algorithme de Bresenham modifié}
+				\label{fig:bresenham_algorithm}
+			\end{figure}
+			
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+\begin{frame}{\textbf{localisation et cartographie simultanées (SLAM)}}
+	\begin{columns}[t]
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Création d'une carte de caractéristique avec 4 états:
+				\begin{itemize}
+					\item Inconnue (Gris)
+					\item Obstacle (Violet)
+					\item Libre (Vert clair)
+					\item Traversé (Vert)
+				\end{itemize}				
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+			\item Calcul et correction de la position
+				\begin{itemize}
+					\item Centrale inertielle
+					\item Triangulation par LiDAR
+				\end{itemize}
+			\end{itemize}
+		\end{column}
+	\end{columns}
+	\begin{columns}[t]
+		\begin{column}{0.5\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.5\textwidth]{IMAGES/lgm_t3_c.png}
+				\caption{Carte des caractéristiques}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.6\textwidth]{IMAGES/lidar_correct_pos.png}
+				\caption{Correction de la position par le LiDAR}
+			\end{figure}
+		\end{column}
+	\end{columns}
+		
+\end{frame}
+
+\begin{frame}{\textbf{Carte de caractéristique dynamique}}
+	\begin{columns}
+		\begin{column}{0.7\textwidth}
+			Environnement hautement dynamique
+			\begin{itemize}
+				\item Carte jumelle : carte d'occurrence
+				\item Compte le nombre de rayons de LiDAR ayant touché les cellules de la carte de caractéristiques
+				\begin{itemize}
+					\item Si collision avec un mur : Ajoute 3
+					\item Sinon : Soustraire 1
+				\end{itemize}
+			\end{itemize}
+			\vspace{0.5em}
+			
+			Assure une carte des caractéristiques sécurisante tout en supprimant de celle-ci les objets dynamiques
+
+			\begin{figure}[H]
+				\centering
+				\begin{subfigure}{0.32\textwidth}
+					\centering
+					\includegraphics[width=0.6\textwidth]{IMAGES/lgm_t1_c.png}
+				\end{subfigure}
+				\hfill
+				\begin{subfigure}{0.32\textwidth}
+					\centering
+					\includegraphics[width=0.6\textwidth]{IMAGES/lgm_t2_c.png}
+				\end{subfigure}
+				\hfill
+				\begin{subfigure}{0.32\textwidth}
+					\centering
+					\includegraphics[width=0.6\textwidth]{IMAGES/lgm_t3_c.png}
+				\end{subfigure}
+			\end{figure}
+			
+
+			Amélioration possible : Filtre de Kalman
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.6\textwidth]{IMAGES/lidar_occurance_map.png}
+				\caption{Carte dynamique des caractéristiques}
+			\end{figure}
+		\end{column}
+	\end{columns}
+
+\end{frame}
+
+
+\begin{frame}{\textbf{Résultats}}
+	\begin{columns}
+		\begin{column}{0.8\textwidth}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{c c c c}
+					\hline
+					\textbf{Carte n°} & \textbf{Nb Robots} & \textbf{Temps exploration} & \textbf{Réduction} \\ 
+					\hline
+					30 & 1 & 2'20" & - \\
+					30 & 2 & 1'3" & 55\% \\
+					40 & 1 & 2'35" & - \\
+					40 & 2 & 1'32" & 41\% \\
+					55 & 1 & 2'7" & - \\
+					55 & 2 & 54" & 57\% \\
+					100 & 1 & 3'16" & - \\
+					100 & 3 & 1'28" & 55\% \\
+					100 & 5 & 1'12" & 63\% \\
+				\end{tabular}
+				\caption{Temps d'exploration pour différentes tailles de carte et nombre de robots}
+				\label{tab:exploration_times_1}
+			\end{table}
+		\end{column}
+		\begin{column}{0.2\textwidth}
+			\begin{figure}[H]
+				\centering
+				\begin{subfigure}[b]{0.8\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map30.png}
+				\end{subfigure}
+				\vfill
+				\begin{subfigure}[b]{0.8\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map40.png}
+				\end{subfigure}
+				\vfill
+				\begin{subfigure}[b]{0.8\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map55.png}
+				\end{subfigure}
+				\vfill
+				\begin{subfigure}[b]{0.8\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map100.png}
+				\end{subfigure}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{\textbf{Résultats}}
+	\begin{columns}
+		\begin{column}{0.33\textwidth}
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.9\textwidth]{IMAGES/map55_explored_2robot.png}
+				\caption*{Carte n°55 - 2 robots}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.33\textwidth}
+			\begin{figure}[H]
+				\centering
+				\begin{subfigure}{0.9\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map40_explored_1robot.png}
+					\caption*{Carte n°40 - 1 robot}
+				\end{subfigure}
+				\vfill
+				\begin{subfigure}{0.9\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/map40_explored_2robot.png}
+					\caption*{Carte n°40 - 2 robots}
+				\end{subfigure}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.33\textwidth}
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.9\textwidth]{IMAGES/map100_explored_5robot.png}
+				\caption*{Carte n°100 - 5 robots}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
 
 % Section 5 : Conclusion
 \section{Conclusion et perspectives}
 \begin{frame}{\textbf{Conclusion}}
-    Slide 12
-	Un simulateur construit:
-		Environ 3500 lignes de code
-		Une dixaine de fonction utiles pour la suite
+	\begin{itemize}
+		\item Développement d'un simulateur :
+		\begin{itemize}
+			\item Environ 3500 lignes de code
+			\item Une dizaine de fonctions utiles pour de futures implémentations
+		\end{itemize}
+		\vspace{0.2cm} 
+		\item Validation des algorithmes d'exploration dans des environnements complexes
+		\vspace{0.2cm} 
+		\item Mise en place d'une communication simple mais robuste entre les robots
+		\vspace{0.2cm} 
+		\item Première étape vers des recherches approfondies en thèse
+	\end{itemize}
+
 \end{frame}
 
-% Section 5 : Conclusion
+
 \begin{frame}{\textbf{Perspectives}}
-    Slide 12
+	\begin{itemize}
+		\item Amélioration de la performance du simulateur :
+		\begin{itemize}
+			\item Passage en C++
+			\item Parallélisation
+		\end{itemize}
+		\vspace{0.2cm}
+		\item Implémentation ROS
+		\vspace{0.2cm}
+		\item Implémentation du terrain
+	\end{itemize}
+
+
 \end{frame}
 
 \begin{frame}{\textbf{Perspectives}}
-    Slide 13
+    \begin{columns}[t]
+        \begin{column}{0.55\textwidth}
+            \textbf{Simplification du problème d'optimisation} \\
+            \vspace{0.5em}
+            \begin{itemize}
+                \item Minimiser la consommation d'énergie lors du déplacement de A à B.
+                \vspace{0.2cm}
+                \item Consommation d'énergie : $\displaystyle E(T) = \int_{0}^{T} \| \omega(t) \| \, dt$
+                \vspace{0.2cm}
+                \item Où : $\| \omega(t) \| = \sqrt{\omega_L^{2}(t) + \omega_R^{2}(t)}$
+                \vspace{0.2cm}
+                \item Contraintes : \( X(0) = X_R \) et \( X(T) = X_{WP} \).
+                \vspace{0.2cm}
+                \item Problématique : Assurer \( X(T) = X_{WP} \).
+            \end{itemize}
+        \end{column}
+
+        \begin{column}{0.45\textwidth}
+			\begin{figure}[H]
+				\centering
+				\begin{subfigure}{0.45\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/robot_model_2.png}
+				\end{subfigure}
+				\hfill
+				\begin{subfigure}{0.45\textwidth}
+					\centering
+					\includegraphics[width=\textwidth]{IMAGES/robot_3Dmodel.png}
+				\end{subfigure}
+				\caption{Modèle de robot utilisé}
+			\end{figure}
+
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.48\textwidth}
+                    \includegraphics[width=\textwidth]{IMAGES/random.png}
+                    \caption{Chemin stochastique}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.48\textwidth}
+                    \includegraphics[width=\textwidth]{IMAGES/empiric.png}
+                    \caption{Chemin empirique}
+                \end{subfigure}
+                \caption{Comparaison des approches d'optimisation des chemins stochastiques et empiriques}
+            \end{figure}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{\textbf{Références}}
-    Slide 13
+	\scriptsize
+	\begin{thebibliography}{9}
+
+	\bibitem{tapia_2016}
+	Calvo Tapia, Carlos, Villacorta-Atienza, José, Mironov, Vasily, Gallego, Victor, and Makarov, Valeri. (2016). WAVES in ISOTROPIC TOTALISTIC CELLULAR AUTOMATA: APPLICATION to REAL-TIME ROBOT NAVIGATION. \textit{Advances in Complex Systems}, 19, 1650012. DOI 10.1142/S0219525916500120.
+
+	\end{thebibliography}
+
 \end{frame}
 
 \end{document}

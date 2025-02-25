@@ -229,7 +229,6 @@ The communication protocol is designed for swarm-based robotic exploration, enab
 
 To ensure robustness, the protocol incorporates error detection and recovery mechanisms, such as Automatic Repeat reQuest (ARQ), unit sum check, and parity bit verification to detect corrupted messages and request retransmission. If communication fails, the system automatically retries multiple times before skipping a failed recipient, ensuring overall progression. Additionally, the master role is dynamically reassigned if a group splits or if a master robot fails, maintaining coordination despite potential disruptions. The compact encoding of messages also minimizes bandwidth usage, making the system resilient to network constraints.  
 
-
 \subsubsection{Speed}
 
 An important aspect of the method is its speed and efficiency. The use of compact one-byte encoded cost values ensures that communication remains lightweight, reducing transmission delays. The protocol follows a strict request-response cycle, preventing unnecessary retransmissions and minimizing wait times. Moreover, by enabling parallel communication between different groups, it ensures that multiple robots can process and execute tasks simultaneously, leading to faster exploration and real-time adaptability to environmental changes.
