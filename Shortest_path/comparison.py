@@ -43,7 +43,7 @@ else:
 
 safe_range = 0
 granularity = 20
-scale = 1/2
+scale = 1/10
 
 save_anim_name = "map_" + str(imap) + "_scale_" + f"{int(1 / scale):g}_g20"
 print(save_anim_name)
@@ -52,8 +52,8 @@ path_dist = compute_path(source_pos, wp_pos, map_size, obstacles, safe_range)
 if path_dist:
 	print(f"Computed path length : {path_dist:.3f} um")
 
-shortest_path_dist, lattice = compute_and_save_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity, save_anim_name)
-# shortest_path_dist, lattice = compute_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity)
+# shortest_path_dist, lattice = compute_and_save_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity, save_anim_name)
+shortest_path_dist, lattice = compute_shortest_path(source_pos, wp_pos, map_size, scale, obstacles, granularity)
 print(f"Shortest computed path length : {shortest_path_dist:.3f} um")
 # display_grid(lattice, scale, wp_pos, shortest_path_dist, obstacles)
 

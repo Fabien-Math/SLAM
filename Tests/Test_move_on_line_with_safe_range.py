@@ -91,7 +91,7 @@ def test():
 
     p1 = (1, 5)
     p2 = (15, 10)
-    safe_range = 2.0
+    safe_range = 5.0
 
     fig, ax = plt.subplots(figsize=(8, 8), layout="constrained")
     inside_points = grid.points_in_safe_range_to_ids(p1, p2, safe_range, ax)
