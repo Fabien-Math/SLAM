@@ -3,12 +3,12 @@
 % Import all packages
 \include{packages}
 
-\newcommand{\titre}{Conception et optimisation d'algorithmes de coordination multi-robot}
+\newcommand{\titre}{Conception et optimisation d'algorithmes de coordination multi-robots}
 \newcommand{\titrefooter}{Soutenance - Projet de fin d'études}
-\newcommand{\soustitre}{Exploration autonome de réseaux de galerie}
+\newcommand{\soustitre}{Exploration autonome de réseaux de galeries}
 \newcommand{\auteur}{Fabien MATHÉ}
 \newcommand{\referent}{M. Mehmet ERSOY}
-\newcommand{\institut}{Seatech - MOCA 3A}
+\newcommand{\institut}{SeaTech - MOCA 3A}
 \newcommand{\presentationdate}{27 février 2025}
 
 
@@ -102,7 +102,7 @@
 		\end{figure}
 	\end{minipage}
     
-	\textbf{Objectif :}
+	\textbf{Objectifs :}
 
 	\vspace{0.8em}
 	\begin{itemize}
@@ -123,9 +123,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Plannification de trajectoire}
+\section{Planification de trajectoire}
 
-\begin{frame}{\textbf{Tentative de d'optimisation théorique}}
+\begin{frame}{\textbf{Tentative d'optimisation théorique}}
 	\textbf{Objectif}
 	\vspace{0.5em}
 	
@@ -133,12 +133,12 @@
 	
 	\vspace{0.5em}
 	\begin{itemize}
-		\item Contraintes :
+		\item Contrainte :
 		\begin{itemize}
 			\item Évitement des obstacles
 		\end{itemize}
 		\vspace{0.2cm}
-		\item Simplification :
+		\item Simplifications :
 		\begin{itemize}
 			\item Aucune contrainte liée au robot
 			\vspace{0.2cm}
@@ -150,7 +150,7 @@
 
 \begin{frame}[t]{\textbf{Définition de l'espace étoilé}}
 	\begin{minipage}[t]{0.6\linewidth}
-		On défini :
+		On définit :
 		\begin{equation*}
 			\displaystyle
 			FV(t) = \left\{ \, (1 - l) \, \mathbf{X}(t) + l\, \mathbf{M}(t, \alpha) \,|\, l \in [0, 1], \alpha \in [0, 2 \pi[ \, \right\}
@@ -316,49 +316,49 @@
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap2.png}
-			\caption*{Résultats carte n°2}
+			\caption*{Résultat carte n°2}
 			\label{fig:rmap2}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap3.png}
-			\caption*{Résultats carte n°3}
+			\caption*{Résultat carte n°3}
 			\label{fig:rmap3}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap4.png}
-			\caption*{Résultats carte n°4}
+			\caption*{Résultat carte n°4}
 			\label{fig:rmap4}
 		\end{subfigure}
 		\vfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap5.png}
-			\caption*{Résultats carte n°5}
+			\caption*{Résultat carte n°5}
 			\label{fig:rmap5}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap6.png}
-			\caption*{Résultats carte n°6}
+			\caption*{Résultat carte n°6}
 			\label{fig:rmap6}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap7.png}
-			\caption*{Résultats carte n°7}
+			\caption*{Résultat carte n°7}
 			\label{fig:rmap7}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}[b]{0.24\textwidth}
 			\centering
 			\includegraphics[width=\textwidth]{IMAGES/rmap8.png}
-			\caption*{Résultats carte n°8}
+			\caption*{Résultat carte n°8}
 			\label{fig:rmap8}
 		\end{subfigure}
 		\caption{Résultats sur les cartes de test}
@@ -371,7 +371,7 @@
 		\centering
 		\begin{tabular}{c c c c c c}
 			\hline
-			Carte & Théoriquement & Méthode & Rel. diff. ($\%$) & CA ($\pm 2$ mu) & Rel. Error ($\%$)\\
+			Cartes & Théoriquement & Méthode & Rel. diff. ($\%$) & CA ($\pm 2$ mu) & Rel. Error ($\%$)\\
 			\hline
 			Carte 1 & 1081 & 1084 & 0.3 & 1086 & 0.5\\
 			Carte 2 & 1121 & 1125 & 0.4 & 1122 & 0.1\\
@@ -466,7 +466,7 @@
 			\item Liaisons souvent coupées
 		\end{itemize}
 		\vspace{0.2cm}
-		\item Simplification
+		\item Simplifications
 		\begin{itemize}
 			\item Communication possible si contact visuel
 			\vspace{0.2cm}
@@ -480,26 +480,28 @@
 
 \begin{frame}{\textbf{Principe}}
 	\begin{columns}
-		\begin{column}{0.5\textwidth}
+		\begin{column}{0.6\textwidth}
 			\begin{itemize}
+				\item Communication robot-à-robot :
+				\begin{itemize}
+					\item Communication par lumière.
+				\end{itemize}
+				\vspace{0.2cm}
 				\item Sélection dynamique du robot maître :
 				\begin{itemize}
 					\item Le robot avec le plus petit ID devient le maître.
-					\item Si le groupe se divise, un maître est créé.
-					\item Si deux groupes se rencontre, les maîtres se synchronisent.
+					% 	\item Si le groupe se divise, un maître est créé.
+					% 	\item Si deux groupes se rencontre, les maîtres se synchronisent.
 				\end{itemize}
+				\vspace{0.2cm}
 				\item Communication hiérarchique forte, le robot maître :
 				\begin{itemize}
 					\item donne des instructions aux robots avec un ID plus élevé.
 					\item partage toutes les informations acquises par tout le groupe.
 				\end{itemize}
-				\item Communication robot-à-robot :
-				\begin{itemize}
-					\item Communication par lumière.
-				\end{itemize}
 			\end{itemize}
 		\end{column}
-		\begin{column}{0.5\textwidth}
+		\begin{column}{0.4\textwidth}
 			\begin{figure}
 				\centering
 				\includegraphics[width=0.4\textwidth]{IMAGES/color_sensor.png}
@@ -553,7 +555,7 @@
 					\textbf{WP 2} & $88$ & \textcolor{blue}{$\mathbf{12}$} & \textcolor{blue}{$\mathbf{53}$} & \textcolor{blue}{$\mathbf{29}$} & $174$ \\ 
 					\hline
 				\end{tabular}
-				\caption{Exemple de table de coût}
+				\caption{Autre exemple de table de coût}
 				\label{tab:example_5R2WP}
 			\end{table}
 		\end{column}
@@ -582,63 +584,12 @@
 \end{frame}
 
 
-\begin{frame}{\textbf{Table des types}}
-    \begin{table}[H]
-		\centering
-		\begin{tabular}{c l l}
-			\hline
-			\textbf{Indicateur de type} & \textbf{Type} & \textbf{Taille des données}\\
-			\hline
-			\texttt{0000} & Fin de message & \texttt{4} bits\\
-			\texttt{0001} & Entier & \texttt{8} bits\\
-			\texttt{0010} & Entier & \texttt{32} bits\\
-			\texttt{0011} & Flottant & \texttt{32} bits\\
-			\texttt{0100} & Chaîne de caractères & \texttt{8} bits pour la longueur + \texttt{8} bits par caractère\\
-			\texttt{0101} & Liste d'entiers 8 bits & \texttt{16} bits pour la longueur + \texttt{8} bits par entier\\
-			\texttt{0110} & Liste de flottants & \texttt{16} bits pour la longueur + \texttt{32} bits par flottant\\
-			\texttt{0111} & ID de type de message & \texttt{8} bits\\
-			\texttt{1000} & Info robot & \texttt{168} bits\\
-			\texttt{1010} & Message binaire & \texttt{16} bits pour la longueur + \texttt{1} bit par bit binaire\\
-			\hline
-		\end{tabular}
-		\caption{Tableau des indicateurs de type}
-	\end{table}
-\end{frame}
-
-\begin{frame}{\textbf{Table des identifiants de message}}
-	\begin{table}[H]
-		\centering
-		\begin{tabular}{c l}
-			\hline
-			\textbf{Message ID} & \textbf{Description} \\
-			\hline
-			\texttt{00000000} & Demander de répéter le dernier message\\
-			\texttt{00000001} & Dernier message reçu correctement\\[5pt]
-
-			\texttt{00010000} & Demander l'ensemble des robots connectés\\
-			\texttt{00010001} & Envoyer l'ensemble des robots connectés\\[5pt]
-
-			\texttt{00100000} & Demander à tous où ils veulent aller\\
-			\texttt{00100001} & Envoyer la position du prochain point de passage avec l'ID de la frontière\\
-			\texttt{00100010} & Envoyer les informations du robot\\
-			\texttt{00100011} & Envoyer la prochaine position à atteindre\\[5pt]
-
-			\texttt{00110000} & Demander la synchronisation de la carte en direct\\
-			\texttt{00110001} & Envoyer la carte en direct mise à jour\\[5pt]
-
-			\texttt{01010101} & Transmettre un message d'un autre robot\\
-			\hline
-		\end{tabular}
-		\caption{Table des identidiants de message}
-	\end{table}
-\end{frame}
-
 \begin{frame}{\textbf{Analyses}}
 	\begin{itemize}
 		\item{Portée délimitée d'application}
 		\begin{itemize}
 			\item Exploration robotique en essaim, scalabilité
-			\item Intérieur/extérieur (secours, exploration planétaire, recherche et sauvetage)
+			\item Intérieur ou extérieur
 			\item Communication optique, propagation lumineuse
 		\end{itemize}
 		
@@ -647,13 +598,12 @@
 		\begin{itemize}
 			\item Detection d'erreurs (ARQ, vérification de somme, bit de parité)
 			\item Réaffectation dynamique du rôle de maître
-			\item Encodage compact, bande passante réduite
 		\end{itemize}
 		
 		\vspace{0.2cm}
 		\item{Vitesse}
 		\begin{itemize}
-			\item Encodage optimisé
+			\item Encodage compact, bande passante réduite
 			\item Cycle requête-réponse, réduire retransmissions
 			\item Communication parallèle, traitement simultané
 		\end{itemize}
@@ -668,7 +618,7 @@
 
 	\vspace{0.5em}
 
-	Implementer et tester les algorithmes proposés pour les améliorer avant un déployement sur robot
+	Implementer et tester les algorithmes proposés pour les améliorer avant un déploiement sur robot
 	
 	\vspace{0.5em}
 
@@ -680,9 +630,9 @@
 			\item Contrainte cinématique du robot prise en considération
 		\end{itemize}
 		\vspace{0.2cm}
-		\item Simplification
+		\item Simplifications
 		\begin{itemize}
-			\item Les robots opèrent dans les airs et se déplaçant sur le sol
+			\item Les robots opèrent dans les airs et se déplacent sur le sol
 			\vspace{0.2cm}
 			\item Le sol est approximé à un plan 2D
 			\vspace{0.2cm}
@@ -696,14 +646,14 @@
 		\begin{column}{0.33\textwidth}
 
 			\vspace{1em}
-			Génération des obstacles par automate cellulaire sur grille cartesienne
+			Génération des obstacles par automate cellulaire sur grille cartésienne
 			\vspace{1em}
 			
 			\textbf{Règles :}
 
 			\vspace{1em}
 
-			Si 4 cellules sont actives dans le voisinage de Moore alors la cellule s'active sinon elle se déactive
+			Si 4 cellules sont actives dans le voisinage de Moore alors la cellule s'active sinon elle se désactive
 		\end{column}
 
 		\begin{column}{0.33\textwidth}
@@ -773,7 +723,7 @@
 					\item Calcul du temps de vol $\rightarrow$ distance.
 				\end{itemize}
 				\vspace{0.2cm}
-				\item Optimisation
+				\item Optimisations
 				\begin{itemize}
 					\item Segmentation de l'espace
 					\item Algorithme de Bresenham modifié
@@ -800,11 +750,11 @@
 \end{frame}
 
 
-\begin{frame}{\textbf{localisation et cartographie simultanées (SLAM)}}
+\begin{frame}{\textbf{Localisation et cartographie simultanées (SLAM)}}
 	\begin{columns}[t]
 		\begin{column}{0.5\textwidth}
 			\begin{itemize}
-				\item Création d'une carte de caractéristique avec 4 états:
+				\item Création d'une carte de caractéristiques avec 4 états:
 				\begin{itemize}
 					\item Inconnue (Gris)
 					\item Obstacle (Violet)
@@ -842,7 +792,7 @@
 		
 \end{frame}
 
-\begin{frame}{\textbf{Carte de caractéristique dynamique}}
+\begin{frame}{\textbf{Carte de caractéristiques dynamique}}
 	\begin{columns}
 		\begin{column}{0.7\textwidth}
 			Environnement hautement dynamique
@@ -850,7 +800,7 @@
 				\item Carte jumelle : carte d'occurrence
 				\item Compte le nombre de rayons de LiDAR ayant touché les cellules de la carte de caractéristiques
 				\begin{itemize}
-					\item Si collision avec un mur : Ajoute 3
+					\item Si collision avec un mur : Ajouter 3
 					\item Sinon : Soustraire 1
 				\end{itemize}
 			\end{itemize}
@@ -1072,5 +1022,58 @@
 	\end{thebibliography}
 
 \end{frame}
+
+
+\begin{frame}{\textbf{Table des types}}
+    \begin{table}[H]
+		\centering
+		\begin{tabular}{c l l}
+			\hline
+			\textbf{Indicateur de type} & \textbf{Type} & \textbf{Taille des données}\\
+			\hline
+			\texttt{0000} & Fin de message & \texttt{4} bits\\
+			\texttt{0001} & Entier & \texttt{8} bits\\
+			\texttt{0010} & Entier & \texttt{32} bits\\
+			\texttt{0011} & Flottant & \texttt{32} bits\\
+			\texttt{0100} & Chaîne de caractères & \texttt{8} bits pour la longueur + \texttt{8} bits par caractère\\
+			\texttt{0101} & Liste d'entiers 8 bits & \texttt{16} bits pour la longueur + \texttt{8} bits par entier\\
+			\texttt{0110} & Liste de flottants & \texttt{16} bits pour la longueur + \texttt{32} bits par flottant\\
+			\texttt{0111} & ID de type de message & \texttt{8} bits\\
+			\texttt{1000} & Info robot & \texttt{168} bits\\
+			\texttt{1010} & Message binaire & \texttt{16} bits pour la longueur + \texttt{1} bit par bit binaire\\
+			\hline
+		\end{tabular}
+		\caption{Tableau des indicateurs de type}
+	\end{table}
+\end{frame}
+
+\begin{frame}{\textbf{Table des identifiants de message}}
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{c l}
+			\hline
+			\textbf{Message ID} & \textbf{Description} \\
+			\hline
+			\texttt{00000000} & Demander de répéter le dernier message\\
+			\texttt{00000001} & Dernier message reçu correctement\\[5pt]
+
+			\texttt{00010000} & Demander l'ensemble des robots connectés\\
+			\texttt{00010001} & Envoyer l'ensemble des robots connectés\\[5pt]
+
+			\texttt{00100000} & Demander à tous où ils veulent aller\\
+			\texttt{00100001} & Envoyer la position du prochain point de passage avec l'ID de la frontière\\
+			\texttt{00100010} & Envoyer les informations du robot\\
+			\texttt{00100011} & Envoyer la prochaine position à atteindre\\[5pt]
+
+			\texttt{00110000} & Demander la synchronisation de la carte en direct\\
+			\texttt{00110001} & Envoyer la carte en direct mise à jour\\[5pt]
+
+			\texttt{01010101} & Transmettre un message d'un autre robot\\
+			\hline
+		\end{tabular}
+		\caption{Table des identidiants de message}
+	\end{table}
+\end{frame}
+
 
 \end{document}
